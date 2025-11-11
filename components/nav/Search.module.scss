@@ -1,221 +1,224 @@
 .search {
-  position: sticky;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  top: 0;
-  right: 0;
-  z-index: 200;
-  max-height: 100vh;
-  pointer-events: none;
-  margin-top: calc(-1 * var(--navbar-height));
+	position: sticky;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	top: 0;
+	right: 0;
+	z-index: 200;
+	max-height: 100vh;
+	pointer-events: none;
+	margin-top: calc(-1 * var(--navbar-height));
 
-  @include mq($until: tablet) {
-    display: none;
-  }
+	@include mq($until: tablet) {
+		display: none;
+	}
 
-  &.open {
-    .wrap {
-      display: none;
-    }
-  }
+	&.open {
+		.wrap {
+			display: none;
+		}
+	}
 
-  .wrap {
-    display: flex;
-    align-items: center;
-    flex: 0 0;
-    height: var(--navbar-height);
-    margin-right: var(--outer-margin);
-    pointer-events: all;
-    cursor: pointer;
+	.wrap {
+		display: flex;
+		align-items: center;
+		flex: 0 0;
+		height: var(--navbar-height);
+		margin-right: var(--outer-margin);
+		pointer-events: all;
+		cursor: pointer;
 
-    svg {
-      height: 1rem;
-    }
-  }
+		svg {
+			height: 1rem;
+		}
+	}
 }
 
 .searchBar {
-  position: fixed;
-  z-index: 100000;
-  bottom: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  padding-right: var(--outer-margin);
-  padding-left: calc(var(--total-outer-margin) + calc(1 * var(--grid-unit)));
-  width: 100%;
-  background-color: var(--black);
-  transform: translateX(100%);
-  transition: transform 0.2s ease-out;
+	position: fixed;
+	z-index: 100000;
+	bottom: 0;
+	right: 0;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	padding-right: var(--outer-margin);
+	padding-left: calc(var(--total-outer-margin) + calc(1 * var(--grid-unit)));
+	width: 100%;
+	background-color: var(--black);
+	transform: translateX(100%);
+	transition: transform 0.2s ease-out;
 
-  @include mq($until: tablet) {
-    padding-right: var(--outer-margin);
-    padding-left: var(--outer-margin);
-  }
+	@include mq($until: tablet) {
+		padding-right: var(--outer-margin);
+		padding-left: var(--outer-margin);
+	}
 
-  a {
-    color: var(--white);
-  }
+	a {
+		color: var(--white);
+	}
 
-  &.show {
-    transform: translateX(0%);
-  }
+	&.show {
+		transform: translateX(0%);
+	}
 
-  &.full {
-    min-height: 100%;
-  }
+	&.full {
+		min-height: 100%;
+	}
 
-  .results,
-  .bar {
-    width: 100%;
-    color: var(--white);
-  }
+	.results,
+	.bar {
+		width: 100%;
+		color: var(--white);
+	}
 
-  .results {
-    --header-height: var(--navbar-height);
-    width: 100%;
+	.results {
+		--header-height: var(--navbar-height);
+		width: 100%;
 
-    padding-right: var(--outer-margin);
+		padding-right: var(--outer-margin);
 
-    header {
-      display: flex;
-      align-items: center;
-      min-height: var(--header-height);
-      max-height: var(--header-height);
-    }
+		header {
+			display: flex;
+			align-items: center;
+			min-height: var(--header-height);
+			max-height: var(--header-height);
+		}
 
-    @include mq($until: tablet) {
-      padding-right: 0;
-    }
+		@include mq($until: tablet) {
+			padding-right: 0;
+		}
 
-    .matches {
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      max-height: calc(100vh - var(--header-height) - var(--navbar-height)) !important;
-      min-height: calc(100vh - var(--header-height) - var(--navbar-height)) !important;
-      height: 100%;
+		.matches {
+			display: flex;
+			flex-direction: column;
+			overflow-y: auto;
+			max-height: calc(100vh - var(--header-height) - var(--navbar-height)) !important;
+			min-height: calc(100vh - var(--header-height) - var(--navbar-height)) !important;
+			height: 100%;
 
-      &::-webkit-scrollbar {
-        background: var(--beige-light);
-      }
+			&::-webkit-scrollbar {
+				background: var(--beige-light);
+			}
 
-      &::-webkit-scrollbar:vertical {
-        width: 1px;
-      }
+			&::-webkit-scrollbar:vertical {
+				width: 1px;
+			}
 
-      &::-webkit-scrollbar-thumb {
-        background: var(--beige-dark);
-      }
+			&::-webkit-scrollbar-thumb {
+				background: var(--beige-dark);
+			}
 
-      flex: 0 0;
-      width: 100%;
-      max-height: calc(100vh - var(--navbar-height) - var(--outer-margin));
-      padding-right: var(--total-outer-margin);
+			flex: 0 0;
+			width: 100%;
+			max-height: calc(100vh - var(--navbar-height) - var(--outer-margin));
+			padding-right: var(--total-outer-margin);
 
-      @include mq($until: tablet) {
-        padding-right: 0;
-      }
+			@include mq($until: tablet) {
+				padding-right: 0;
+			}
 
-      .loader {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        width: 100%;
-        flex: 1 1 100%;
-      }
-    }
+			.loader {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 100%;
+				width: 100%;
+				flex: 1 1 100%;
+			}
+		}
 
-    h2 {
-      padding-top: var(--small-space);
-    }
+		h2 {
+			padding-top: var(--small-space);
+		}
 
-    flex: 1 1 auto;
+		flex: 1 1 auto;
 
-    ul {
-      list-style: none;
+		ul {
+			list-style: none;
 
-      li {
-        display: flex;
-        flex-wrap: wrap;
-        margin-bottom: var(--small-space);
-        margin-right: var(--gutter);
+			li {
+				display: flex;
+				flex-wrap: wrap;
+				margin-bottom: var(--small-space);
+				margin-right: var(--gutter);
 
-        &:hover {
-          h4 {
-            text-decoration: underline;
-          }
-        }
+				&:hover {
+					h4 {
+						text-decoration: underline;
+					}
+				}
 
-        figure {
-          margin-top: 1.8rem;
-          width: 25% !important;
-          margin-left: var(--gutter);
-        }
+				figure {
+					margin-top: 1.8rem;
+					width: 25% !important;
+					margin-left: var(--gutter);
+				}
 
-        .text {
-          width: calc(75% - var(--gutter));
-        }
-      }
-    }
-  }
+				.text {
+					width: calc(75% - var(--gutter));
+					p {
+						overflow: hidden;
+					}
+				}
+			}
+		}
+	}
 
-  .bar {
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    min-height: var(--navbar-height);
-    flex: 0 0;
+	.bar {
+		display: flex;
+		align-items: center;
+		flex-direction: row;
+		min-height: var(--navbar-height);
+		flex: 0 0;
 
-    .icon {
-      flex: 0 0;
+		.icon {
+			flex: 0 0;
 
-      &:first-child {
-        margin-right: 1rem;
-      }
+			&:first-child {
+				margin-right: 1rem;
+			}
 
-      &.close {
-        cursor: pointer;
-      }
-    }
+			&.close {
+				cursor: pointer;
+			}
+		}
 
-    svg {
-      height: 20px;
-      width: 20px;
-      stroke: var(--white);
+		svg {
+			height: 20px;
+			width: 20px;
+			stroke: var(--white);
 
-      path,
-      circle {
-        stroke: var(--white);
-      }
+			path,
+			circle {
+				stroke: var(--white);
+			}
 
-      @include mq($until: tablet) {
-        transform: scale(0.7);
-      }
-    }
+			@include mq($until: tablet) {
+				transform: scale(0.7);
+			}
+		}
 
-    input {
-      flex: 1 1 auto;
-      margin: 0;
-      background-color: transparent;
-      padding-left: 0;
-      color: var(--white);
-      border: 0;
-      outline: 0;
-    }
-  }
+		input {
+			flex: 1 1 auto;
+			margin: 0;
+			background-color: transparent;
+			padding-left: 0;
+			color: var(--white);
+			border: 0;
+			outline: 0;
+		}
+	}
 }
 
 .error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-  flex: 1 1 100%;
-  color: var(--red);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100%;
+	flex: 1 1 100%;
+	color: var(--red);
 }
