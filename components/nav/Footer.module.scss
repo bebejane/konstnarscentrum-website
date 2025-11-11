@@ -1,168 +1,169 @@
 .footer {
-  width: 100%;
-  padding: var(--outer-margin);
-  background-color: var(--black);
-  padding-top: var(--space);
+	width: 100%;
+	padding: var(--outer-margin);
+	background-color: var(--black);
+	padding-top: var(--space);
 
-  @include mq($from: desktop) {
-    padding-left: calc((var(--outer-margin) * 2) + var(--logo-size));
-    padding-right: calc((var(--outer-margin) * 2) + var(--logo-size));
-  }
+	@include mq($from: desktop) {
+		padding-left: calc((var(--outer-margin) * 2) + var(--logo-size));
+		padding-right: calc((var(--outer-margin) * 2) + var(--logo-size));
+		min-height: calc(100vh - var(--navbar-height));
+	}
 
-  padding-top: var(--space);
-  padding-bottom: var(--small-space);
+	padding-top: var(--space);
+	padding-bottom: var(--small-space);
 
-  section {
-    display: flex;
-    flex-direction: row;
-    margin-bottom: var(--small-space);
-    &:first-of-type {
-      //padding-top: var(--space);
-    }
-  }
+	section {
+		display: flex;
+		flex-direction: row;
+		margin-bottom: var(--small-space);
+		&:first-of-type {
+			//padding-top: var(--space);
+		}
+	}
 
-  .menu {
-    display: none;
+	.menu {
+		display: none;
 
-    @include mq($from: desktop) {
-      display: flex;
-    }
-  }
+		@include mq($from: desktop) {
+			display: flex;
+		}
+	}
 
-  nav {
-    width: 100%;
-    color: var(--white);
+	nav {
+		width: 100%;
+		color: var(--white);
 
-    a {
-      color: var(--white);
-      &:hover {
-        color: var(--beige-dark) !important;
-      }
-    }
+		a {
+			color: var(--white);
+			&:hover {
+				color: var(--beige-dark) !important;
+			}
+		}
 
-    > ul {
-      display: flex;
-      flex-direction: row;
-      list-style: none;
+		> ul {
+			display: flex;
+			flex-direction: row;
+			list-style: none;
 
-      > li {
-        width: calc(100% / 6);
-        line-height: var(--line-height-nav);
+			> li {
+				width: calc(100% / 6);
+				line-height: var(--line-height-nav);
 
-        ul {
-          list-style: none;
+				ul {
+					list-style: none;
 
-          li {
-            max-width: 80%;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
+					li {
+						max-width: 80%;
+						overflow: hidden;
+						white-space: nowrap;
+						text-overflow: ellipsis;
 
-            &:first-child {
-              font-weight: bold !important;
-            }
-          }
-        }
-      }
-    }
-  }
+						&:first-child {
+							font-weight: bold !important;
+						}
+					}
+				}
+			}
+		}
+	}
 
-  .about,
-  .social,
-  .copyright {
-    line-height: var(--line-height);
+	.about,
+	.social,
+	.copyright {
+		line-height: var(--line-height);
 
-    @include mq($until: tablet) {
-      display: block;
-    }
+		@include mq($until: tablet) {
+			display: block;
+		}
 
-    div,
-    p {
-      color: var(--white);
+		div,
+		p {
+			color: var(--white);
 
-      span {
-        padding-right: 1em;
-      }
+			span {
+				padding-right: 1em;
+			}
 
-      @include mq($from: tablet) {
-        width: 50%;
+			@include mq($from: tablet) {
+				width: 50%;
 
-        &:first-child {
-          padding-right: 2em;
-        }
-      }
-    }
-  }
+				&:first-child {
+					padding-right: 2em;
+				}
+			}
+		}
+	}
 
-  .social {
-    @include mq($until: tablet) {
-      span {
-        padding-bottom: 1em;
-      }
-    }
-  }
+	.social {
+		@include mq($until: tablet) {
+			span {
+				padding-bottom: 1em;
+			}
+		}
+	}
 
-  .support {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0;
+	.support {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 0;
 
-    @include mq($from: tablet) {
-      width: calc(100% + var(--outer-margin) + var(--logo-size));
-      margin-right: calc(-1 * var(--outer-margin) + var(--logo-size));
-    }
+		@include mq($from: tablet) {
+			width: calc(100% + var(--outer-margin) + var(--logo-size));
+			margin-right: calc(-1 * var(--outer-margin) + var(--logo-size));
+		}
 
-    @include mq($until: tablet) {
-      align-items: end;
-      svg {
-        transform: scale(0.8);
-      }
-    }
+		@include mq($until: tablet) {
+			align-items: end;
+			svg {
+				transform: scale(0.8);
+			}
+		}
 
-    .sponsors {
-      display: flex;
-      flex-direction: row;
+		.sponsors {
+			display: flex;
+			flex-direction: row;
 
-      ul {
-        display: flex;
-        flex-wrap: wrap;
-        @include mq($until: tablet) {
-          li:first-of-type {
-            width: 100%;
-          }
-        }
-        list-style: none;
+			ul {
+				display: flex;
+				flex-wrap: wrap;
+				@include mq($until: tablet) {
+					li:first-of-type {
+						width: 100%;
+					}
+				}
+				list-style: none;
 
-        li {
-          margin-right: 1rem;
-          max-height: 1rem;
+				li {
+					margin-right: 1rem;
+					max-height: 1rem;
 
-          @include mq($until: tablet) {
-            &:not(:first-of-type) {
-              margin-top: 0.4em;
-            }
-          }
+					@include mq($until: tablet) {
+						&:not(:first-of-type) {
+							margin-top: 0.4em;
+						}
+					}
 
-          .image {
-            min-height: 0.8rem;
-            max-height: 0.8rem;
-            height: 0.8rem;
-            @include mq($from: tablet) {
-              min-height: 1rem;
-              max-height: 1rem;
-              height: 1rem;
-            }
-          }
-        }
-      }
-    }
+					.image {
+						min-height: 0.8rem;
+						max-height: 0.8rem;
+						height: 0.8rem;
+						@include mq($from: tablet) {
+							min-height: 1rem;
+							max-height: 1rem;
+							height: 1rem;
+						}
+					}
+				}
+			}
+		}
 
-    .logo {
-      svg {
-        margin-left: 0px;
-        width: 4rem;
-        height: 4rem;
-      }
-    }
-  }
+		.logo {
+			svg {
+				margin-left: 0px;
+				width: 4rem;
+				height: 4rem;
+			}
+		}
+	}
 }

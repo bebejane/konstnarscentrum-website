@@ -1,98 +1,98 @@
 .gallery {
-  position: relative;
-  max-width: 100%;
-  min-width: 100%;
-  margin-top: var(--space);
-  margin-bottom: var(--space);
-  //margin-left: calc(-1 * var(--outer-margin));
-  max-width: calc(100% + (var(--outer-margin)));
-  margin-right: calc(-1 * (var(--outer-margin) * 2));
+	position: relative;
+	max-width: 100%;
+	min-width: 100%;
+	margin-top: var(--space);
+	margin-bottom: var(--space);
+	//margin-left: calc(-1 * var(--outer-margin));
+	max-width: calc(100% + (var(--outer-margin)));
 
-  @include mq($from: tablet) {
-    margin-left: calc(-1 * var(--grid-unit));
-    max-width: calc(100% + (var(--grid-unit) * 2));
-    margin-right: calc(-1 * var(--grid-unit));
-  }
+	@include mq($from: tablet) {
+		margin-left: calc(-1 * var(--grid-unit));
+		max-width: calc(100% + (var(--grid-unit) * 2));
+		margin-right: calc(-1 * var(--grid-unit));
+		margin-right: calc(-1 * (var(--outer-margin) * 2));
+	}
 
-  .fade {
-    @include mq($from: tablet) {
-      display: none;
-    }
+	.fade {
+		@include mq($from: tablet) {
+			display: none;
+		}
 
-    height: 100%;
-    width: calc(2 * var(--outer-margin));
-    background: linear-gradient(270deg, rgba(252, 252, 252, 1) 0%, rgba(252, 252, 252, 0) 100%);
-    position: absolute;
-    right: 0;
-    z-index: 100;
-  }
+		height: 100%;
+		width: calc(2 * var(--outer-margin));
+		background: linear-gradient(270deg, rgba(252, 252, 252, 1) 0%, rgba(252, 252, 252, 0) 100%);
+		position: absolute;
+		right: 0;
+		z-index: 100;
+	}
 
-  .next {
-    @include mq($until: tablet) {
-      display: none;
-    }
+	.next {
+		@include mq($until: tablet) {
+			display: none;
+		}
 
-    width: 3em;
-    height: 3em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 1000;
-    margin: 0;
-    margin-right: calc(-1 * var(--grid-unit));
-    transform: translateY(-50%);
-    cursor: pointer;
-    user-select: none;
-  }
+		width: 3em;
+		height: 3em;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 1000;
+		margin: 0;
+		margin-right: calc(-1 * var(--grid-unit));
+		transform: translateY(-50%);
+		cursor: pointer;
+		user-select: none;
+	}
 
-  .swiper {
-    position: relative;
-    max-width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    overflow: hidden;
-    user-select: none;
-    cursor: pointer;
+	.swiper {
+		position: relative;
+		max-width: 100%;
+		display: flex;
+		flex-direction: row;
+		align-items: flex-end;
+		overflow: hidden;
+		user-select: none;
+		cursor: pointer;
 
-    >div {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-end;
+		> div {
+			display: flex;
+			flex-direction: row;
+			align-items: flex-end;
 
-      .slide {
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        width: calc((100% - (var(--gutter) * 2)) / 3);
-        padding-right: var(--gutter);
+			.slide {
+				display: flex;
+				flex-direction: column;
+				position: relative;
+				width: calc((100% - (var(--gutter) * 2)) / 3);
+				padding-right: var(--gutter);
 
-        >figure {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          justify-content: flex-start;
-          cursor: pointer;
+				> figure {
+					display: flex;
+					flex-direction: column;
+					align-items: flex-start;
+					justify-content: flex-start;
+					cursor: pointer;
 
-          figcaption {
-            flex: 0 0;
-            padding: 0;
-            margin-top: 1em;
+					figcaption {
+						flex: 0 0;
+						padding: 0;
+						margin-top: 1em;
 
-            p {
-              margin: 0;
-            }
-          }
+						p {
+							margin: 0;
+						}
+					}
 
-          .image {
-            //min-height: 20vw;
-            //max-height: 20vw;
-          }
-        }
-      }
-    }
-  }
+					.image {
+						//min-height: 20vw;
+						//max-height: 20vw;
+					}
+				}
+			}
+		}
+	}
 }
