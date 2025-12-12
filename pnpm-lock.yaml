@@ -79,7 +79,7 @@ importers:
         version: 2.30.0
       dato-nextjs-utils:
         specifier: github:bebejane/dato-nextjs-utils
-        version: https://codeload.github.com/bebejane/dato-nextjs-utils/tar.gz/9b1d76b0345400f0a1a230dd02e7489f99de819a(@apollo/client@3.14.0(@types/react@18.3.26)(graphql-ws@5.12.1(graphql@16.11.0))(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@datocms/cma-client-browser@3.4.5)(@datocms/cma-client-node@3.0.2)(@datocms/cma-client@3.0.1)(@types/node@18.19.130)(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(datocms-listen@0.1.15(graphql@16.11.0))(next-seo@5.15.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-datocms@4.2.2(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: https://codeload.github.com/bebejane/dato-nextjs-utils/tar.gz/9b1d76b0345400f0a1a230dd02e7489f99de819a(@apollo/client@3.14.0(@types/react@18.3.26)(graphql-ws@5.12.1(graphql@16.11.0))(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@datocms/cma-client-browser@3.4.5)(@datocms/cma-client-node@3.0.2)(@datocms/cma-client@3.0.1)(@types/node@18.19.130)(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(datocms-listen@0.1.15(graphql@16.11.0))(next-seo@5.15.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-datocms@4.2.2(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       datocms-structured-text-utils:
         specifier: ^2.0.4
         version: 2.1.12
@@ -118,7 +118,7 @@ importers:
         version: 4.17.21
       mailing:
         specifier: ^1.0.0
-        version: 1.1.0(bufferutil@4.0.9)(encoding@0.1.13)(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tsx@3.14.0)(utf-8-validate@5.0.10)
+        version: 1.1.0(bufferutil@4.0.9)(encoding@0.1.13)(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tsx@3.14.0)(utf-8-validate@5.0.10)
       markdown-truncate:
         specifier: ^1.0.4
         version: 1.1.1
@@ -129,11 +129,11 @@ importers:
         specifier: ^2.0.8
         version: 2.0.8(mjml@4.16.1(encoding@0.1.13))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next:
-        specifier: 14.2.33
-        version: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+        specifier: 14.2.35
+        version: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
       next-auth:
         specifier: 4.19.0
-        version: 4.19.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(nodemailer@6.10.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 4.19.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(nodemailer@6.10.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next-compose-plugins:
         specifier: ^2.2.1
         version: 2.2.1
@@ -142,19 +142,19 @@ importers:
         version: 0.0.2(graphql@16.11.0)
       next-seo:
         specifier: ^5.13.0
-        version: 5.15.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 5.15.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next-sitemap:
         specifier: ^3.1.30
-        version: 3.1.55(@next/env@13.5.11)(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))
+        version: 3.1.55(@next/env@13.5.11)(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))
       next-themes:
         specifier: ^0.2.1
-        version: 0.2.1(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.2.1(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nextjs-cors:
         specifier: ^2.1.2
-        version: 2.2.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))
+        version: 2.2.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))
       nextjs-google-analytics:
         specifier: ^2.2.0
-        version: 2.3.7(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react@18.3.1)
+        version: 2.3.7(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react@18.3.1)
       nodemailer:
         specifier: ^6.9.1
         version: 6.10.1
@@ -1620,8 +1620,8 @@ packages:
   '@next/env@13.5.11':
     resolution: {integrity: sha512-fbb2C7HChgM7CemdCY+y3N1n8pcTKdqtQLbC7/EQtPdLvlMUT9JX/dBYl8MMZAtYG4uVMyPFHXckb68q/NRwqg==}
 
-  '@next/env@14.2.33':
-    resolution: {integrity: sha512-CgVHNZ1fRIlxkLhIX22flAZI/HmpDaZ8vwyJ/B0SDPTBuLZ1PJ+DWMjCHhqnExfmSQzA/PbZi8OAc7PAq2w9IA==}
+  '@next/env@14.2.35':
+    resolution: {integrity: sha512-DuhvCtj4t9Gwrx80dmz2F4t/zKQ4ktN8WrMwOuVzkJfBilwAwGr6v16M5eI8yCuZ63H9TTuEU09Iu2HqkzFPVQ==}
 
   '@next/eslint-plugin-next@12.3.7':
     resolution: {integrity: sha512-L3WEJJBd1CUUsuxSEThheAV5Nh6/mzCagwj4LHaYlANBkW8Hmg8Ne8l/Vx/sPyfyE7FjuKyiNYWbSVpXRvrmaw==}
@@ -5612,8 +5612,8 @@ packages:
       react: '*'
       react-dom: '*'
 
-  next@14.2.33:
-    resolution: {integrity: sha512-GiKHLsD00t4ACm1p00VgrI0rUFAC9cRDGReKyERlM57aeEZkOQGcZTpIbsGn0b562FTPJWmYfKwplfO9EaT6ng==}
+  next@14.2.35:
+    resolution: {integrity: sha512-KhYd2Hjt/O1/1aZVX3dCwGXM1QmOV4eNM2UTacK5gipDdPN/oHHK/4oVGy7X8GMfPMsUTUEmGlsy0EY1YGAkig==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -9435,7 +9435,7 @@ snapshots:
 
   '@next/env@13.5.11': {}
 
-  '@next/env@14.2.33': {}
+  '@next/env@14.2.35': {}
 
   '@next/eslint-plugin-next@12.3.7':
     dependencies:
@@ -11660,7 +11660,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.28.4
 
-  dato-nextjs-utils@https://codeload.github.com/bebejane/dato-nextjs-utils/tar.gz/9b1d76b0345400f0a1a230dd02e7489f99de819a(@apollo/client@3.14.0(@types/react@18.3.26)(graphql-ws@5.12.1(graphql@16.11.0))(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@datocms/cma-client-browser@3.4.5)(@datocms/cma-client-node@3.0.2)(@datocms/cma-client@3.0.1)(@types/node@18.19.130)(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(datocms-listen@0.1.15(graphql@16.11.0))(next-seo@5.15.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-datocms@4.2.2(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  dato-nextjs-utils@https://codeload.github.com/bebejane/dato-nextjs-utils/tar.gz/9b1d76b0345400f0a1a230dd02e7489f99de819a(@apollo/client@3.14.0(@types/react@18.3.26)(graphql-ws@5.12.1(graphql@16.11.0))(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@datocms/cma-client-browser@3.4.5)(@datocms/cma-client-node@3.0.2)(@datocms/cma-client@3.0.1)(@types/node@18.19.130)(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(datocms-listen@0.1.15(graphql@16.11.0))(next-seo@5.15.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-datocms@4.2.2(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@apollo/client': 3.14.0(@types/react@18.3.26)(graphql-ws@5.12.1(graphql@16.11.0))(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@datocms/cma-client': 3.0.1
@@ -11672,8 +11672,8 @@ snapshots:
       '@types/react-dom': 19.2.2(@types/react@18.3.26)
       datocms-listen: 0.1.15(graphql@16.11.0)
       markdown-truncate: 1.1.1
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
-      next-seo: 5.15.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next-seo: 5.15.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-datocms: 4.2.2(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-dom: 18.3.1(react@18.3.1)
@@ -13067,7 +13067,7 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
 
-  iron-session@6.3.1(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)):
+  iron-session@6.3.1(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)):
     dependencies:
       '@peculiar/webcrypto': 1.5.0
       '@types/cookie': 0.5.4
@@ -13077,7 +13077,7 @@ snapshots:
       cookie: 0.5.0
       iron-webcrypto: 0.2.8
     optionalDependencies:
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
 
   iron-webcrypto@0.2.8:
     dependencies:
@@ -13679,7 +13679,7 @@ snapshots:
       - react
       - react-dom
 
-  mailing@1.1.0(bufferutil@4.0.9)(encoding@0.1.13)(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tsx@3.14.0)(utf-8-validate@5.0.10):
+  mailing@1.1.0(bufferutil@4.0.9)(encoding@0.1.13)(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tsx@3.14.0)(utf-8-validate@5.0.10):
     dependencies:
       '@babel/parser': 7.28.5
       '@faire/mjml-react': 3.5.3(mjml@4.16.1(encoding@0.1.13))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -13709,11 +13709,11 @@ snapshots:
       esbuild-register: 3.6.0(esbuild@0.15.18)
       fs-extra: 10.1.0
       html-minifier-terser: 7.2.0
-      iron-session: 6.3.1(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))
+      iron-session: 6.3.1(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))
       lodash: 4.17.21
       mailing-core: 1.1.0(encoding@0.1.13)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       mjml: 4.16.1(encoding@0.1.13)
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
       node-fetch: 2.7.0(encoding@0.1.13)
       node-html-parser: 6.1.13
       nodemailer: 6.8.0
@@ -14496,13 +14496,13 @@ snapshots:
 
   negotiator@0.6.3: {}
 
-  next-auth@4.19.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(nodemailer@6.10.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next-auth@4.19.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(nodemailer@6.10.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@babel/runtime': 7.28.4
       '@panva/hkdf': 1.2.1
       cookie: 0.5.0
       jose: 4.15.9
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
       oauth: 0.9.15
       openid-client: 5.7.1
       preact: 10.27.2
@@ -14521,28 +14521,28 @@ snapshots:
     transitivePeerDependencies:
       - graphql
 
-  next-seo@5.15.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next-seo@5.15.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  next-sitemap@3.1.55(@next/env@13.5.11)(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)):
+  next-sitemap@3.1.55(@next/env@13.5.11)(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)):
     dependencies:
       '@corex/deepmerge': 4.0.43
       '@next/env': 13.5.11
       minimist: 1.2.8
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
 
-  next-themes@0.2.1(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next-themes@0.2.1(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2):
+  next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2):
     dependencies:
-      '@next/env': 14.2.33
+      '@next/env': 14.2.35
       '@swc/helpers': 0.5.5
       busboy: 1.6.0
       caniuse-lite: 1.0.30001751
@@ -14566,14 +14566,14 @@ snapshots:
       - '@babel/core'
       - babel-plugin-macros
 
-  nextjs-cors@2.2.0(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)):
+  nextjs-cors@2.2.0(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)):
     dependencies:
       cors: 2.8.5
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
 
-  nextjs-google-analytics@2.3.7(next@14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react@18.3.1):
+  nextjs-google-analytics@2.3.7(next@14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react@18.3.1):
     dependencies:
-      next: 14.2.33(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
+      next: 14.2.35(@babel/core@7.28.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2)
       react: 18.3.1
     optionalDependencies:
       fsevents: 2.3.3
