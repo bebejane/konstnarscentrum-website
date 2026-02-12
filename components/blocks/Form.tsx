@@ -87,10 +87,10 @@ export default function Form({ record, data: { id, formFields, confirmation } }:
 				<p ref={confirmationRef} className={s.confirmation}>{confirmation}</p>
 				:
 				<form onSubmit={handleSubmit} className={cn(loading && s.loading)}>
-					<label htmlFor={'fromName'}>Namn</label>
+					<label htmlFor={'fromName'}>Namn*</label>
 					<input id={'fromName'} type="text" value={formValues.fromName} onChange={handleInputChange} />
 
-					<label htmlFor={'from-email'}>Email</label>
+					<label htmlFor={'from-email'}>Email*</label>
 					<input id={'fromEmail'} type="email" value={formValues.fromEmail} onChange={handleInputChange} />
 
 					{formFields.map(({ id: fieldId, __typename, title }, idx) => {
