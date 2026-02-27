@@ -131,83 +131,89 @@ export default function Member({
 		<>
 			<DatoSEO title={member.fullName} description={member.bio} seo={member._seoMetaTags} />
 			<div className={s.container}>
-				<Article
-					id={id}
-					key={id}
-					image={member.image}
-					title={`${firstName} ${lastName}`}
-					text={bio?.replace(/\n/g, ' ')}
-					editable={JSON.stringify({ ...member.image, nodelete: true })}
-					onClick={(id) => setImageId(id)}
-				>
-					<MetaSection
-						key={`${id}-meta`}
-						items={[
-							{
-								title: 'Född',
-								value: `${[yearOfBirth, birthPlace].filter((el) => el).join(', ')}`,
-							},
-							{ title: 'Verksam', value: city },
-							{ title: 'Kontakt', value: showContact ? email : undefined },
-							{
-								title: 'Typ',
-								value: memberCategory
-									?.map(({ categoryType }) => capitalize(categoryType))
-									.join(', '),
-							},
-							{
-								title: 'Besök',
-								value:
-									!weblinks.length || !showContact
-										? undefined
-										: weblinks.map(({ label, url }, idx) => (
-												<React.Fragment key={idx}>
-													<a href={url}>{label}</a>
-													{idx + 1 < weblinks.length ? ', ' : ''}
-												</React.Fragment>
-										  )),
-							},
-						]}
-					/>
-					{!isIncomplete && (
-						<>
-							<h2 className='noPadding'>Utvalda verk</h2>
-							{member.content?.map((block, idx) => (
-								<Block
-									key={`${id}-${idx}`}
-									data={block}
-									record={member}
-									onClick={(id) => setImageId(id)}
-									editable={{
-										...block,
-										id: block.id,
-										type: block.__typename,
-										index: idx,
-									}}
-								/>
-							))}
-						</>
-					)}
-					{isEditable && (
-						<Portfolio
-							key={member.id}
-							member={member}
-							block={block}
-							setBlock={setBlock}
-							content={member.content || memberFromProps.content}
-							onChange={handleBlockChange}
-							onContentChange={handleContentChange}
-							onChangeMainImage={handleMainImageChange}
-							onRemove={handleRemove}
-							mainImage={mainImage}
-							setMainImage={setMainImage}
-							preview={preview}
-							onPreview={() => setPreview(!preview)}
-							onClose={() => setBlock(undefined)}
-							onError={(err) => setError(err)}
+				{member.active ? (
+					<Article
+						id={id}
+						key={id}
+						image={member.image}
+						title={`${firstName} ${lastName}`}
+						text={bio?.replace(/\n/g, ' ')}
+						editable={JSON.stringify({ ...member.image, nodelete: true })}
+						onClick={(id) => setImageId(id)}
+					>
+						<MetaSection
+							key={`${id}-meta`}
+							items={[
+								{
+									title: 'Född',
+									value: `${[yearOfBirth, birthPlace].filter((el) => el).join(', ')}`,
+								},
+								{ title: 'Verksam', value: city },
+								{ title: 'Kontakt', value: showContact ? email : undefined },
+								{
+									title: 'Typ',
+									value: memberCategory
+										?.map(({ categoryType }) => capitalize(categoryType))
+										.join(', '),
+								},
+								{
+									title: 'Besök',
+									value:
+										!weblinks.length || !showContact
+											? undefined
+											: weblinks.map(({ label, url }, idx) => (
+													<React.Fragment key={idx}>
+														<a href={url}>{label}</a>
+														{idx + 1 < weblinks.length ? ', ' : ''}
+													</React.Fragment>
+											  )),
+								},
+							]}
 						/>
-					)}
-				</Article>
+						{!isIncomplete && (
+							<>
+								<h2 className='noPadding'>Utvalda verk</h2>
+								{member.content?.map((block, idx) => (
+									<Block
+										key={`${id}-${idx}`}
+										data={block}
+										record={member}
+										onClick={(id) => setImageId(id)}
+										editable={{
+											...block,
+											id: block.id,
+											type: block.__typename,
+											index: idx,
+										}}
+									/>
+								))}
+							</>
+						)}
+						{isEditable && (
+							<Portfolio
+								key={member.id}
+								member={member}
+								block={block}
+								setBlock={setBlock}
+								content={member.content || memberFromProps.content}
+								onChange={handleBlockChange}
+								onContentChange={handleContentChange}
+								onChangeMainImage={handleMainImageChange}
+								onRemove={handleRemove}
+								mainImage={mainImage}
+								setMainImage={setMainImage}
+								preview={preview}
+								onPreview={() => setPreview(!preview)}
+								onClose={() => setBlock(undefined)}
+								onError={(err) => setError(err)}
+							/>
+						)}
+					</Article>
+				) : (
+					<Article id={id}>
+						<p className={s.inactive}>Konstnärens profil är inaktiverat</p>
+					</Article>
+				)}
 				<RelatedSection
 					key={`${id}-related`}
 					title='Upptäck fler'
@@ -259,7 +265,7 @@ export const getStaticProps: GetStaticProps = withGlobalProps(
 			preview: context.preview,
 		});
 
-		if (!member || !member.active) return { notFound: true };
+		if (!member) return { notFound: true };
 
 		const { members: related } = await apiQuery(RelatedMembersDocument, {
 			variables: {
