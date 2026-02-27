@@ -3,8 +3,20 @@ import cn from 'classnames';
 import withGlobalProps from '/lib/withGlobalProps';
 import { GetStaticProps } from 'next';
 import { apiQuery } from 'dato-nextjs-utils/api';
-import { MemberBySlugDocument, AllMembersWithPortfolioDocument, RelatedMembersDocument } from '/graphql';
-import { Article, Block, MetaSection, RelatedSection, Portfolio, Loader, ErrorModal } from '/components';
+import {
+	MemberBySlugDocument,
+	AllMembersWithPortfolioDocument,
+	RelatedMembersDocument,
+} from '/graphql';
+import {
+	Article,
+	Block,
+	MetaSection,
+	RelatedSection,
+	Portfolio,
+	Loader,
+	ErrorModal,
+} from '/components';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { DatoSEO } from 'dato-nextjs-utils/components';
@@ -35,7 +47,11 @@ export default function Member({
 	member: memberFromProps,
 	related,
 }: Props) {
-	const [imageId, setImageId, setImages] = useStore((state) => [state.imageId, state.setImageId, state.setImages]);
+	const [imageId, setImageId, setImages] = useStore((state) => [
+		state.imageId,
+		state.setImageId,
+		state.setImages,
+	]);
 	const [member, setMember] = useState<MemberRecord | undefined>(memberFromProps);
 	const [mainImage, setMainImage] = useState<FileField | undefined>();
 	const [block, setBlock] = useState<ImageRecord | VideoRecord | undefined>();
@@ -86,13 +102,14 @@ export default function Member({
 
 			setSaving(false);
 		},
-		[status, member]
+		[status, member],
 	);
 
 	const handleBlockChange = (block: MemberModelContentField) =>
 		handleSave(member.content.map((b) => (b.id === block.id ? block : b)));
 	const handleContentChange = (content: MemberModelContentField[]) => handleSave(content);
-	const handleRemove = (id: string) => handleSave(member.content.filter((block) => block.id !== id));
+	const handleRemove = (id: string) =>
+		handleSave(member.content.filter((block) => block.id !== id));
 
 	const handleMainImageChange = async (image: FileField) => {
 		setMainImage(undefined);
@@ -104,7 +121,9 @@ export default function Member({
 
 	useEffect(() => {
 		const images = [member.image];
-		member.content.forEach((el) => el.__typename === 'ImageRecord' && images.push.apply(images, el.image));
+		member.content.forEach(
+			(el) => el.__typename === 'ImageRecord' && images.push.apply(images, el.image),
+		);
 		setImages(imageId ? images : undefined);
 	}, [imageId]);
 
@@ -124,10 +143,18 @@ export default function Member({
 					<MetaSection
 						key={`${id}-meta`}
 						items={[
-							{ title: 'Född', value: `${[yearOfBirth, birthPlace].filter((el) => el).join(', ')}` },
+							{
+								title: 'Född',
+								value: `${[yearOfBirth, birthPlace].filter((el) => el).join(', ')}`,
+							},
 							{ title: 'Verksam', value: city },
 							{ title: 'Kontakt', value: showContact ? email : undefined },
-							{ title: 'Typ', value: memberCategory?.map(({ categoryType }) => capitalize(categoryType)).join(', ') },
+							{
+								title: 'Typ',
+								value: memberCategory
+									?.map(({ categoryType }) => capitalize(categoryType))
+									.join(', '),
+							},
 							{
 								title: 'Besök',
 								value:
@@ -212,7 +239,9 @@ Member.page = {
 
 export async function getStaticPaths(context) {
 	const { members }: { members: MemberRecord[] } = await apiQuery(AllMembersWithPortfolioDocument);
-	const paths = members.map(({ slug, region }) => ({ params: { member: slug, region: region.slug } }));
+	const paths = members.map(({ slug, region }) => ({
+		params: { member: slug, region: region.slug },
+	}));
 
 	return {
 		paths,
@@ -225,9 +254,12 @@ export const getStaticProps: GetStaticProps = withGlobalProps(
 	async ({ props, revalidate, context }: any) => {
 		const regionId = props.region.global ? undefined : props.region.id;
 		const slug = context.params.member;
-		const { member } = await apiQuery(MemberBySlugDocument, { variables: { slug }, preview: context.preview });
+		const { member } = await apiQuery(MemberBySlugDocument, {
+			variables: { slug },
+			preview: context.preview,
+		});
 
-		if (!member) return { notFound: true };
+		if (!member || !member.active) return { notFound: true };
 
 		const { members: related } = await apiQuery(RelatedMembersDocument, {
 			variables: {
@@ -246,5 +278,5 @@ export const getStaticProps: GetStaticProps = withGlobalProps(
 			},
 			revalidate,
 		};
-	}
+	},
 );
