@@ -1,4 +1,6 @@
-import s from "./_error.module.scss";
+import Link from 'next/link';
+import s from './_error.module.scss';
+import { RegionLink } from '/components';
 
 function Error({ statusCode }) {
 	return (

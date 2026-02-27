@@ -211,7 +211,7 @@ export default function Member({
 					</Article>
 				) : (
 					<Article id={id}>
-						<p className={s.inactive}>Konstnärens profil är inaktiverat</p>
+						<p className={s.inactive}>Konstnärens portfolio är inaktiverat</p>
 					</Article>
 				)}
 				<RelatedSection
