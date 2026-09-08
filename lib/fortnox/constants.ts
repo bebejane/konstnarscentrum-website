@@ -1,0 +1,33 @@
+import { regions } from '/lib/region'
+
+export const FORTNOX_API_BASE = 'https://api.fortnox.se/3'
+export const FORTNOX_TOKEN_URL = 'https://apps.fortnox.se/oauth-v1/token'
+export const FORTNOX_AUTH_URL = 'https://apps.fortnox.se/oauth-v1/auth'
+
+export const FORTNOX_CLIENT_ID = process.env.FORTNOX_CLIENT_ID
+export const FORTNOX_CLIENT_SECRET = process.env.FORTNOX_CLIENT_SECRET
+export const FORTNOX_REDIRECT_URI = process.env.FORTNOX_REDIRECT_URI
+
+// Invoice defaults (hardcoded for now)
+export const FORTNOX_INVOICE_ACCOUNT = Number(process.env.FORTNOX_INVOICE_ACCOUNT ?? 0)
+export const FORTNOX_INVOICE_AMOUNT = Number(process.env.FORTNOX_INVOICE_AMOUNT ?? 0)
+export const FORTNOX_INVOICE_DUE_DAYS = Number(process.env.FORTNOX_INVOICE_DUE_DAYS ?? 30)
+
+/**
+ * Region slugs in the system, mapped to the env prefix used for their
+ * Fortnox OAuth tokens. The region `name` in regions.json may differ
+ * (Öst vs ost), so we key off the stable `slug`.
+ */
+export const regionSlugs = regions.map(r => r.slug)
+
+export const fortnoxTokenEnvKey = (regionSlug: string, kind: 'ACCESS' | 'REFRESH') =>
+  `FORTNOX_${regionSlug.toUpperCase()}_${kind}_TOKEN`
+
+export const getFortnoxTokenFromEnv = (regionSlug: string, kind: 'ACCESS' | 'REFRESH'): string | undefined =>
+  process.env[fortnoxTokenEnvKey(regionSlug, kind)]
+
+export const clientCredentials = (): { id: string; secret: string } => {
+  if (!FORTNOX_CLIENT_ID || !FORTNOX_CLIENT_SECRET)
+    throw new Error('FORTNOX_CLIENT_ID and FORTNOX_CLIENT_SECRET must be set in .env')
+  return { id: FORTNOX_CLIENT_ID, secret: FORTNOX_CLIENT_SECRET }
+}

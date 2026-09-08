@@ -1,0 +1,35 @@
+.container {
+  max-width: 720px;
+
+  .invoiceTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 2rem;
+
+    th,
+    td {
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid var(--beige-dark, #ccc);
+    }
+
+    th {
+      font-weight: 600;
+    }
+  }
+
+  .paid {
+    color: var(--green, #2e7d32);
+    font-weight: 600;
+  }
+
+  .partiallyPaid {
+    color: var(--orange, #b26a00);
+    font-weight: 600;
+  }
+
+  .unpaid {
+    color: var(--red, #c0392b);
+    font-weight: 600;
+  }
+}

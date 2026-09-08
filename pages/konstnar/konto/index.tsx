@@ -219,6 +219,9 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 
 				</form >
 				<h3>Övrigt</h3>
+				<Link href="/konstnar/konto/fakturor">
+					<button>Visa mina fakturor</button>
+				</Link>
 				<SignOut />
 			</div >
 			{error && <ErrorModal error={error} onClose={() => setError(undefined)} />}

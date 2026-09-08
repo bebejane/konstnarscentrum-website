@@ -1,0 +1,14 @@
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  bcrypt: true
+  bufferutil: true
+  core-js: true
+  core-js-pure: true
+  esbuild: true
+  fast-folder-size: true
+  prisma: false
+  swiper: false
+  utf-8-validate: false
+  yarn: false
