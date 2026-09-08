@@ -14,7 +14,7 @@ const FIELD_TYPE_TO_EDITOR: Record<string, string> = {
   integer: 'integer',
   float: 'float',
   boolean: 'boolean',
-  date: 'date'
+  date: 'date_picker'
 }
 
 type FieldSpec = {
@@ -149,7 +149,7 @@ async function run() {
         api_key: 'invoices',
         field_type: 'links',
         hint: 'Medlemmens fakturor (Fortnox). Uppdateras automatiskt.',
-        validators: { items_item_type: { item_types: [INVOICE_MODEL] } }
+        validators: { items_item_type: { item_types: [invoiceType.id] } }
       })
       console.log(`✓ Created field "invoices" on ${MEMBER_MODEL} → ${INVOICE_MODEL}`)
     } catch (err: any) {
