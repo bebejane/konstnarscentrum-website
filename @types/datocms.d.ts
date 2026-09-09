@@ -4230,10 +4230,27 @@ type MetaBlockRecord_seoMetaTagsArgs = {
   locale?: InputMaybe<SiteLocale>;
 };
 
+enum MuxThumbnailFitMode {
+  crop = 'crop',
+  pad = 'pad',
+  preserve = 'preserve',
+  smartcrop = 'smartcrop',
+  stretch = 'stretch'
+}
+
 enum MuxThumbnailFormatType {
   gif = 'gif',
   jpg = 'jpg',
   png = 'png'
+}
+
+enum MuxThumbnailRotation {
+  /** Rotate 90° clockwise */
+  ROTATE_90 = 'ROTATE_90',
+  /** Rotate 180° clockwise */
+  ROTATE_180 = 'ROTATE_180',
+  /** Rotate 270° clockwise */
+  ROTATE_270 = 'ROTATE_270'
 }
 
 type NewsModelContentBlocksField = ImageRecord | RelatedMemberNewsRecord;
@@ -6055,6 +6072,8 @@ type UploadVideoField = {
   mp4Url?: Maybe<Scalars['String']>;
   muxAssetId: Scalars['String'];
   muxPlaybackId: Scalars['String'];
+  /** Default poster frame, in seconds into the video. Resolves to the record-level field override when present, otherwise the upload-level default. `null` means Mux's default (middle of the video). */
+  posterTime?: Maybe<Scalars['Float']>;
   streamingUrl: Scalars['String'];
   thumbhash?: Maybe<Scalars['String']>;
   thumbnailUrl: Scalars['String'];
@@ -6084,7 +6103,14 @@ type UploadVideoFieldmp4UrlArgs = {
 
 
 type UploadVideoFieldthumbnailUrlArgs = {
+  fitMode?: InputMaybe<MuxThumbnailFitMode>;
+  flipH?: InputMaybe<Scalars['Boolean']>;
+  flipV?: InputMaybe<Scalars['Boolean']>;
   format?: InputMaybe<MuxThumbnailFormatType>;
+  height?: InputMaybe<Scalars['Int']>;
+  rotate?: InputMaybe<MuxThumbnailRotation>;
+  time?: InputMaybe<Scalars['Float']>;
+  width?: InputMaybe<Scalars['Int']>;
 };
 
 

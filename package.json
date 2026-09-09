@@ -3,8 +3,8 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "npm run dev:watch",
-		"dev:watch": "LOG_GRAPHQL=false next dev & npm run barrel:watch & graphql-codegen --watch",
+		"dev": "pnpm run dev:watch",
+		"dev:watch": "LOG_GRAPHQL=false next dev & pnpm run barrel:watch & graphql-codegen --watch",
 		"dev:emails": "npx mailing",
 		"dev:test": "DATOCMS_ENVIRONMENT=dev NEXT_PUBLIC_DATOCMS_ENVIRONMENT=dev next dev & npm run barrel:watch & graphql-codegen --watch & npm run dev:emails",
 		"prebuild": "node ./prebuild",
@@ -22,7 +22,10 @@
 		"syncfortknox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/sync-fortknox-customers.tsx",
 		"migratememberfields": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/migrate-member-fields.tsx",
 		"test": "tsx --tsconfig ./tsconfig.node.json ./tests/test.ts",
-		"test:emails": "tsx --tsconfig ./tsconfig.node.json ./tests/emails.tsx"
+		"test:emails": "tsx --tsconfig ./tsconfig.node.json ./tests/emails.tsx",
+		"test:fortnox": "tsx --tsconfig ./tsconfig.node.json ./tests/fortnox.ts",
+		"testfortnox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/test-fortnox.ts",
+		"testroundtrip": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/test-invoice-roundtrip.ts"
 	},
 	"exports": {
 		"lib/*": "/lib",

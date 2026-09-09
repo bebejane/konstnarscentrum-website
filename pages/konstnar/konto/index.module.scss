@@ -1,70 +1,69 @@
 .container {
+	input[type='text'],
+	textarea,
+	select,
+	button {
+		width: 100%;
+	}
 
-  input[type="text"],
-  textarea,
-  select,
-  button {
-    width: 100%;
-  }
+	h3:not(:first-of-type) {
+		padding-top: var(--small-space);
+	}
 
-  h3:not(:first-of-type) {
-    padding-top: var(--small-space);
-  }
+	button {
+		margin-top: 1rem;
+	}
 
-  form {
-    margin-bottom: 2rem;
+	form {
+		margin-bottom: 2rem;
 
-    button {
-      margin-top: 2rem;
-    }
+		label {
+			display: block;
+			margin-bottom: 0.5rem;
+		}
 
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-    }
+		.checkboxGroup {
+			display: flex;
+			flex-direction: row;
+			flex-wrap: wrap;
+			align-items: center;
+			background-color: var(--beige-light);
+			padding: 1rem;
+			padding-left: 1.2rem;
 
-    .checkboxGroup {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-      background-color: var(--beige-light);
-      padding: 1rem;
-      padding-left: 1.2rem;
+			div {
+				flex: 0 0 33.333%;
+				white-space: pre;
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				margin-bottom: 0.5rem;
 
-      div {
-        flex: 0 0 33.333%;
-        white-space: pre;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        margin-bottom: 0.5rem;
+				input {
+					margin: 0;
+					margin-right: 0.5rem;
+				}
 
-        input {
-          margin: 0;
-          margin-right: 0.5rem;
-        }
+				label {
+					margin: 0;
+				}
+			}
+		}
+	}
 
-        label {
-          margin: 0;
-        }
-      }
-    }
-  }
+	.portfolioButton {
+		display: block;
+		margin-bottom: 1rem;
+	}
 
-  .portfolioButton {
-    display: block;
-    margin-bottom: 1rem;
-  }
+	.error {
+		color: var(--red);
+		margin-top: -0.8rem;
+		margin-bottom: 1rem;
+		font-size: 0.7em;
+	}
 
-  .error {
-    color: var(--red);
-    margin-top: -0.8rem;
-    margin-bottom: 1rem;
-    font-size: 0.7em;
-  }
-
-  .errorMuted {
-    color: var(--beige-dark);
-  }
+	.errorMuted {
+		color: var(--beige-dark);
+	}
 }

@@ -1,4 +1,4 @@
-import { regions } from '/lib/region'
+import regions from '../../regions.json'
 
 export const FORTNOX_API_BASE = 'https://api.fortnox.se/3'
 export const FORTNOX_TOKEN_URL = 'https://apps.fortnox.se/oauth-v1/token'
@@ -12,6 +12,25 @@ export const FORTNOX_REDIRECT_URI = process.env.FORTNOX_REDIRECT_URI
 export const FORTNOX_INVOICE_ACCOUNT = Number(process.env.FORTNOX_INVOICE_ACCOUNT ?? 0)
 export const FORTNOX_INVOICE_AMOUNT = Number(process.env.FORTNOX_INVOICE_AMOUNT ?? 0)
 export const FORTNOX_INVOICE_DUE_DAYS = Number(process.env.FORTNOX_INVOICE_DUE_DAYS ?? 30)
+
+/**
+ * Comma-separated allowlist of member emails that may receive an emailed
+ * invoice. When set, only members whose email is in the list get the Fortnox
+ * email; everyone else's invoice is created but not emailed. When empty/unset,
+ * all eligible members are emailed.
+ *
+ * Read lazily so tests can mutate the env between assertions.
+ */
+export const getEmailAllowlist = (): string[] =>
+  (process.env.FORTNOX_EMAIL_ALLOWLIST ?? '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+
+export const isEmailAllowedToSend = (email?: string): boolean => {
+  const allowlist = getEmailAllowlist()
+  return allowlist.length === 0 || (email ? allowlist.includes(email.toLowerCase()) : false)
+}
 
 /**
  * Regions allowed to use the Fortnox integration. Add a region's slug

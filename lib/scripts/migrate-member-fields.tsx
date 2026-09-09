@@ -160,11 +160,53 @@ async function run() {
     console.log(`• "invoices" field already exists on ${MEMBER_MODEL}`)
   }
 
-  // 4) Remove the obsolete fields from the member model (now stored on invoice records)
-  const toRemove = ['latest_invoice_year', 'invoice_paid', 'fortknox_invoice_number']
+  // 4) Rename member.fortknox_customer_number -> member.fortnox_customer_number
+  //    (legacy misspelling; copy values, then drop the old field)
   const memberFieldList = await client.fields.list(MEMBER_MODEL)
+  const legacyField = memberFieldList.find((f: any) => f.api_key === 'fortknox_customer_number')
+
+  if (!memberFields.has('fortnox_customer_number')) {
+    try {
+      await client.fields.create(MEMBER_MODEL, {
+        label: 'Fortnox kundnummer',
+        api_key: 'fortnox_customer_number',
+        field_type: 'string',
+        hint: 'Kundnumret medlemmen har i regionens Fortnox.',
+        validators: {},
+        appearance: { editor: 'single_line', parameters: {}, addons: [] }
+      })
+      console.log(`✓ Created field "fortnox_customer_number" on ${MEMBER_MODEL}`)
+    } catch (err: any) {
+      console.error(`✗ Failed to create "fortnox_customer_number" on ${MEMBER_MODEL}: ${err?.message ?? err}`)
+      process.exitCode = 1
+    }
+  } else {
+    console.log(`• "fortnox_customer_number" field already exists on ${MEMBER_MODEL}`)
+  }
+
+  if (legacyField) {
+    try {
+      let copied = 0
+      for await (const item of client.items.listPagedIterator({ filter: { type: MEMBER_MODEL } })) {
+        const value = (item as any).fortknox_customer_number
+        if (!value) continue
+        await client.items.update(item.id, { fortnox_customer_number: value })
+        copied++
+      }
+      await client.fields.destroy(legacyField.id)
+      console.log(`✓ Renamed fortknox_customer_number -> fortnox_customer_number (copied ${copied} member(s))`)
+    } catch (err: any) {
+      console.error(`✗ Failed to rename fortknox_customer_number: ${err?.message ?? err}`)
+      process.exitCode = 1
+    }
+  } else {
+    console.log(`• "fortknox_customer_number" not present on ${MEMBER_MODEL} — nothing to rename`)
+  }
+
+  // 5) Remove the obsolete fields from the member model (now stored on invoice records)
+  const toRemove = ['latest_invoice_year', 'invoice_paid', 'fortknox_invoice_number']
   for (const apiKey of toRemove) {
-    const field = memberFieldList.find((f: any) => f.api_key === apiKey)
+    const field = (await client.fields.list(MEMBER_MODEL)).find((f: any) => f.api_key === apiKey)
     if (!field) {
       console.log(`• "${apiKey}" not present on ${MEMBER_MODEL} — nothing to remove`)
       continue

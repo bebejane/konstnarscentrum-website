@@ -46,7 +46,7 @@ export const createInvoice = async (regionSlug: string, input: CreateInvoiceInpu
  * the customer / invoice is used for the recipient).
  */
 export const sendInvoiceAsEmail = async (regionSlug: string, documentNumber: string): Promise<void> => {
-  await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}/email`, { method: 'PUT' })
+  await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}/email`, { method: 'GET' })
 }
 
 /**
@@ -54,14 +54,7 @@ export const sendInvoiceAsEmail = async (regionSlug: string, documentNumber: str
  * is enabled on the account.
  */
 export const sendInvoiceAsEPrint = async (regionSlug: string, documentNumber: string): Promise<void> => {
-  await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}/eprint`, { method: 'PUT' })
-}
-
-/**
- * Mark an invoice as booked/sent (if required) without generated media.
- */
-export const setInvoiceAsSent = async (regionSlug: string, documentNumber: string): Promise<void> => {
-  await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}/send`, { method: 'PUT' })
+  await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}/eprint`, { method: 'GET' })
 }
 
 export const getInvoice = async (regionSlug: string, documentNumber: string): Promise<FortnoxInvoice> => {

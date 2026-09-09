@@ -1,5 +1,5 @@
 import client from '/lib/client'
-import { regions } from '/lib/region'
+import regions from '../../regions.json'
 import { createCustomer, getCustomer, listCustomers, updateCustomer } from './customers'
 import { hasFortnoxCredentials } from './auth'
 import type { FortnoxCustomer } from './customers'
@@ -19,17 +19,28 @@ export type MemberItem = {
 }
 
 /**
+ * Strip characters Fortnox rejects in free-text fields (e.g. emoji / Unicode
+ * symbols). Keeps letters, digits, whitespace and punctuation, collapses
+ * repeated whitespace, and trims. Returns undefined when nothing remains.
+ */
+export const sanitizeText = (value: string | undefined): string | undefined => {
+  if (!value) return undefined
+  const cleaned = value.replace(/[\p{S}]/gu, '').replace(/\s+/g, ' ').trim()
+  return cleaned || undefined
+}
+
+/**
  * Map a DatoCMS member to the data we send to Fortnox as a customer.
  * Email is the join key between the systems.
  */
 export const memberToCustomer = (member: MemberItem): Partial<FortnoxCustomer> => {
   const fullName = [member.first_name, member.last_name].filter(Boolean).join(' ') || undefined
   return {
-    Name: fullName,
+    Name: sanitizeText(fullName),
     Email: member.email,
-    City: member.city || undefined,
+    City: sanitizeText(member.city || undefined),
     // Store the DatoCMS member id for reverse lookup
-    YourCustomerNumber: member.id
+    ExternalReference: member.id
   }
 }
 
@@ -58,6 +69,7 @@ export const syncMemberToFortKnox = async (member: MemberItem): Promise<{ custom
 
   if (!region) throw new Error(`Member ${member.id} has no matching region`)
   if (!member.email) throw new Error(`Member ${member.id} has no email`)
+  if (!member.first_name && !member.last_name) throw new Error(`Member ${member.id} has no name`)
   if (!hasFortnoxCredentials(region.slug))
     throw new Error(`Fortnox is disabled or not configured for region ${region.slug}`)
 

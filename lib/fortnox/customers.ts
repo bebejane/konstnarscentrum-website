@@ -8,7 +8,7 @@ export type FortnoxCustomer = {
   ZipCode?: string
   Address1?: string
   YourReference?: string
-  YourCustomerNumber?: string
+  ExternalReference?: string
   [key: string]: any
 }
 

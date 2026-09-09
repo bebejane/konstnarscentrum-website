@@ -1,9 +1,22 @@
 import client from '/lib/client'
-import { regions } from '/lib/region'
+import regions from '../../regions.json'
+
+let invoiceItemTypeId: string | null = null
+
+const getInvoiceItemTypeId = async (): Promise<string> => {
+  if (invoiceItemTypeId) return invoiceItemTypeId
+  const types = await client.itemTypes.list()
+  const invoiceType = types.find(t => (t as any).name === 'Invoice')
+  if (!invoiceType) throw new Error('DatoCMS model "Invoice" not found')
+  invoiceItemTypeId = invoiceType.id
+  return invoiceItemTypeId
+}
 import {
   FORTNOX_INVOICE_ACCOUNT,
   FORTNOX_INVOICE_AMOUNT,
-  FORTNOX_INVOICE_DUE_DAYS
+  FORTNOX_INVOICE_DUE_DAYS,
+  getFortnoxTokenFromEnv,
+  isEmailAllowedToSend
 } from './constants'
 import { createInvoice, sendInvoiceAsEmail, getInvoice, isInvoicePaid, isInvoicePartiallyPaid } from './invoices'
 import { hasFortnoxCredentials } from './auth'
@@ -51,6 +64,33 @@ const getMemberInvoices = async (member: MemberItem): Promise<InvoiceRecord[]> =
 }
 
 /**
+ * Pure eligibility check given a member, the target invoice year, its linked
+ * invoice records, and whether Fortnox credentials exist for the member's
+ * region. Extracted from `isEligibleForInvoice` so it can be unit-tested
+ * without network access.
+ */
+export const isEligibleForInvoiceFromRecords = (
+  member: MemberItem,
+  invoiceYear: number,
+  records: InvoiceRecord[],
+  hasCredentials: boolean
+): { eligible: boolean; reason?: string } => {
+  const region = regions.find(r => r.id === member.region)
+
+  if (!region) return { eligible: false, reason: 'no region' }
+  if (!hasCredentials)
+    return { eligible: false, reason: `no fortnox credentials (${region.slug})` }
+  if (!member.fortnox_customer_number)
+    return { eligible: false, reason: 'no fortnox customer number' }
+  if (member.vilande) return { eligible: false, reason: 'vilande' }
+
+  if (records.some(inv => inv.invoice_year === invoiceYear))
+    return { eligible: false, reason: `already invoiced ${invoiceYear}` }
+
+  return { eligible: true }
+}
+
+/**
  * Eligibility for receiving the annual invoice:
  * - has region + fortnox credentials
  * - has a linked fortnox customer number
@@ -62,19 +102,13 @@ export const isEligibleForInvoice = async (
   invoiceYear: number
 ): Promise<{ eligible: boolean; reason?: string }> => {
   const region = regions.find(r => r.id === member.region)
-
-  if (!region) return { eligible: false, reason: 'no region' }
-  if (!hasFortnoxCredentials(region.slug))
-    return { eligible: false, reason: `no fortnox credentials (${region.slug})` }
-  if (!member.fortnox_customer_number)
-    return { eligible: false, reason: 'no fortnox customer number' }
-  if (member.vilande) return { eligible: false, reason: 'vilande' }
-
-  const invoices = await getMemberInvoices(member)
-  if (invoices.some(inv => inv.invoice_year === invoiceYear))
-    return { eligible: false, reason: `already invoiced ${invoiceYear}` }
-
-  return { eligible: true }
+  const records = await getMemberInvoices(member)
+  return isEligibleForInvoiceFromRecords(
+    member,
+    invoiceYear,
+    records,
+    region ? hasFortnoxCredentials(region.slug) : false
+  )
 }
 
 /**
@@ -110,12 +144,18 @@ export const createAnnualInvoiceForMember = async (
     ]
   })
 
-  // Send via Fortnox email
-  await sendInvoiceAsEmail(region.slug, invoice.DocumentNumber)
+  // Send via Fortnox email (guarded by the email allowlist)
+  if (isEmailAllowedToSend(member.email)) {
+    await sendInvoiceAsEmail(region.slug, invoice.DocumentNumber)
+  } else {
+    console.log(
+      `[${member.id}] invoice ${invoice.DocumentNumber} created but NOT emailed (email not in FORTNOX_EMAIL_ALLOWLIST)`
+    )
+  }
 
   // Create a DatoCMS invoice record linked to the member
   const invoiceRecord = await client.items.create({
-    item_type: { type: 'item_type', id: 'invoice' },
+    item_type: { type: 'item_type', id: await getInvoiceItemTypeId() },
     ...({
       fortnox_document_number: String(invoice.DocumentNumber),
       payment_status: invoice.Status ?? 'UNPAID',
