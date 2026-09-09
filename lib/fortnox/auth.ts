@@ -2,7 +2,8 @@ import {
   FORTNOX_TOKEN_URL,
   clientCredentials,
   fortnoxTokenEnvKey,
-  getFortnoxTokenFromEnv
+  getFortnoxTokenFromEnv,
+  isFortnoxEnabled
 } from './constants'
 
 /**
@@ -64,6 +65,7 @@ export const getAccessToken = async (regionSlug: string): Promise<string> => {
 }
 
 export const hasFortnoxCredentials = (regionSlug: string): boolean =>
+  isFortnoxEnabled(regionSlug) &&
   !!(getFortnoxTokenFromEnv(regionSlug, 'ACCESS') || getFortnoxTokenFromEnv(regionSlug, 'REFRESH'))
 
 export { fortnoxTokenEnvKey }

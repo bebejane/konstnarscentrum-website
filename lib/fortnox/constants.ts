@@ -14,6 +14,16 @@ export const FORTNOX_INVOICE_AMOUNT = Number(process.env.FORTNOX_INVOICE_AMOUNT 
 export const FORTNOX_INVOICE_DUE_DAYS = Number(process.env.FORTNOX_INVOICE_DUE_DAYS ?? 30)
 
 /**
+ * Regions allowed to use the Fortnox integration. Add a region's slug
+ * (e.g. 'ost', 'vast') as it comes onboard; regions not listed are excluded
+ * even if they have OAuth tokens configured in .env.
+ */
+export const FORTNOX_ENABLED_REGIONS: string[] = ['ost']
+
+export const isFortnoxEnabled = (regionSlug: string): boolean =>
+  FORTNOX_ENABLED_REGIONS.includes(regionSlug)
+
+/**
  * Region slugs in the system, mapped to the env prefix used for their
  * Fortnox OAuth tokens. The region `name` in regions.json may differ
  * (Öst vs ost), so we key off the stable `slug`.

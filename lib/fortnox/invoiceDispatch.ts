@@ -3,8 +3,7 @@ import { regions } from '/lib/region'
 import {
   FORTNOX_INVOICE_ACCOUNT,
   FORTNOX_INVOICE_AMOUNT,
-  FORTNOX_INVOICE_DUE_DAYS,
-  getFortnoxTokenFromEnv
+  FORTNOX_INVOICE_DUE_DAYS
 } from './constants'
 import { createInvoice, sendInvoiceAsEmail, getInvoice, isInvoicePaid, isInvoicePartiallyPaid } from './invoices'
 import { hasFortnoxCredentials } from './auth'
@@ -90,8 +89,8 @@ export const createAnnualInvoiceForMember = async (
   if (!region) throw new Error(`Member ${member.id} has no region`)
   if (!member.fortnox_customer_number)
     throw new Error(`Member ${member.id} has no Fortnox customer number`)
-  if (!getFortnoxTokenFromEnv(region.slug, 'ACCESS') && !getFortnoxTokenFromEnv(region.slug, 'REFRESH'))
-    throw new Error(`No Fortnox credentials for region ${region.slug}`)
+  if (!hasFortnoxCredentials(region.slug))
+    throw new Error(`Fortnox is disabled or not configured for region ${region.slug}`)
 
   const invoiceDate = new Date()
   const dueDate = new Date(invoiceDate)

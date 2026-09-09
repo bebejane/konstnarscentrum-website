@@ -59,7 +59,7 @@ export const syncMemberToFortKnox = async (member: MemberItem): Promise<{ custom
   if (!region) throw new Error(`Member ${member.id} has no matching region`)
   if (!member.email) throw new Error(`Member ${member.id} has no email`)
   if (!hasFortnoxCredentials(region.slug))
-    throw new Error(`No Fortnox credentials configured for region ${region.slug}`)
+    throw new Error(`Fortnox is disabled or not configured for region ${region.slug}`)
 
   const data = memberToCustomer(member)
 
