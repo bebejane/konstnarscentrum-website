@@ -63,6 +63,7 @@ export default function InvoicesPage({ ctx }: Props) {
 	}, [ctx]);
 
 	const handleSubmit = async () => {
+		return;
 		setSubmitting(true);
 		setError(undefined);
 		setResults(undefined);
@@ -129,11 +130,7 @@ export default function InvoicesPage({ ctx }: Props) {
 						</div>
 					)}
 
-					<Button
-						onClick={handleSubmit}
-						disabled={true || submitting || members.length === 0}
-						fullWidth
-					>
+					<Button onClick={handleSubmit} disabled={submitting || members.length === 0} fullWidth>
 						{submitting ? <Spinner /> : `Skicka fakturor (${invoiceYear})`}
 					</Button>
 

@@ -7,6 +7,7 @@ import RegionField from '/lib/plugin/entrypoints/RegionField';
 import ModelSelectorField from '/lib/plugin/entrypoints/ModelSelectorField';
 import MemberApproval from '/lib/plugin/entrypoints/MemberApproval';
 import InvoicesPage from '/lib/plugin/InvoicesPage';
+import { InvoiceLinkField } from '/lib/plugin/InvoiceLinkField';
 import { isDev } from '/lib/plugin/utils';
 
 let connected = false;
@@ -43,7 +44,20 @@ export default function PluginBootstrap() {
 						fieldTypes: ['string'],
 						configurable: false,
 					},
+					{
+						id: 'invoice-link',
+						name: 'Fortnox Invoice Link',
+						type: 'addon' as const,
+						fieldTypes: ['string'],
+					},
 				];
+			},
+			overrideFieldExtensions(field) {
+				if (field.attributes.api_key === 'fortnox_document_number') {
+					return {
+						addons: [{ id: 'invoic-link' }],
+					};
+				}
 			},
 			renderFieldExtension(fieldExtensionId: string, ctx: RenderFieldExtensionCtx) {
 				switch (fieldExtensionId) {
@@ -53,6 +67,8 @@ export default function PluginBootstrap() {
 						return ctx.itemStatus === 'published' ? render(<MemberApproval ctx={ctx} />) : null;
 					case 'model-selector':
 						return render(<ModelSelectorField ctx={ctx} />);
+					case 'invoice-link':
+						return render(<InvoiceLinkField ctx={ctx} />);
 				}
 			},
 			contentAreaSidebarItems(ctx: IntentCtx) {
@@ -61,7 +77,7 @@ export default function PluginBootstrap() {
 				return [
 					{
 						label: 'Fakturor',
-						icon: 'file-invoice',
+						icon: 'file-lines',
 						pointsTo: { pageId: 'invoices' },
 						placement: ['before', 'settings'],
 					},
@@ -72,25 +88,6 @@ export default function PluginBootstrap() {
 					return render(<InvoicesPage ctx={ctx} />);
 				}
 			},
-			// itemFormSidebarPanels(itemType: ItemType, ctx: InitPropertiesAndMethods) {
-			// 	const helpModels = ctx.plugin.attributes.parameters.helpModels as string;
-			// 	if (!helpModels) return [];
-
-			// 	const activeHelpModels = JSON.parse(helpModels) as ModelOption[];
-			// 	if (!activeHelpModels.find(({ value }) => value === itemType.attributes.api_key)) return [];
-
-			// 	return [
-			// 		{
-			// 			id: 'sidebarHelp',
-			// 			label: `Hjälp${isDev ? ' (dev)' : ''}`,
-			// 			placement: ['before', 'actions'],
-			// 			startOpen: true,
-			// 		},
-			// 	];
-			// },
-			// renderItemFormSidebarPanel(sidebarPanelId, ctx: RenderItemFormSidebarPanelCtx) {
-			// 	return render(<HelpSidebar ctx={ctx} />);
-			// },
 		})
 			.catch(console.error)
 			.finally(() => {
