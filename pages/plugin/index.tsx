@@ -1,24 +1,7 @@
-//import s from './index.module.scss';
-//import cn from 'classnames';
-import withGlobalProps from '/lib/withGlobalProps';
-import { GetStaticProps } from 'next';
+import dynamic from 'next/dynamic';
 
-export type Props = {
-	region: Region;
-};
+const PluginBootstrap = dynamic(() => import('/lib/plugin/PluginBootstrap'), { ssr: false });
 
-export default function PluginPage({}: Props) {
-	return <div>plugin</div>;
+export default function PluginPage() {
+	return <PluginBootstrap />;
 }
-
-export const getStaticProps: GetStaticProps = withGlobalProps(
-	{ queries: [] },
-	async ({ props, revalidate, context }: any) => {
-		return {
-			props: {
-				...props,
-			},
-			revalidate,
-		};
-	},
-);

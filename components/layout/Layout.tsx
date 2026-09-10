@@ -24,11 +24,17 @@ export type LayoutProps = {
 	regions: RegionRecord[];
 };
 
-export default function Layout({ children, menu: menuFromProps, title, footer, regions }: LayoutProps) {
+export default function Layout({
+	children,
+	menu: menuFromProps,
+	title,
+	footer,
+	regions,
+}: LayoutProps) {
 	const router = useRouter();
 	const [images, imageId, setImageId, showMenu] = useStore(
 		(state) => [state.images, state.imageId, state.setImageId, state.showMenu],
-		shallow
+		shallow,
 	);
 	const isHome =
 		router.asPath === '/' ||
