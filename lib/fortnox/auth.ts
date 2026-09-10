@@ -5,7 +5,7 @@ import {
   getFortnoxTokenFromEnv,
   isFortnoxEnabled
 } from './constants'
-import { persistRefreshTokenToEnv } from './tokenStore'
+import { hasKvStore, persistRefreshToken, readRefreshTokenFromEnv, readStoredRefreshToken } from './tokenStore'
 
 type CachedToken = {
   accessToken: string
@@ -22,15 +22,15 @@ const tokenCache: Record<string, CachedToken> = {}
 
 const ACCESS_TOKEN_TTL_MS = 4.5 * 60 * 1000 // Fortnox access tokens expire after ~5 min
 
-const getEffectiveRefreshToken = (regionSlug: string): string | undefined =>
-  tokenCache[regionSlug]?.refreshToken ?? getFortnoxTokenFromEnv(regionSlug, 'REFRESH')
+const getRefreshTokenForRegion = async (regionSlug: string): Promise<string | undefined> =>
+  tokenCache[regionSlug]?.refreshToken ?? (await readStoredRefreshToken(regionSlug))
 
 /**
  * Exchange a refresh token for a fresh access token + rotated refresh token.
  * Fortnox access tokens expire after ~5 minutes.
  */
 const refreshAccessToken = async (regionSlug: string): Promise<{ accessToken: string; refreshToken?: string }> => {
-  const refreshToken = getEffectiveRefreshToken(regionSlug)
+  const refreshToken = await getRefreshTokenForRegion(regionSlug)
 
   if (!refreshToken)
     throw new Error(`No FORTNOX_${regionSlug.toUpperCase()}_REFRESH_TOKEN configured in .env`)
@@ -67,9 +67,9 @@ const refreshAccessToken = async (regionSlug: string): Promise<{ accessToken: st
  * Get a valid access token for a region's Fortnox account.
  *
  * 1. Returns a cached, still-valid access token if present.
- * 2. Otherwise refreshes using the newest known refresh token (cached or from
- *    `.env`), caches both, and persists the rotated refresh token back to
- *    `.env` (local runs only).
+ * 2. Otherwise refreshes using the newest known refresh token (cached, KV, or
+ *    `.env`), caches both, and persists the rotated refresh token (to KV on
+ *    Vercel, `.env` locally — see `tokenStore`).
  * 3. Falls back to the static access token in `.env` if refresh fails.
  */
 export const getAccessToken = async (regionSlug: string): Promise<string> => {
@@ -77,16 +77,30 @@ export const getAccessToken = async (regionSlug: string): Promise<string> => {
   if (cached?.accessToken && Date.now() < cached.expiresAt)
     return cached.accessToken
 
-  try {
+  const refreshOnce = async (): Promise<string> => {
     const { accessToken, refreshToken } = await refreshAccessToken(regionSlug)
     tokenCache[regionSlug] = {
       accessToken,
       refreshToken,
       expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS
     }
-    if (refreshToken) persistRefreshTokenToEnv(regionSlug, refreshToken)
+    if (refreshToken) await persistRefreshToken(regionSlug, refreshToken)
     return accessToken
+  }
+
+  try {
+    return await refreshOnce()
   } catch (err) {
+    // A concurrent lambda may have rotated the refresh token mid-flight,
+    // invalidating the token we just used. Re-read KV and retry once.
+    if (hasKvStore()) {
+      tokenCache[regionSlug] = { accessToken: '', refreshToken: undefined, expiresAt: 0 }
+      try {
+        return await refreshOnce()
+      } catch {
+        // fall through to the static token below
+      }
+    }
     // Fall back to the statically configured access token
     const accessToken = getFortnoxTokenFromEnv(regionSlug, 'ACCESS')
     if (accessToken) return accessToken
@@ -96,6 +110,6 @@ export const getAccessToken = async (regionSlug: string): Promise<string> => {
 
 export const hasFortnoxCredentials = (regionSlug: string): boolean =>
   isFortnoxEnabled(regionSlug) &&
-  !!(getFortnoxTokenFromEnv(regionSlug, 'ACCESS') || getEffectiveRefreshToken(regionSlug))
+  !!(getFortnoxTokenFromEnv(regionSlug, 'ACCESS') || readRefreshTokenFromEnv(regionSlug))
 
 export { fortnoxTokenEnvKey }

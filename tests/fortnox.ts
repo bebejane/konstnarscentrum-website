@@ -5,6 +5,11 @@ import { isInvoicePaid, isInvoicePartiallyPaid, FortnoxInvoice } from "../lib/fo
 import { isEligibleForInvoiceFromRecords } from "../lib/fortnox/invoiceDispatch";
 import { memberToCustomer, sanitizeText } from "../lib/fortnox/sync";
 import { isEmailAllowedToSend } from "../lib/fortnox/constants";
+import {
+  canPersistTokens,
+  hasKvStore,
+  readRefreshTokenFromEnv
+} from "../lib/fortnox/tokenStore";
 
 // Tests for the Fortnox integration's pure logic (no network / no credentials).
 
@@ -138,6 +143,33 @@ async function main() {
 
   process.env.FORTNOX_EMAIL_ALLOWLIST = prevAllowlist;
   ok("isEmailAllowedToSend runs");
+
+  // ---------- tokenStore ----------
+  const prevKvUrl = process.env.KV_REST_API_URL;
+  const prevKvToken = process.env.KV_REST_API_TOKEN;
+  const prevEnvRefresh = process.env.FORTNOX_OST_REFRESH_TOKEN;
+
+  delete process.env.KV_REST_API_URL;
+  delete process.env.KV_REST_API_TOKEN;
+  assert("hasKvStore false without KV env vars", !hasKvStore());
+
+  process.env.KV_REST_API_URL = "https://example.upstash.io";
+  process.env.KV_REST_API_TOKEN = "token";
+  assert("hasKvStore true with KV env vars", hasKvStore());
+  assert("canPersistTokens true in local dev", canPersistTokens());
+
+  process.env.FORTNOX_OST_REFRESH_TOKEN = "test-refresh-token";
+  assert("readRefreshTokenFromEnv reads FORTNOX_OST_REFRESH_TOKEN", readRefreshTokenFromEnv("ost") === "test-refresh-token");
+  delete process.env.FORTNOX_OST_REFRESH_TOKEN;
+  assert("readRefreshTokenFromEnv undefined when unset", readRefreshTokenFromEnv("ost") === undefined);
+
+  if (prevKvUrl) process.env.KV_REST_API_URL = prevKvUrl;
+  else delete process.env.KV_REST_API_URL;
+  if (prevKvToken) process.env.KV_REST_API_TOKEN = prevKvToken;
+  else delete process.env.KV_REST_API_TOKEN;
+  if (prevEnvRefresh) process.env.FORTNOX_OST_REFRESH_TOKEN = prevEnvRefresh;
+  else delete process.env.FORTNOX_OST_REFRESH_TOKEN;
+  ok("tokenStore runs");
 
   // ---------- report ----------
   results.forEach(r => {

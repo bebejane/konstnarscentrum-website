@@ -28,16 +28,23 @@ function App({ Component, pageProps }) {
 	}, [router]);
 
 	const errorCode = parseInt(router.pathname.replace('/', ''));
+	const isPlugin = router.asPath.startsWith('/plugin');
 	const isError =
-		(!isNaN(errorCode) && errorCode > 400 && errorCode < 600) || router.pathname.replace('/', '') === '_error';
+		(!isNaN(errorCode) && errorCode > 400 && errorCode < 600) ||
+		router.pathname.replace('/', '') === '_error';
 
-	if (isError) return <Component {...pageProps} />;
+	if (isError || isPlugin) return <Component {...pageProps} />;
 
 	const title = pageTitle ?? page?.title ?? page?.crumbs?.[0].title;
 
 	return (
 		<>
-			<DefaultDatoSEO site={site} path={router.pathname} siteTitle='Konstnärscentrum' title={title} />
+			<DefaultDatoSEO
+				site={site}
+				path={router.pathname}
+				siteTitle='Konstnärscentrum'
+				title={title}
+			/>
 			<GoogleAnalytics
 				strategy={'afterInteractive'}
 				trackPageViews={{ ignoreHashChange: true }}
