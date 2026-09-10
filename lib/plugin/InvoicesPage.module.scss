@@ -2,9 +2,13 @@
 	position: relative;
 	min-height: 100vh;
 
+	a {
+		cursor: pointer;
+	}
 	.loading,
 	.error {
 		position: absolute;
+		flex-direction: column;
 		width: 100%;
 		height: 100%;
 		top: 0;
@@ -13,9 +17,9 @@
 		align-items: center;
 		justify-content: center;
 		padding: var(--spacing-m);
+		line-height: 2.5;
 	}
 	.error {
-		flex-direction: column;
 		color: var(--alert-color);
 	}
 
@@ -27,8 +31,20 @@
 		}
 		table {
 			width: 100%;
+			//max-width: 1000px;
 			th {
 				text-align: left;
+			}
+			tr {
+				cursor: pointer;
+			}
+			tr:hover {
+				background-color: var(--light-bg-color);
+				td {
+					background-color: var(--light-bg-color);
+				}
+			}
+			td {
 			}
 		}
 	}

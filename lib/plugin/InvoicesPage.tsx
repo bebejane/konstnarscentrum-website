@@ -1,5 +1,4 @@
 import s from './InvoicesPage.module.scss';
-import 'datocms-react-ui/styles.css';
 import { RenderPageCtx } from 'datocms-plugin-sdk';
 import {
 	Button,
@@ -20,6 +19,8 @@ type Member = {
 	email?: string;
 	first_name?: string;
 	last_name?: string;
+	city: string;
+	postal_code: string;
 	active?: boolean;
 	region?: string;
 	fortnox_customer_number?: string;
@@ -32,6 +33,11 @@ type InvoiceResult = {
 	errors: string[];
 	invoices: string[];
 	invoiceYear: number;
+};
+
+const sortSwedish = (arr: any[], key: string): any[] => {
+	const sorter = new Intl.Collator('sv', { usage: 'sort' });
+	return arr.sort((a: any, b: any) => sorter.compare(a[key], b[key]));
 };
 
 const basicAuthHeaders = (ctx: RenderPageCtx): Record<string, string> => {
@@ -115,8 +121,17 @@ export default function InvoicesPage({ ctx }: Props) {
 				) : (
 					<>
 						<Toolbar style={{ minHeight: 60 }}>
-							<ToolbarStack stackSize='m' style={{ justifyContent: 'flex-start' }}>
+							<ToolbarStack stackSize='m'>
 								<ToolbarTitle>Fakturor: {region?.name}</ToolbarTitle>
+								<div style={{ flex: '1' }} />
+								<Button
+									buttonType='primary'
+									onClick={handleSubmit}
+									disabled={submitting || members.length === 0}
+									className={s.submit}
+								>
+									{submitting ? <Spinner /> : `Skicka fakturor (${invoiceYear})`}
+								</Button>
 							</ToolbarStack>
 						</Toolbar>
 						<div className={s.invoices}>
@@ -144,31 +159,27 @@ export default function InvoicesPage({ ctx }: Props) {
 								</div>
 							)}
 
-							<Button
-								onClick={handleSubmit}
-								disabled={submitting || members.length === 0}
-								fullWidth
-								className={s.submit}
-							>
-								{submitting ? <Spinner /> : `Skicka fakturor (${invoiceYear})`}
-							</Button>
-
 							{members.length > 0 && (
 								<table>
 									<thead>
 										<tr>
 											<th>Namn</th>
 											<th>E-post</th>
+											<th>Stad</th>
 											<th>Kundnr.</th>
 											<th>Status</th>
 										</tr>
 									</thead>
 									<tbody>
-										{members.map((m) => (
-											<tr key={m.id}>
-												<td>{[m.first_name, m.last_name].filter(Boolean).join(' ') || '—'}</td>
-												<td>{m.email || '—'}</td>
-												<td>{m.fortnox_customer_number || '—'}</td>
+										{sortSwedish(members, 'last_name').map((m) => (
+											<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
+												<td>
+													<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
+												</td>
+												<td>{m.email || ''}</td>
+												<td>{m.city || ''}</td>
+
+												<td>{m.fortnox_customer_number || ''}</td>
 												<td>
 													{m.active ? (
 														<span style={{ color: '#38a169' }}>Aktiv</span>
