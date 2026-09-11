@@ -93,12 +93,15 @@ export const getAccessToken = async (regionSlug: string): Promise<string> => {
   } catch (err) {
     // A concurrent lambda may have rotated the refresh token mid-flight,
     // invalidating the token we just used. Re-read KV and retry once.
+    const errMessage = err instanceof Error ? err.message : String(err)
+    console.warn(`[fortnox] refresh failed for ${regionSlug}: ${errMessage}; retrying via KV`)
     if (hasKvStore()) {
       tokenCache[regionSlug] = { accessToken: '', refreshToken: undefined, expiresAt: 0 }
       try {
         return await refreshOnce()
-      } catch {
-        // fall through to the static token below
+      } catch (retryErr) {
+        const retryMessage = retryErr instanceof Error ? retryErr.message : String(retryErr)
+        console.warn(`[fortnox] KV retry failed for ${regionSlug}: ${retryMessage}; falling back to static access token`)
       }
     }
     // Fall back to the statically configured access token

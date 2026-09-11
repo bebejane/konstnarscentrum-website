@@ -56,7 +56,9 @@ export const getFortnoxTokenFromEnv = (regionSlug: string, kind: 'ACCESS' | 'REF
   process.env[fortnoxTokenEnvKey(regionSlug, kind)]
 
 export const clientCredentials = (): { id: string; secret: string } => {
-  if (!FORTNOX_CLIENT_ID || !FORTNOX_CLIENT_SECRET)
+  const id = process.env.FORTNOX_CLIENT_ID
+  const secret = process.env.FORTNOX_CLIENT_SECRET
+  if (!id || !secret)
     throw new Error('FORTNOX_CLIENT_ID and FORTNOX_CLIENT_SECRET must be set in .env')
-  return { id: FORTNOX_CLIENT_ID, secret: FORTNOX_CLIENT_SECRET }
+  return { id, secret }
 }
