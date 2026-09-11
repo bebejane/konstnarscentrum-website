@@ -10,16 +10,15 @@ Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONM
 
 ## Prerequisites
 
-1. `.env` must contain `FORTNOX_CLIENT_ID`, `FORTNOX_CLIENT_SECRET`, and per-region tokens for `ost`:
-   - `FORTNOX_OST_ACCESS_TOKEN`
-   - `FORTNOX_OST_REFRESH_TOKEN`
-2. If tokens are missing, authorize via the OAuth callback:
+1. `.env` must contain `FORTNOX_CLIENT_ID`, `FORTNOX_CLIENT_SECRET`, and per-region refresh token for `ost`:
+   - `FORTNOX_OST_REFRESH_TOKEN` (access tokens are *not* required — they're fetched via refresh and only live in process memory; a static `FORTNOX_OST_ACCESS_TOKEN` is optional and only used as a last-resort fallback)
+2. If the token is missing, authorize via the OAuth callback:
 
    ```
    https://apps.fortnox.se/oauth-v1/auth?client_id=<CLIENT_ID>&redirect_uri=http://localhost:3000/api/fortnox/callback&scope=customer+invoice&access_type=offline&response_type=code&state=ost
    ```
 
-   With the dev server running, the callback prints the `FORTNOX_OST_*` lines to paste into `.env`.
+   With the dev server running, the callback prints the `FORTNOX_OST_REFRESH_TOKEN` line to paste into `.env`.
 
 ## Token persistence on Vercel (no database)
 
@@ -39,8 +38,8 @@ How `lib/fortnox/tokenStore.ts` picks a backend per write/read:
 
 `lib/fortnox/auth.ts` also caches access tokens in-memory per region (4.5 min
 TTL) to minimize refreshes, and on a failed refresh re-reads KV once before
-falling back to the statically configured access token (handles two lambdas
-rotating concurrently).
+throwing (a statically configured `FORTNOX_<REGION>_ACCESS_TOKEN` is used only
+if present — it is *not* required).
 
 ### Vercel setup (one time)
 

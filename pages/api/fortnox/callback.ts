@@ -9,8 +9,9 @@ export const config = {
  * OAuth callback helper.
  *
  * This exchanges the Fortnox authorization code for access + refresh tokens and
- * renders them so you can copy them into `.env` (per-region tokens are stored
- * manually in `.env`).
+ * renders them so you can copy them into `.env`. Only the refresh token is
+ * required in `.env` (the access token is fetched automatically via refresh and
+ * held in process memory; a static access token is optional for debugging).
  *
  * Redirect URI configured in the Fortnox developer portal must match:
  *   FORTNOX_REDIRECT_URI (e.g. http://localhost:3000/api/fortnox/callback)
@@ -63,17 +64,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const region = state ? String(state).toUpperCase() : 'REGION'
 
     const envSnippet = [
-      `# Region: ${region}`,
-      `FORTNOX_${region}_ACCESS_TOKEN=${data.access_token ?? ''}`,
+      `# Region: ${region} — paste into .env:`,
       `FORTNOX_${region}_REFRESH_TOKEN=${data.refresh_token ?? ''}`,
+      `# Optional (debugging only): FORTNOX_${region}_ACCESS_TOKEN=${data.access_token ?? ''}`,
       ''
     ].join('\n')
 
     res.setHeader('Content-Type', 'text/plain')
     return res.status(200).send(
       `Fortnox OAuth success for region: ${region}\n\n` +
-      `Copy these lines into your .env:\n\n${envSnippet}` +
-      `Access tokens expire after ~5 minutes; the refresh token can be used to obtain new ones.`
+      `Copy this into your .env:\n\n${envSnippet}` +
+      `Only the refresh token is required — access tokens are fetched automatically via refresh and live in process memory.` +
+      ` The rotated refresh token is also persisted to KV when KV_REST_API_* are set.`
     )
   } catch (err: any) {
     res.setHeader('Content-Type', 'text/plain')
