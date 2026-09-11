@@ -2,6 +2,7 @@
 	position: relative;
 	min-height: 100vh;
 	margin-right: var(--spacing-xl);
+	//margin-left: var(--spacing-m);
 
 	a {
 		cursor: pointer;
@@ -21,13 +22,77 @@
 		line-height: 2.5;
 	}
 	.error {
-		color: var(--alert-color);
+		color: var(--color--ink-danger);
 	}
 
-	.submit {
+	.progress {
+		margin-bottom: var(--spacing-l);
+
+		.bar {
+			height: 8px;
+			width: 100%;
+			background-color: var(--color--progress--track);
+			border-radius: 999px;
+			margin-bottom: var(--spacing-s);
+			overflow: hidden;
+		}
+		.barFill {
+			height: 100%;
+			background-color: var(--color--progress--fill);
+			transition: width 0.2s ease;
+		}
+		.progressLabel {
+			margin-top: var(--spacing-xs);
+			font-size: var(--font-size-s);
+			margin-bottom: var(--spacing-s);
+		}
+		.legend {
+			display: flex;
+			gap: var(--spacing-s);
+			margin-top: var(--spacing-xs);
+			font-size: var(--font-size-s);
+		}
+	}
+	.badgeCreated,
+	.badgeSkipped,
+	.badgeFailed {
+		display: inline-block;
+		padding: 2px 6px 2px 6px;
+		border-radius: 0px;
+		font-size: var(--font-size-s);
+		white-space: nowrap;
+	}
+	.badgeCreated {
+		background: var(--color--success-soft--surface);
+		color: var(--color--success-soft--ink);
+	}
+	.badgeSkipped {
+		background: var(--color--surface-muted);
+		color: var(--color--ink-subtle);
+	}
+	.badgeFailed {
+		background: var(--color--danger-soft--surface);
+		color: var(--color--danger-soft--ink);
 	}
 	.invoices {
 		padding-top: var(--spacing-xl);
+
+		.results {
+			padding: var(--spacing-m);
+			margin-bottom: var(--spacing-l);
+			border-radius: 4px;
+			&.failed {
+				background: var(--color--danger-soft--surface);
+				color: var(--color--danger-soft--ink);
+			}
+			&.ok {
+				background: var(--color--success-soft--surface);
+				color: var(--color--success-soft--ink);
+			}
+			ul {
+				list-style: none;
+			}
+		}
 		.submit {
 			margin-bottom: var(--spacing-l);
 		}
@@ -41,15 +106,16 @@
 				cursor: pointer;
 			}
 			tr:hover {
-				background-color: var(--light-bg-color);
+				background-color: var(--color--surface-hover);
 				td {
-					background-color: var(--light-bg-color);
+					background-color: var(--color--surface-hover);
 				}
 			}
 			td,
 			th {
 				padding: var(--spacing-s);
 				padding-left: var(--spacing-m);
+				height: 2.5rem;
 			}
 		}
 	}

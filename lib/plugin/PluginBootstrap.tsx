@@ -1,6 +1,12 @@
 import 'datocms-react-ui/styles.css';
 import React, { useEffect } from 'react';
-import { connect, IntentCtx, RenderFieldExtensionCtx, RenderPageCtx } from 'datocms-plugin-sdk';
+import {
+	connect,
+	ContentAreaSidebarItemsCtx,
+	ManualFieldExtensionsCtx,
+	RenderFieldExtensionCtx,
+	RenderPageCtx,
+} from 'datocms-plugin-sdk';
 import { render } from '/lib/plugin/utils/render';
 import ConfigScreen from '/lib/plugin/entrypoints/ConfigScreen';
 import RegionField from '/lib/plugin/entrypoints/RegionField';
@@ -21,7 +27,7 @@ export default function PluginBootstrap() {
 			renderConfigScreen(ctx) {
 				return render(<ConfigScreen ctx={ctx} />);
 			},
-			manualFieldExtensions(ctx: IntentCtx) {
+			manualFieldExtensions(ctx: ManualFieldExtensionsCtx) {
 				return [
 					{
 						id: 'region-field',
@@ -55,7 +61,7 @@ export default function PluginBootstrap() {
 			overrideFieldExtensions(field) {
 				if (field.attributes.api_key === 'fortnox_document_number') {
 					return {
-						addons: [{ id: 'invoic-link' }],
+						addons: [{ id: 'invoice-link' }],
 					};
 				}
 			},
@@ -71,7 +77,7 @@ export default function PluginBootstrap() {
 						return render(<InvoiceLinkField ctx={ctx} />);
 				}
 			},
-			contentAreaSidebarItems(ctx: IntentCtx) {
+			contentAreaSidebarItems(ctx: ContentAreaSidebarItemsCtx) {
 				if (ctx.environment !== 'dev') return [];
 
 				return [
@@ -79,7 +85,7 @@ export default function PluginBootstrap() {
 						label: 'Fakturor',
 						icon: 'file-lines',
 						pointsTo: { pageId: 'invoices' },
-						placement: ['before', 'settings'],
+						placement: ['after', 'menuItems'],
 					},
 				];
 			},
