@@ -32,7 +32,8 @@ const isAuthorized = (req: NextApiRequest) => {
 };
 
 const findRegionByRole = (roleName: string) =>
-	regions.find((r) => r.slug.toLowerCase() === roleName.toLowerCase());
+	regions.find((r) => r.slug.toLowerCase() === roleName.toLowerCase()) ??
+	regions.find((r) => r.slug.toLowerCase() === 'ost');
 
 const filterMembersByRegion = (members: MemberItem[], regionId: string) =>
 	members.filter((m) => m.region === regionId);
@@ -138,12 +139,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		try {
 			const tasks: Task[] = memberIds
 				? await Promise.all(
-						memberIds.map(async (id) => ({ id, member: await resolveMember(id, region.id) }))
-				  )
+						memberIds.map(async (id) => ({ id, member: await resolveMember(id, region.id) })),
+					)
 				: filterMembersByRegion(await getAllMembers(region.id), region.id).map((member) => ({
 						id: member.id,
 						member,
-				  }));
+					}));
 
 			if (stream) {
 				res.setHeader('Content-Type', 'application/x-ndjson');
