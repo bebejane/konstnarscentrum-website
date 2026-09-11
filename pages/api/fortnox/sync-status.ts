@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import client from '/lib/client'
 import { getAllMembers } from '/lib/fortnox/sync'
-import { syncMemberInvoicePaymentStatus } from '/lib/fortnox/invoiceDispatch'
+import { InvoiceRecord, syncMemberInvoicePaymentStatus } from '/lib/fortnox/invoiceDispatch'
 import { parseDatoError } from '/lib/utils'
 
 export const config = {
@@ -32,14 +32,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const members = await getAllMembers()
     const results = { polled: 0, updated: 0, skipped: 0, failed: 0, errors: [] as string[] }
 
+    // Group all invoice records by member id in a single pass.
+    const invoicesByMember = new Map<string, InvoiceRecord[]>()
+    for await (const record of client.items.listPagedIterator({ filter: { type: 'invoice' } })) {
+      const invoice = record as unknown as InvoiceRecord
+      const memberId = typeof invoice.member === 'string' ? invoice.member : invoice.member?.id
+      if (!memberId) continue
+      const list = invoicesByMember.get(memberId)
+      if (list) list.push(invoice)
+      else invoicesByMember.set(memberId, [invoice])
+    }
+
     for (const member of members) {
-      if (!Array.isArray(member.invoices) || member.invoices.length === 0) {
+      const records = invoicesByMember.get(member.id)
+      if (!records || records.length === 0) {
         results.skipped++
         continue
       }
 
       try {
-        const change = await syncMemberInvoicePaymentStatus(member)
+        const change = await syncMemberInvoicePaymentStatus(member, records)
         results.polled++
         results.updated += change?.updated ?? 0
       } catch (err: any) {

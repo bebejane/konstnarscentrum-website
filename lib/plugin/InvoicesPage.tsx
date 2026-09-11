@@ -300,7 +300,7 @@ export default function InvoicesPage({ ctx }: Props) {
 					<>
 						<Toolbar style={{ minHeight: 60, maxHeight: 60 }}>
 							<ToolbarStack stackSize='m'>
-								<ToolbarTitle>Fakturor: {region?.name}</ToolbarTitle>
+								<ToolbarTitle>Fakturera: {region?.name}</ToolbarTitle>
 								<div style={{ flex: '1' }} />
 								{running && (
 									<Button buttonType='muted' onClick={handleAbort} style={{ marginRight: 8 }}>

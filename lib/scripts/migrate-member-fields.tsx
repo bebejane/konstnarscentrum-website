@@ -26,7 +26,7 @@ type FieldSpec = {
 }
 
 // Model + fields for the new `invoice` record type. One record per Fortnox invoice,
-// linked to its member via member.invoices. Kept in sync by the cron / dispatch code.
+// linked to its member via invoice.member. Kept in sync by the cron / dispatch code.
 const INVOICE_FIELDS: FieldSpec[] = [
   {
     api_key: 'fortnox_document_number',
@@ -132,7 +132,8 @@ async function run() {
     console.log('• All invoice model fields already exist')
   }
 
-  // 3) Add `member.invoices` multiple-links field pointing to the invoice model
+  // 3) Link invoices to members: add the required `invoice.member` link field
+  //    and drop the obsolete `member.invoices` links field.
   const memberType = await findItemType(MEMBER_MODEL)
   if (!memberType) {
     console.error(`✗ Could not find model "${MEMBER_MODEL}" in environment "${environment}".`)
@@ -140,29 +141,46 @@ async function run() {
     return
   }
 
-  const memberFields = new Set((await client.fields.list(MEMBER_MODEL)).map((f: any) => f.api_key))
-
-  if (!memberFields.has('invoices')) {
+  const invoiceFieldKeys = new Set((await client.fields.list(INVOICE_MODEL)).map((f: any) => f.api_key))
+  if (!invoiceFieldKeys.has('member')) {
     try {
-      await client.fields.create(MEMBER_MODEL, {
-        label: 'Fakturor',
-        api_key: 'invoices',
-        field_type: 'links',
-        hint: 'Medlemmens fakturor (Fortnox). Uppdateras automatiskt.',
-        validators: { items_item_type: { item_types: [invoiceType.id] } }
+      await client.fields.create(INVOICE_MODEL, {
+        label: 'Medlem',
+        api_key: 'member',
+        field_type: 'link',
+        hint: 'Medlemmen fakturan avser.',
+        validators: {
+          required: {},
+          item_item_type: { item_types: [memberType.id] }
+        }
       })
-      console.log(`✓ Created field "invoices" on ${MEMBER_MODEL} → ${INVOICE_MODEL}`)
+      console.log(`✓ Created field "member" on ${INVOICE_MODEL} → ${MEMBER_MODEL}`)
     } catch (err: any) {
-      console.error(`✗ Failed to create "invoices" on ${MEMBER_MODEL}: ${err?.message ?? err}`)
+      console.error(`✗ Failed to create "member" on ${INVOICE_MODEL}: ${err?.message ?? err}`)
       process.exitCode = 1
     }
   } else {
-    console.log(`• "invoices" field already exists on ${MEMBER_MODEL}`)
+    console.log(`• "member" field already exists on ${INVOICE_MODEL}`)
+  }
+
+  const memberFieldList = await client.fields.list(MEMBER_MODEL)
+  const memberFields = new Set(memberFieldList.map((f: any) => f.api_key))
+  const legacyInvoicesField = memberFieldList.find((f: any) => f.api_key === 'invoices')
+  if (legacyInvoicesField) {
+    try {
+      await client.fields.destroy(legacyInvoicesField.id)
+      memberFields.delete('invoices')
+      console.log(`✓ Removed obsolete field "invoices" from ${MEMBER_MODEL}`)
+    } catch (err: any) {
+      console.error(`✗ Failed to remove "invoices" from ${MEMBER_MODEL}: ${err?.message ?? err}`)
+      process.exitCode = 1
+    }
+  } else {
+    console.log(`• "invoices" not present on ${MEMBER_MODEL} — nothing to remove`)
   }
 
   // 4) Rename member.fortknox_customer_number -> member.fortnox_customer_number
   //    (legacy misspelling; copy values, then drop the old field)
-  const memberFieldList = await client.fields.list(MEMBER_MODEL)
   const legacyField = memberFieldList.find((f: any) => f.api_key === 'fortknox_customer_number')
 
   if (!memberFields.has('fortnox_customer_number')) {

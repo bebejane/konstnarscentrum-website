@@ -1,18 +1,9 @@
 import s from "./fakturor.module.scss";
 import requireAuthentication from "/lib/auth/requireAuthentication";
 import client from "/lib/client";
+import { getMemberInvoices } from "/lib/fortnox/invoiceDispatch";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-
-type InvoiceRecord = {
-  id: string;
-  fortnox_document_number?: string;
-  payment_status?: string;
-  payment_date?: string | null;
-  invoice_year?: number;
-  total?: number;
-  region?: string;
-};
 
 export type InvoiceRow = {
   id: string;
@@ -125,30 +116,13 @@ export const getServerSideProps = requireAuthentication(
           email?: string;
           region?: string;
           fortnox_customer_number?: string;
-          invoices?: (string | InvoiceRecord)[];
         }
       | undefined;
 
     if (!member?.fortnox_customer_number)
       return { props: { ...props, invoices: [], customerNumber: null } };
 
-    if (!Array.isArray(member.invoices) || member.invoices.length === 0)
-      return { props: { ...props, invoices: [], customerNumber: member.fortnox_customer_number } };
-
-    const ids = member.invoices.map(i => (typeof i === 'string' ? i : (i as any).id));
-    const records: InvoiceRecord[] = [];
-    for (const id of ids) {
-      const nested = member.invoices.find(i => typeof i !== 'string' && (i as any).id === id);
-      if (nested && typeof nested !== 'string') {
-        records.push(nested as InvoiceRecord);
-      } else {
-        try {
-          records.push(await client.items.find(id));
-        } catch {
-          // skip missing
-        }
-      }
-    }
+    const records = await getMemberInvoices(member.id);
 
     const list: InvoiceRow[] = records.map(inv => ({
       id: inv.id,

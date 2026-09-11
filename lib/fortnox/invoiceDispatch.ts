@@ -32,33 +32,19 @@ export type InvoiceRecord = {
   total?: number
   fortnox_customer_number?: string
   region?: string
+  member?: string | { id: string }
   [key: string]: any
 }
 
 /**
- * Normalize the member's `invoices` link field into a list of invoice ids.
- * CMA may return link fields as arrays of full objects or arrays of ids.
+ * Fetch all invoice records linked to a member via the `invoice.member` field.
  */
-const getMemberInvoiceIds = (member: MemberItem): string[] => {
-  const inv = member.invoices
-  if (!Array.isArray(inv)) return []
-  return inv
-    .map((i) => (typeof i === 'string' ? i : (i as any)?.id))
-    .filter(Boolean)
-}
-
-/**
- * Fetch the full invoice records linked to a member.
- */
-const getMemberInvoices = async (member: MemberItem): Promise<InvoiceRecord[]> => {
-  const ids = getMemberInvoiceIds(member)
+export const getMemberInvoices = async (memberId: string): Promise<InvoiceRecord[]> => {
   const records: InvoiceRecord[] = []
-  for (const id of ids) {
-    try {
-      records.push(await client.items.find(id))
-    } catch {
-      // Incomplete/linked-to-missing record — skip
-    }
+  for await (const record of client.items.listPagedIterator({
+    filter: { type: 'invoice', fields: { member: { eq: memberId } } }
+  })) {
+    records.push(record as unknown as InvoiceRecord)
   }
   return records
 }
@@ -102,7 +88,7 @@ export const isEligibleForInvoice = async (
   invoiceYear: number
 ): Promise<{ eligible: boolean; reason?: string }> => {
   const region = regions.find(r => r.id === member.region)
-  const records = await getMemberInvoices(member)
+  const records = await getMemberInvoices(member.id)
   return isEligibleForInvoiceFromRecords(
     member,
     invoiceYear,
@@ -163,13 +149,9 @@ export const createAnnualInvoiceForMember = async (
       invoice_year: invoiceYear,
       total: typeof invoice.Total === 'number' ? invoice.Total : 0,
       fortnox_customer_number: member.fortnox_customer_number,
-      region: region.slug
+      region: region.slug,
+      member: member.id
     } as any)
-  })
-
-  // Link it into the member's `invoices` field
-  await client.items.update(member.id, {
-    invoices: [...getMemberInvoiceIds(member), invoiceRecord.id]
   })
 
   return { documentNumber: invoice.DocumentNumber, invoiceRecordId: invoiceRecord.id }
@@ -181,12 +163,15 @@ export const createAnnualInvoiceForMember = async (
  *
  * Returns the number of records updated (0 when nothing changed).
  */
-export const syncMemberInvoicePaymentStatus = async (member: MemberItem): Promise<{ updated: number }> => {
+export const syncMemberInvoicePaymentStatus = async (
+  member: MemberItem,
+  records?: InvoiceRecord[]
+): Promise<{ updated: number }> => {
   const region = regions.find(r => r.id === member.region)
   if (!region) return { updated: 0 }
   if (!hasFortnoxCredentials(region.slug)) return { updated: 0 }
 
-  const invoices = await getMemberInvoices(member)
+  const invoices = records ?? (await getMemberInvoices(member.id))
   let updated = 0
 
   for (const rec of invoices) {

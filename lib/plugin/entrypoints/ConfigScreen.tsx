@@ -45,6 +45,9 @@ export default function ConfigScreen({ ctx }: Props) {
 				id='basicAuthPassword'
 				label='Password'
 				name='basicAuthPassword'
+				textInputProps={{
+					type: 'password',
+				}}
 				value={basicAuthPassword}
 				onChange={(val) => setBasicAuthPassword(val as string)}
 			/>

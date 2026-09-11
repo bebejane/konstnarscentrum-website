@@ -1,5 +1,5 @@
 import 'datocms-react-ui/styles.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
 	connect,
 	ContentAreaSidebarItemsCtx,
@@ -15,13 +15,13 @@ import MemberApproval from '/lib/plugin/entrypoints/MemberApproval';
 import InvoicesPage from '/lib/plugin/InvoicesPage';
 import { InvoiceLinkField } from '/lib/plugin/InvoiceLinkField';
 import { isDev } from '/lib/plugin/utils';
-
-let connected = false;
+import { sleep } from '/lib/utils';
 
 export default function PluginBootstrap() {
-	useEffect(() => {
-		if (connected) return;
-		connected = true;
+	const connecting = useRef(false);
+
+	async function init() {
+		connecting.current = true;
 
 		connect({
 			renderConfigScreen(ctx) {
@@ -82,7 +82,7 @@ export default function PluginBootstrap() {
 
 				return [
 					{
-						label: 'Fakturor',
+						label: 'Fakturera',
 						icon: 'file-lines',
 						pointsTo: { pageId: 'invoices' },
 						placement: ['after', 'menuItems'],
@@ -95,10 +95,19 @@ export default function PluginBootstrap() {
 				}
 			},
 		})
-			.catch(console.error)
+			.catch(() => {
+				console.error('PluginBootstrap error');
+			})
 			.finally(() => {
 				console.log('PluginBootstrap connected');
+				connecting.current = false;
 			});
+	}
+
+	useEffect(() => {
+		if (connecting.current) return;
+
+		init();
 	}, []);
 
 	return <div id='root' />;

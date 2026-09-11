@@ -14,7 +14,6 @@ export type MemberItem = {
 	active?: boolean;
 	vilande?: boolean;
 	fortnox_customer_number?: string;
-	invoices?: (string | { id: string })[];
 	[key: string]: any;
 };
 
