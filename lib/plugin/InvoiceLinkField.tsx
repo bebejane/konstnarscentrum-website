@@ -1,25 +1,26 @@
 'use client';
 
 import { Canvas } from 'datocms-react-ui';
-
 import { RenderFieldExtensionCtx } from 'datocms-plugin-sdk';
-import 'datocms-react-ui/styles.css';
+import { regionFromRoleName } from '/lib/plugin/utils';
+import { getFortnoxInvoiceUrl } from '/lib/fortnox/constants';
 
 type PropTypes = {
 	ctx: RenderFieldExtensionCtx;
 };
 
-const FORTNOX_INVOICE_URL =
-	'https://apps5.fortnox.se/app/54489d4ebc8b4a5c88113e07f22511cd/kf/invoice';
-
 export function InvoiceLinkField({ ctx }: PropTypes) {
 	const invoiceId = ctx.formValues?.fortnox_document_number as string | undefined;
 
 	if (!invoiceId) return null;
+	const region = regionFromRoleName(ctx.currentRole.attributes.name.toLowerCase());
+
+	if (!region) return null;
+	const href = getFortnoxInvoiceUrl(invoiceId, region.slug);
 
 	return (
 		<Canvas ctx={ctx}>
-			<a href={`${FORTNOX_INVOICE_URL}/${invoiceId}`} target='_blank' rel='noopener noreferrer'>
+			<a href={href} target='_blank' rel='noopener noreferrer'>
 				Open in Fortnox ↗
 			</a>
 		</Canvas>

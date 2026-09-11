@@ -5,6 +5,7 @@ import { RenderPageCtx } from 'datocms-plugin-sdk';
 import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
 import { useEffect, useRef, useState } from 'react';
 import { regions } from '/lib/region';
+import { regionFromRoleName } from '/lib/plugin/utils';
 
 type Props = { ctx: RenderPageCtx };
 
@@ -139,11 +140,8 @@ const streamBatch = async (
 };
 
 export default function InvoicesPage({ ctx }: Props) {
-	const roleName =
-		ctx.currentRole.attributes.name.toLowerCase() === 'admin'
-			? 'ost'
-			: ctx.currentRole.attributes.name.toLowerCase();
-	const region = regions.find((r) => r.slug.toLowerCase() === roleName);
+	const roleName = ctx.currentRole.attributes.name.toLowerCase();
+	const region = regionFromRoleName(roleName);
 
 	const [members, setMembers] = useState<Member[]>([]);
 	const [loading, setLoading] = useState(true);

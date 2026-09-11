@@ -17,7 +17,6 @@ import MemberApproval from '/lib/plugin/entrypoints/MemberApproval';
 import InvoicesPage from '/lib/plugin/InvoicesPage';
 import { InvoiceLinkField } from '/lib/plugin/InvoiceLinkField';
 import { isDev } from '/lib/plugin/utils';
-import { sleep } from '/lib/utils';
 
 export default function PluginBootstrap() {
 	const connecting = useRef(false);
