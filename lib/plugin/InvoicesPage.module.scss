@@ -1,6 +1,7 @@
 .container {
 	position: relative;
 	min-height: 100vh;
+	margin-right: var(--spacing-xl);
 
 	a {
 		cursor: pointer;
@@ -23,9 +24,10 @@
 		color: var(--alert-color);
 	}
 
+	.submit {
+	}
 	.invoices {
-		padding: var(--spacing-m);
-		padding-top: 0;
+		padding-top: var(--spacing-xl);
 		.submit {
 			margin-bottom: var(--spacing-l);
 		}
@@ -44,7 +46,10 @@
 					background-color: var(--light-bg-color);
 				}
 			}
-			td {
+			td,
+			th {
+				padding: var(--spacing-s);
+				padding-left: var(--spacing-m);
 			}
 		}
 	}

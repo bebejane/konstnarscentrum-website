@@ -120,7 +120,7 @@ export default function InvoicesPage({ ctx }: Props) {
 					</div>
 				) : (
 					<>
-						<Toolbar style={{ minHeight: 60 }}>
+						<Toolbar style={{ minHeight: 60, maxHeight: 60 }}>
 							<ToolbarStack stackSize='m'>
 								<ToolbarTitle>Fakturor: {region?.name}</ToolbarTitle>
 								<div style={{ flex: '1' }} />
