@@ -299,7 +299,7 @@ export default function InvoicesPage({ ctx }: Props) {
 				) : (
 					<>
 						<Toolbar style={{ minHeight: 60, maxHeight: 60 }}>
-							<ToolbarStack stackSize='m'>
+							<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
 								<ToolbarTitle>Fakturera: {region?.name}</ToolbarTitle>
 								<div style={{ flex: '1' }} />
 								{running && (

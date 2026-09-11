@@ -6,8 +6,10 @@ let invoiceItemTypeId: string | null = null
 const getInvoiceItemTypeId = async (): Promise<string> => {
   if (invoiceItemTypeId) return invoiceItemTypeId
   const types = await client.itemTypes.list()
-  const invoiceType = types.find(t => (t as any).name === 'Invoice')
-  if (!invoiceType) throw new Error('DatoCMS model "Invoice" not found')
+  const invoiceType =
+    types.find(t => (t as any).api_key === 'invoice') ??
+    types.find(t => (t as any).name === 'Invoice')
+  if (!invoiceType) throw new Error('DatoCMS model with api_key "invoice" not found')
   invoiceItemTypeId = invoiceType.id
   return invoiceItemTypeId
 }
