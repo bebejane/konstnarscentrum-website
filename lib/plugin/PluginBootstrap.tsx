@@ -1,8 +1,10 @@
 import 'datocms-react-ui/styles.css';
 import React, { useEffect, useRef } from 'react';
 import {
+	BuildItemPresentationInfoCtx,
 	connect,
 	ContentAreaSidebarItemsCtx,
+	Item,
 	ManualFieldExtensionsCtx,
 	RenderFieldExtensionCtx,
 	RenderPageCtx,
@@ -93,6 +95,17 @@ export default function PluginBootstrap() {
 				if (pageId === 'invoices') {
 					return render(<InvoicesPage ctx={ctx} />);
 				}
+			},
+			async buildItemPresentationInfo(item: Item, ctx: BuildItemPresentationInfoCtx) {
+				if (!item.attributes.fortnox_document_number) return;
+
+				const {
+					attributes: { fortnox_document_number, invoice_year, payment_status },
+				} = item;
+
+				return {
+					title: `#${fortnox_document_number} - ${payment_status} (${invoice_year})`,
+				};
 			},
 		})
 			.catch(() => {
