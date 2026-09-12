@@ -74,6 +74,13 @@
 		background: var(--color--danger-soft--surface);
 		color: var(--color--danger-soft--ink);
 	}
+	.invoiceLink {
+		color: var(--color--link);
+		text-decoration: none;
+		&:hover {
+			text-decoration: underline;
+		}
+	}
 	.invoices {
 		padding-top: var(--spacing-xl);
 
@@ -116,6 +123,12 @@
 				padding: var(--spacing-s);
 				padding-left: var(--spacing-m);
 				height: 2.5rem;
+			}
+
+			td span {
+				&.active {
+					color: var(--color--ink-success);
+				}
 			}
 		}
 	}

@@ -6,6 +6,8 @@ import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'da
 import { useEffect, useRef, useState } from 'react';
 import { regions } from '/lib/region';
 import { regionFromRoleName } from '/lib/plugin/utils';
+import { getFortnoxInvoiceUrl } from '/lib/fortnox/constants';
+import type { InvoiceRecord } from '/lib/fortnox/invoiceDispatch';
 
 type Props = { ctx: RenderPageCtx };
 
@@ -19,6 +21,7 @@ type Member = {
 	active?: boolean;
 	region?: string;
 	fortnox_customer_number?: string;
+	invoice?: InvoiceRecord | null;
 };
 
 type MemberStatus = 'created' | 'skipped' | 'failed';
@@ -27,6 +30,7 @@ type MemberRunState = {
 	status: MemberStatus;
 	reason?: string;
 	documentNumber?: string;
+	invoiceRecordId?: string;
 };
 
 type InvoiceResult = {
@@ -58,6 +62,7 @@ type StreamEvent =
 			status: MemberStatus;
 			reason?: string;
 			documentNumber?: string;
+			invoiceRecordId?: string;
 	  }
 	| {
 			type: 'done';
@@ -154,6 +159,8 @@ export default function InvoicesPage({ ctx }: Props) {
 
 	const invoiceYear = new Date().getFullYear();
 
+	const pendingMembers = members.filter((m) => !m.invoice);
+
 	useEffect(() => {
 		setLoading(true);
 		fetch(`/api/fortnox/plugin/invoices?role=${encodeURIComponent(roleName)}`, {
@@ -179,7 +186,7 @@ export default function InvoicesPage({ ctx }: Props) {
 		setStatusById({});
 		setRunning(true);
 
-		const ordered = sortSwedish([...members], 'last_name');
+		const ordered = sortSwedish([...pendingMembers], 'last_name');
 		const total = ordered.length;
 		const counts = { created: 0, skipped: 0, failed: 0 };
 		const summary: Omit<InvoiceResult, 'invoiceYear'> = {
@@ -229,6 +236,7 @@ export default function InvoicesPage({ ctx }: Props) {
 									status: event.status,
 									reason: event.reason,
 									documentNumber: event.documentNumber,
+									invoiceRecordId: event.invoiceRecordId,
 								},
 							}));
 							setProgress({
@@ -280,8 +288,21 @@ export default function InvoicesPage({ ctx }: Props) {
 		);
 	};
 
-	const percent = progress ? (progress.processed / Math.max(progress.total, 1)) * 100 : 0;
+	const renderInvoiceLink = (id?: string) => {
+		if (!id) return '';
 
+		//const href = getFortnoxInvoiceUrl(documentNumber, region?.slug || '');
+		return (
+			<>
+				<a className={s.invoiceLink} onClick={(e) => e.stopPropagation()}>
+					#{id}
+				</a>
+			</>
+		);
+	};
+
+	const percent = progress ? (progress.processed / Math.max(progress.total, 1)) * 100 : 0;
+	console.log(statusById);
 	return (
 		<Canvas ctx={ctx}>
 			<div className={s.container}>
@@ -308,10 +329,14 @@ export default function InvoicesPage({ ctx }: Props) {
 								<Button
 									buttonType='primary'
 									onClick={handleSubmit}
-									disabled={running || members.length === 0}
+									disabled={running || pendingMembers.length === 0}
 									className={s.submit}
 								>
-									{running ? <Spinner /> : `Skicka fakturor (${invoiceYear})`}
+									{running ? (
+										<Spinner />
+									) : (
+										`Skicka fakturor (${invoiceYear}): ${pendingMembers.length}`
+									)}
 								</Button>
 							</ToolbarStack>
 						</Toolbar>
@@ -362,32 +387,42 @@ export default function InvoicesPage({ ctx }: Props) {
 										<tr>
 											<th>Namn</th>
 											<th>E-post</th>
-											<th>Stad</th>
 											<th>Kundnr.</th>
 											<th>Status</th>
 											<th>Faktura</th>
+											<th></th>
 										</tr>
 									</thead>
 									<tbody>
-										{sortSwedish([...members], 'last_name').map((m) => (
-											<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
-												<td>
-													<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
-												</td>
-												<td>{m.email || ''}</td>
-												<td>{m.city || ''}</td>
+										{sortSwedish([...members], 'last_name').map((m) => {
+											const invoiceId = statusById[m.id]?.invoiceRecordId ?? m.invoice?.id;
+											const documentNumber =
+												statusById[m.id]?.documentNumber ?? m.invoice?.fortnox_document_number;
+											return (
+												<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
+													<td>
+														<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
+													</td>
+													<td>{m.email || ''}</td>
+													<td>{m.fortnox_customer_number || ''}</td>
+													<td>
+														<span className={cn(m.active && s.active)}>
+															{m.active ? 'Aktiv' : 'Inaktiv'}
+														</span>
+													</td>
 
-												<td>{m.fortnox_customer_number || ''}</td>
-												<td>
-													{m.active ? (
-														<span style={{ color: 'var(--color--ink-success)' }}>Aktiv</span>
-													) : (
-														<span style={{ color: 'var(--color--ink-subtle)' }}>Inaktiv</span>
-													)}
-												</td>
-												<td>{renderRunStatus(statusById[m.id])}</td>
-											</tr>
-										))}
+													<td
+														onClick={(e) => {
+															e.stopPropagation();
+															ctx.editItem(invoiceId);
+														}}
+													>
+														{documentNumber && <a>#{documentNumber}</a>}
+													</td>
+													<td>{renderRunStatus(statusById[m.id])}</td>
+												</tr>
+											);
+										})}
 									</tbody>
 								</table>
 							)}

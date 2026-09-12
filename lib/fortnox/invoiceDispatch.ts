@@ -52,6 +52,29 @@ export const getMemberInvoices = async (memberId: string): Promise<InvoiceRecord
 }
 
 /**
+ * Fetch the invoice record for a given year for every member, keyed by member
+ * id. Optionally restrict to a single region (matched on the record's `region`
+ * slug). Members without an invoice that year are simply absent from the map.
+ */
+export const getYearlyInvoicesByMember = async (
+  invoiceYear: number,
+  regionSlug?: string
+): Promise<Record<string, InvoiceRecord>> => {
+  const fields: Record<string, unknown> = { invoice_year: { eq: invoiceYear } }
+  if (regionSlug) fields.region = { eq: regionSlug }
+
+  const byMember: Record<string, InvoiceRecord> = {}
+  for await (const record of client.items.listPagedIterator({
+    filter: { type: 'invoice', fields }
+  })) {
+    const rec = record as unknown as InvoiceRecord
+    const memberId = typeof rec.member === 'string' ? rec.member : rec.member?.id
+    if (memberId && rec.fortnox_document_number) byMember[memberId] = rec
+  }
+  return byMember
+}
+
+/**
  * Pure eligibility check given a member, the target invoice year, its linked
  * invoice records, and whether Fortnox credentials exist for the member's
  * region. Extracted from `isEligibleForInvoice` so it can be unit-tested

@@ -2,7 +2,11 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import client from '/lib/client';
 import regions from '/regions.json';
 import { getAllMembers, MemberItem } from '/lib/fortnox/sync';
-import { createAnnualInvoiceForMember, isEligibleForInvoice } from '/lib/fortnox/invoiceDispatch';
+import {
+  createAnnualInvoiceForMember,
+  getYearlyInvoicesByMember,
+  isEligibleForInvoice,
+} from '/lib/fortnox/invoiceDispatch';
 import { parseDatoError } from '/lib/utils';
 
 export const config = {
@@ -15,6 +19,7 @@ type MemberResult = {
 	status: MemberStatus;
 	reason?: string;
 	documentNumber?: string;
+	invoiceRecordId?: string;
 };
 
 type Task = {
@@ -64,8 +69,8 @@ const processMember = async (member: MemberItem, invoiceYear: number): Promise<M
 		const { eligible, reason } = await isEligibleForInvoice(member, invoiceYear);
 		if (!eligible) return { status: 'skipped', reason };
 
-		const { documentNumber } = await createAnnualInvoiceForMember(member, invoiceYear);
-		return { status: 'created', documentNumber };
+		const { documentNumber, invoiceRecordId } = await createAnnualInvoiceForMember(member, invoiceYear);
+		return { status: 'created', documentNumber, invoiceRecordId };
 	} catch (err: any) {
 		return { status: 'failed', reason: err?.message ?? String(err) };
 	}
@@ -115,7 +120,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		try {
 			const allMembers = await getAllMembers(region.id);
 			const members = filterMembersByRegion(allMembers, region.id);
-			return res.status(200).json({ members, region: region.slug });
+			const invoiceYear = new Date().getFullYear();
+			const yearlyInvoices = await getYearlyInvoicesByMember(invoiceYear, region.slug);
+			const membersWithInvoices = members.map((m) => ({
+				...m,
+				invoice: yearlyInvoices[m.id] ?? null,
+			}));
+			return res
+				.status(200)
+				.json({ members: membersWithInvoices, region: region.slug, invoiceYear });
 		} catch (err) {
 			return res.status(500).json({ error: parseDatoError(err) });
 		}
@@ -183,6 +196,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 						status: result.status,
 						...(result.reason ? { reason: result.reason } : {}),
 						...(result.documentNumber ? { documentNumber: result.documentNumber } : {}),
+						...(result.invoiceRecordId ? { invoiceRecordId: result.invoiceRecordId } : {}),
 					});
 					if (!ok) break;
 				}
