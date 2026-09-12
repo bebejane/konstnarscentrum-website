@@ -112,11 +112,8 @@
 			tr {
 				cursor: pointer;
 			}
-			tr:hover {
+			tr:hover td {
 				background-color: var(--color--surface-hover);
-				td {
-					background-color: var(--color--surface-hover);
-				}
 			}
 			td,
 			th {

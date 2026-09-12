@@ -4,9 +4,7 @@ import cn from 'classnames';
 import { RenderPageCtx } from 'datocms-plugin-sdk';
 import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
 import { useEffect, useRef, useState } from 'react';
-import { regions } from '/lib/region';
 import { regionFromRoleName } from '/lib/plugin/utils';
-import { getFortnoxInvoiceUrl } from '/lib/fortnox/constants';
 import type { InvoiceRecord } from '/lib/fortnox/invoiceDispatch';
 
 type Props = { ctx: RenderPageCtx };
@@ -302,7 +300,7 @@ export default function InvoicesPage({ ctx }: Props) {
 	};
 
 	const percent = progress ? (progress.processed / Math.max(progress.total, 1)) * 100 : 0;
-	console.log(statusById);
+
 	return (
 		<Canvas ctx={ctx}>
 			<div className={s.container}>
@@ -387,9 +385,9 @@ export default function InvoicesPage({ ctx }: Props) {
 										<tr>
 											<th>Namn</th>
 											<th>E-post</th>
-											<th>Kundnr.</th>
 											<th>Status</th>
-											<th>Faktura</th>
+											<th>Kundnr.</th>
+											<th>Fakturanr.</th>
 											<th></th>
 										</tr>
 									</thead>
@@ -404,13 +402,12 @@ export default function InvoicesPage({ ctx }: Props) {
 														<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
 													</td>
 													<td>{m.email || ''}</td>
-													<td>{m.fortnox_customer_number || ''}</td>
 													<td>
 														<span className={cn(m.active && s.active)}>
 															{m.active ? 'Aktiv' : 'Inaktiv'}
 														</span>
 													</td>
-
+													<td>{m.fortnox_customer_number || ''}</td>
 													<td
 														onClick={(e) => {
 															e.stopPropagation();
@@ -419,7 +416,9 @@ export default function InvoicesPage({ ctx }: Props) {
 													>
 														{documentNumber && <a>#{documentNumber}</a>}
 													</td>
-													<td>{renderRunStatus(statusById[m.id])}</td>
+													<td>
+														{renderRunStatus(invoiceId ? { status: 'created' } : statusById[m.id])}
+													</td>
 												</tr>
 											);
 										})}
