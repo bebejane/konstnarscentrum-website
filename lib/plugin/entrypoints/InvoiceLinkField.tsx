@@ -9,7 +9,7 @@ type PropTypes = {
 	ctx: RenderFieldExtensionCtx;
 };
 
-export function InvoiceLinkField({ ctx }: PropTypes) {
+export default function InvoiceLinkField({ ctx }: PropTypes) {
 	const invoiceId = ctx.formValues?.fortnox_document_number as string | undefined;
 
 	if (!invoiceId) return null;

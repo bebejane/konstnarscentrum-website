@@ -84,8 +84,12 @@
 	.invoices {
 		padding-top: var(--spacing-xl);
 
+		.progress {
+			padding-left: var(--spacing-m);
+		}
 		.results {
 			padding: var(--spacing-m);
+			padding-top: 0;
 			margin-bottom: var(--spacing-l);
 			border-radius: 4px;
 			&.failed {

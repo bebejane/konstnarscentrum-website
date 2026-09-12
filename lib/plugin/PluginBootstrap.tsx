@@ -14,8 +14,8 @@ import ConfigScreen from '/lib/plugin/entrypoints/ConfigScreen';
 import RegionField from '/lib/plugin/entrypoints/RegionField';
 import ModelSelectorField from '/lib/plugin/entrypoints/ModelSelectorField';
 import MemberApproval from '/lib/plugin/entrypoints/MemberApproval';
-import InvoicesPage from '/lib/plugin/InvoicesPage';
-import { InvoiceLinkField } from '/lib/plugin/InvoiceLinkField';
+import InvoicesPage from '/lib/plugin/entrypoints/InvoicesPage';
+import InvoiceLinkField from '/lib/plugin/entrypoints/InvoiceLinkField';
 import { isDev } from '/lib/plugin/utils';
 
 export default function PluginBootstrap() {

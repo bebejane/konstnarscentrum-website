@@ -9,9 +9,8 @@ export const FORTNOX_CLIENT_SECRET = process.env.FORTNOX_CLIENT_SECRET;
 export const FORTNOX_REDIRECT_URI = process.env.FORTNOX_REDIRECT_URI;
 
 // Invoice defaults (hardcoded for now)
-export const FORTNOX_INVOICE_ACCOUNT = Number(process.env.FORTNOX_INVOICE_ACCOUNT ?? 0);
-export const FORTNOX_INVOICE_AMOUNT = Number(process.env.FORTNOX_INVOICE_AMOUNT ?? 0);
-export const FORTNOX_INVOICE_DUE_DAYS = Number(process.env.FORTNOX_INVOICE_DUE_DAYS ?? 30);
+export const FORTNOX_INVOICE_AMOUNT = 250;
+export const FORTNOX_INVOICE_DUE_DAYS = 30;
 
 /**
  * Comma-separated allowlist of member emails that may receive an emailed

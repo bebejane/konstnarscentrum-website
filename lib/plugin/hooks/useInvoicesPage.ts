@@ -141,6 +141,7 @@ export type UseInvoicesPage = {
 	pendingMembers: Member[];
 	loading: boolean;
 	running: boolean;
+	aborted: boolean;
 	error?: string | null;
 	results: InvoiceResult | null;
 	progress: RunProgress | null;
@@ -160,6 +161,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	const [members, setMembers] = useState<Member[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [running, setRunning] = useState(false);
+	const [aborted, setAborted] = useState(false);
 	const [error, setError] = useState<string | null>();
 	const [results, setResults] = useState<InvoiceResult | null>();
 	const [progress, setProgress] = useState<RunProgress | null>(null);
@@ -193,6 +195,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 		setError(null);
 		setResults(null);
 		setStatusById({});
+		setAborted(false);
 		setRunning(true);
 
 		const ordered = sortSwedish([...pendingMembers], 'last_name');
@@ -272,7 +275,8 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 			if (!controller.signal.aborted) setError(err?.message || String(err));
 		}
 
-		if (total > 0) setResults({ ...summary, invoiceYear });
+		if (total > 0 && !controller.signal.aborted) setResults({ ...summary, invoiceYear });
+		setAborted(controller.signal.aborted);
 		setProgress((prev) => (prev ? { ...prev, done: true, currentName: '' } : prev));
 		setRunning(false);
 		abortRef.current = null;
@@ -286,6 +290,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 		pendingMembers,
 		loading,
 		running,
+		aborted,
 		error,
 		results,
 		progress,

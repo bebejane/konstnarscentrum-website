@@ -1,10 +1,9 @@
 import s from './InvoicesPage.module.scss';
-import 'datocms-react-ui/styles.css';
 import cn from 'classnames';
 import { RenderPageCtx } from 'datocms-plugin-sdk';
 import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
-import { useInvoicesPage, sortSwedish } from './useInvoicesPage';
-import type { MemberRunState } from './useInvoicesPage';
+import { useInvoicesPage, sortSwedish } from '../hooks/useInvoicesPage';
+import type { MemberRunState } from '../hooks/useInvoicesPage';
 
 type Props = { ctx: RenderPageCtx };
 
@@ -14,6 +13,7 @@ export default function InvoicesPage({ ctx }: Props) {
 		pendingMembers,
 		loading,
 		running,
+		aborted,
 		error,
 		results,
 		progress,
@@ -72,11 +72,7 @@ export default function InvoicesPage({ ctx }: Props) {
 									disabled={running || pendingMembers.length === 0}
 									className={s.submit}
 								>
-									{running ? (
-										<Spinner />
-									) : (
-										`Skicka fakturor (${invoiceYear}): ${pendingMembers.length}`
-									)}
+									{running ? <Spinner /> : `Skicka fakturor (${invoiceYear})`}
 								</Button>
 							</ToolbarStack>
 						</Toolbar>
@@ -91,7 +87,9 @@ export default function InvoicesPage({ ctx }: Props) {
 											? `Bearbetar ${progress.processed} / ${progress.total}${
 													progress.currentName ? `: ${progress.currentName}` : ''
 												}`
-											: `Klart: ${progress.processed} / ${progress.total} bearbetade`}
+											: aborted
+												? `Avbruten: ${progress.processed} / ${progress.total} bearbetade`
+												: `Klart: ${progress.processed} / ${progress.total} bearbetade`}
 									</div>
 									<div className={s.legend}>
 										<span className={s.badgeCreated}>{progress.created} skickade</span>
@@ -108,7 +106,7 @@ export default function InvoicesPage({ ctx }: Props) {
 									<strong>Resultat ({results.invoiceYear}):</strong>
 									<ul>
 										<li>{results.created} skapade</li>
-										<li>{results.skipped} hoppade över</li>
+										<li>{results.skipped} skippade</li>
 										{results.failed > 0 && <li>{results.failed} misslyckades</li>}
 									</ul>
 									{results.errors.length > 0 && (
@@ -135,37 +133,35 @@ export default function InvoicesPage({ ctx }: Props) {
 									</thead>
 									<tbody>
 										{sortSwedish([...members], 'last_name').map((m) => {
-												const invoiceId = statusById[m.id]?.invoiceRecordId ?? m.invoice?.id;
-												const documentNumber =
-													statusById[m.id]?.documentNumber ?? m.invoice?.fortnox_document_number;
-												return (
-													<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
-														<td>
-															<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
-														</td>
-														<td>{m.email || ''}</td>
-														<td>
-															<span className={cn(m.active && s.active)}>
-																{m.active ? 'Aktiv' : 'Inaktiv'}
-															</span>
-														</td>
-														<td>{m.fortnox_customer_number || ''}</td>
-														<td
-															onClick={(e) => {
-																e.stopPropagation();
-																ctx.editItem(invoiceId);
-															}}
-														>
-															{documentNumber && <a>#{documentNumber}</a>}
-														</td>
-														<td>
-															{renderRunStatus(
-																invoiceId ? { status: 'created' } : statusById[m.id],
-															)}
-														</td>
-													</tr>
-												);
-											})}
+											const invoiceId = statusById[m.id]?.invoiceRecordId ?? m.invoice?.id;
+											const documentNumber =
+												statusById[m.id]?.documentNumber ?? m.invoice?.fortnox_document_number;
+											return (
+												<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
+													<td>
+														<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
+													</td>
+													<td>{m.email || ''}</td>
+													<td>
+														<span className={cn(m.active && s.active)}>
+															{m.active ? 'Aktiv' : 'Inaktiv'}
+														</span>
+													</td>
+													<td>{m.fortnox_customer_number || ''}</td>
+													<td
+														onClick={(e) => {
+															e.stopPropagation();
+															ctx.editItem(invoiceId);
+														}}
+													>
+														{documentNumber && <a>#{documentNumber}</a>}
+													</td>
+													<td>
+														{renderRunStatus(invoiceId ? { status: 'created' } : statusById[m.id])}
+													</td>
+												</tr>
+											);
+										})}
 									</tbody>
 								</table>
 							)}
