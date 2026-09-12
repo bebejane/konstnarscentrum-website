@@ -126,6 +126,23 @@ These are the same endpoints the DatoCMS plugin and the daily cron call. Use Bas
   curl -u konstnarscentrum:<password> http://localhost:3000/api/fortnox/sync-status
   ```
 
+- **Customer sync (DatoCMS webhook)**:
+
+  ```
+  curl -u konstnarscentrum:<password> -X POST http://localhost:3000/api/fortnox/customer-sync \
+    -H "Content-Type: application/json" \
+    -d '{"entity_type":"item","event_type":"item::create","related_entities":[{"id":"TYPE_ID","attributes":{"api_key":"member"}}],"entity":{"id":"MEMBER_ID","attributes":{"email":"bjorn@konst-teknik.se","first_name":"Björn","last_name":"Test","city":"Norrköping","region":"143685113"}}}'
+  ```
+
+  A new member (no `fortnox_customer_number`) is created in Fortnox for `ost` and
+  the returned number is written back to the DatoCMS member. Re-run the same curl
+  with the number added to confirm it updates instead of recreating. To register
+  the real webhook in the DatoCMS project: **Project settings → Webhooks**,
+  event type *Item*, events *Create* + *Update*, URL
+  `https://<site>/api/fortnox/customer-sync`, HTTP Basic Auth
+  (`BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`). Non-member events are skipped
+  with a 200.
+
 - **Member invoices API** (requires a logged-in member session):
 
   ```

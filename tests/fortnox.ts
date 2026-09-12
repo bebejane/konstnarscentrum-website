@@ -3,7 +3,12 @@ dotenv.config({ path: "./.env" });
 
 import { isInvoicePaid, isInvoicePartiallyPaid, FortnoxInvoice } from "../lib/fortnox/invoices";
 import { isEligibleForInvoiceFromRecords } from "../lib/fortnox/invoiceDispatch";
-import { memberToCustomer, sanitizeText } from "../lib/fortnox/sync";
+import {
+  memberToCustomer,
+  sanitizeText,
+  webhookEntityToMember,
+  webhookModelApiKey
+} from "../lib/fortnox/sync";
 import { isEmailAllowedToSend } from "../lib/fortnox/constants";
 import {
   canPersistTokens,
@@ -170,6 +175,57 @@ async function main() {
   if (prevEnvRefresh) process.env.FORTNOX_OST_REFRESH_TOKEN = prevEnvRefresh;
   else delete process.env.FORTNOX_OST_REFRESH_TOKEN;
   ok("tokenStore runs");
+
+  // ---------- webhookEntityToMember / webhookModelApiKey ----------
+  const itemTypeId = "itemTypeMember";
+
+  const entity = {
+    id: "Member3",
+    attributes: {
+      email: "web@example.com",
+      first_name: "Karin",
+      last_name: "Karlsson",
+      city: "Göteborg",
+      vilande: false,
+      fortnox_customer_number: "10001",
+      region: "143685113"
+    },
+    relationships: {
+      item_type: { data: { id: itemTypeId, type: "item_type" } },
+      region: { data: { id: "143685113", type: "item_type" } }
+    }
+  };
+
+  const m = webhookEntityToMember(entity as any);
+  assert("webhookEntityToMember id", m.id === "Member3");
+  assert("webhookEntityToMember email", m.email === "web@example.com");
+  assert("webhookEntityToMember first_name", m.first_name === "Karin");
+  assert("webhookEntityToMember last_name", m.last_name === "Karlsson");
+  assert("webhookEntityToMember city", m.city === "Göteborg");
+  assert("webhookEntityToMember vilande", m.vilande === false);
+  assert(
+    "webhookEntityToMember fortnox_customer_number",
+    m.fortnox_customer_number === "10001"
+  );
+  assert("webhookEntityToMember region from attributes", m.region === "143685113");
+
+  const noAttrs = webhookEntityToMember({ id: "Member4", relationships: { region: { data: { id: "143707759" } } } } as any);
+  assert("webhookEntityToMember region falls back to relationships", noAttrs.region === "143707759");
+  assert("webhookEntityToMember missing fields undefined", noAttrs.email === undefined);
+
+  const payload = {
+    entity,
+    entity_type: "item",
+    event_type: "item::create",
+    related_entities: [
+      { id: itemTypeId, type: "item_type", attributes: { api_key: "member" } },
+      { id: "x", type: "item_type", attributes: { api_key: "region" } }
+    ]
+  };
+  assert("webhookModelApiKey returns member", webhookModelApiKey(payload as any) === "member");
+  assert("webhookModelApiKey undefined without related entity", webhookModelApiKey({ entity: { id: "a" } } as any) === undefined);
+  assert("webhookModelApiKey undefined without payload", webhookModelApiKey({} as any) === undefined);
+  ok("webhook entity helpers run");
 
   // ---------- report ----------
   results.forEach(r => {

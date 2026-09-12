@@ -128,3 +128,53 @@ export const getAllMembers = async (regionId?: string): Promise<MemberItem[]> =>
 	}
 	return members;
 };
+
+export type DatoWebhookEntity = {
+	id: string;
+	type?: string;
+	attributes?: Record<string, any>;
+	relationships?: Record<string, { data?: { id?: string; type?: string } }>;
+};
+
+export type DatoWebhookPayload = {
+	event_type?: string;
+	entity_type?: string;
+	entity?: DatoWebhookEntity;
+	related_entities?: Array<{ id?: string; attributes?: { api_key?: string } }>;
+};
+
+/**
+ * The model `api_key` (e.g. 'member') of the entity in a DatoCMS webhook
+ * payload. Mirrors the lookup `withRevalidate` does: find the item_type in
+ * `related_entities` whose id matches `entity.relationships.item_type`.
+ */
+export const webhookModelApiKey = (payload: DatoWebhookPayload): string | undefined => {
+	const itemTypeId = payload?.entity?.relationships?.item_type?.data?.id;
+	if (!itemTypeId) return undefined;
+	return payload?.related_entities?.find(({ id }) => id === itemTypeId)?.attributes?.api_key;
+};
+
+/**
+ * Build a `MemberItem` from a DatoCMS webhook `entity` so the payload can be
+ * fed straight into `syncMemberToFortKnox`. Field values live in
+ * `entity.attributes`; single-link fields (region) are the record id there,
+ * with `entity.relationships` as a fallback.
+ */
+export const webhookEntityToMember = (entity: DatoWebhookEntity): MemberItem => {
+	const attrs = entity.attributes ?? {};
+	const region =
+		(typeof attrs.region === 'string' && attrs.region) ||
+		attrs.region?.id ||
+		entity.relationships?.region?.data?.id;
+	return {
+		id: entity.id,
+		email: attrs.email,
+		first_name: attrs.first_name,
+		last_name: attrs.last_name,
+		city: attrs.city,
+		active: attrs.active,
+		vilande: attrs.vilande,
+		fortnox_customer_number: attrs.fortnox_customer_number,
+		region,
+	};
+};
