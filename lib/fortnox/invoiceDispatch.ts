@@ -155,6 +155,7 @@ export const createAnnualInvoiceForMember = async (
 				Description: `Medlemsavgift ${invoiceYear}`,
 				Price: FORTNOX_INVOICE_AMOUNT,
 				DeliveredQuantity: 1,
+				VATCode: 'MF',
 			},
 		],
 	});

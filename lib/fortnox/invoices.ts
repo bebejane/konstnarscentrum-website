@@ -26,6 +26,7 @@ export type CreateInvoiceInput = {
     Price: number
     DeliveredQuantity: number
     AccountNumber?: number
+    VATCode?: string
   }[]
 }
 
