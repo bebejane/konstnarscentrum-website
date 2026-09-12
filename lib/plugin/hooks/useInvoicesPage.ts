@@ -152,6 +152,7 @@ export type UseInvoicesPage = {
 	submit: () => Promise<void>;
 	abort: () => void;
 	dismissError: () => void;
+	refresh: () => void;
 };
 
 export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
@@ -172,7 +173,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	const pendingMembers = members.filter((m) => !m.invoice);
 	const percent = progress ? (progress.processed / Math.max(progress.total, 1)) * 100 : 0;
 
-	useEffect(() => {
+	const refresh = async () => {
 		setLoading(true);
 		fetch(`/api/fortnox/plugin/invoices?role=${encodeURIComponent(roleName)}`, {
 			headers: basicAuthHeaders(ctx),
@@ -187,6 +188,10 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 			.then((data) => setMembers(data.members))
 			.catch((err) => setError(err.message || String(err)))
 			.finally(() => setLoading(false));
+	};
+
+	useEffect(() => {
+		refresh();
 	}, [ctx]);
 
 	useEffect(() => {
@@ -306,5 +311,6 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 		submit,
 		abort,
 		dismissError,
+		refresh,
 	};
 }

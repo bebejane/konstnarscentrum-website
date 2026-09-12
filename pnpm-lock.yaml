@@ -188,6 +188,9 @@ importers:
       react-hook-form:
         specifier: ^7.15.4
         version: 7.65.0(react@18.3.1)
+      react-icons:
+        specifier: 5.3.0
+        version: 5.3.0(react@18.3.1)
       react-intersection-observer:
         specifier: ^9.4.0
         version: 9.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6297,6 +6300,11 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-icons@5.3.0:
+    resolution: {integrity: sha512-DnUk8aFbTyQPSkCfF8dbX6kQjXA9DktMeJqfjrg6cK9vwQVMxmcA3BfP4QoiztVmEHtwlTgLFsPuH2NskKT6eg==}
+    peerDependencies:
+      react: '*'
 
   react-intersection-observer@8.34.0:
     resolution: {integrity: sha512-TYKh52Zc0Uptp5/b4N91XydfSGKubEhgZRtcg1rhTKABXijc4Sdr1uTp5lJ8TN27jwUsdXxjHXtHa0kPj704sw==}
@@ -15463,6 +15471,10 @@ snapshots:
       tslib: 2.8.1
 
   react-hook-form@7.65.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
+  react-icons@5.3.0(react@18.3.1):
     dependencies:
       react: 18.3.1
 

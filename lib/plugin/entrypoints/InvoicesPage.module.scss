@@ -7,6 +7,13 @@
 		cursor: pointer;
 	}
 
+	button {
+		margin-left: var(--spacing-s);
+	}
+	.refresh {
+		color: #fff;
+	}
+
 	.progress {
 		margin-bottom: var(--spacing-l);
 
@@ -90,9 +97,7 @@
 				list-style: none;
 			}
 		}
-		.submit {
-			margin-bottom: var(--spacing-l);
-		}
+
 		table {
 			width: 100%;
 
@@ -110,6 +115,7 @@
 				padding: var(--spacing-s);
 				padding-left: var(--spacing-m);
 				height: 2.5rem;
+				vertical-align: middle;
 			}
 
 			td span {
@@ -133,5 +139,5 @@
 	align-items: center;
 	justify-content: center;
 	padding: var(--spacing-m);
-	line-height: 2.5;
+	line-height: 3.5;
 }

@@ -4,6 +4,7 @@ import { RenderPageCtx } from 'datocms-plugin-sdk';
 import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
 import { useInvoicesPage, sortSwedish } from '../hooks/useInvoicesPage';
 import type { MemberRunState } from '../hooks/useInvoicesPage';
+import { IoRefreshOutline } from 'react-icons/io5';
 
 type Props = { ctx: RenderPageCtx };
 
@@ -22,6 +23,7 @@ export default function InvoicesPage({ ctx }: Props) {
 		region,
 		submit,
 		abort,
+		refresh,
 	} = useInvoicesPage(ctx);
 
 	const renderRunStatus = (state?: MemberRunState) => {
@@ -55,8 +57,19 @@ export default function InvoicesPage({ ctx }: Props) {
 						<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
 							<ToolbarTitle>Fakturera: {region?.name}</ToolbarTitle>
 							<div style={{ flex: '1' }} />
+							{!running && (
+								<Button
+									buttonType='primary'
+									onClick={refresh}
+									type='button'
+									disabled={running || pendingMembers.length === 0}
+									className={s.refresh}
+									leftIcon={<IoRefreshOutline color='#fff' size={18} />}
+								/>
+							)}
+
 							{running && (
-								<Button buttonType='muted' onClick={abort} style={{ marginRight: 8 }}>
+								<Button buttonType='muted' onClick={abort}>
 									Avbryt
 								</Button>
 							)}
@@ -113,15 +126,16 @@ export default function InvoicesPage({ ctx }: Props) {
 							</div>
 						)}
 
-						{members.length > 0 && (
+						{members.length > 0 && !loading && (
 							<table>
 								<thead>
 									<tr>
 										<th>Namn</th>
 										<th>E-post</th>
-										<th>Status</th>
-										<th>Kundnr.</th>
-										<th>Fakturanr.</th>
+
+										<th>Kund nr.</th>
+										<th>Faktura nr.</th>
+										<th>Betalningsstatus</th>
 										<th></th>
 									</tr>
 								</thead>
@@ -136,11 +150,7 @@ export default function InvoicesPage({ ctx }: Props) {
 													<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
 												</td>
 												<td>{m.email || ''}</td>
-												<td>
-													<span className={cn(m.active && s.active)}>
-														{m.active ? 'Aktiv' : 'Inaktiv'}
-													</span>
-												</td>
+
 												<td>{m.fortnox_customer_number || ''}</td>
 												<td
 													onClick={(e) => {
@@ -150,6 +160,7 @@ export default function InvoicesPage({ ctx }: Props) {
 												>
 													{documentNumber && <a>#{documentNumber}</a>}
 												</td>
+												<td>{m.invoice?.payment_status || ''}</td>
 												<td>
 													{renderRunStatus(invoiceId ? { status: 'created' } : statusById[m.id])}
 												</td>
