@@ -55,12 +55,16 @@
 	}
 	.badgeCreated,
 	.badgeSkipped,
-	.badgeFailed {
+	.badgeFailed,
+	.badgePlaceholder {
 		display: inline-block;
 		padding: 2px 6px 2px 6px;
 		border-radius: 0px;
 		font-size: var(--font-size-s);
 		white-space: nowrap;
+	}
+	.badgePlaceholder {
+		opacity: 0;
 	}
 	.badgeCreated {
 		background: var(--color--success-soft--surface);

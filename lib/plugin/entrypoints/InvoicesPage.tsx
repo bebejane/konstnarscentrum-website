@@ -27,7 +27,8 @@ export default function InvoicesPage({ ctx }: Props) {
 	} = useInvoicesPage(ctx);
 
 	const renderRunStatus = (state?: MemberRunState) => {
-		if (!state) return '';
+		if (!state) return <span className={s.badgePlaceholder}>&nbsp;</span>;
+
 		const label =
 			state.status === 'created' ? 'Skickad' : state.status === 'skipped' ? 'Skippad' : 'Fel';
 		const className =
