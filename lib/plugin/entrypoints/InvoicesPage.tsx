@@ -14,7 +14,6 @@ export default function InvoicesPage({ ctx }: Props) {
 		loading,
 		running,
 		aborted,
-		error,
 		results,
 		progress,
 		statusById,
@@ -23,7 +22,6 @@ export default function InvoicesPage({ ctx }: Props) {
 		region,
 		submit,
 		abort,
-		dismissError,
 	} = useInvoicesPage(ctx);
 
 	const renderRunStatus = (state?: MemberRunState) => {
