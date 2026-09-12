@@ -83,7 +83,7 @@ export default function PluginBootstrap() {
 
 				return [
 					{
-						label: 'Fakturera',
+						label: 'Fakturera' + (isDev ? ' (dev)' : ''),
 						icon: 'file-lines',
 						pointsTo: { pageId: 'invoices' },
 						placement: ['after', 'menuItems'],
