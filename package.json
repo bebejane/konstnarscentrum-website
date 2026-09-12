@@ -24,6 +24,7 @@
 		"test": "tsx --tsconfig ./tsconfig.node.json ./tests/test.ts",
 		"test:emails": "tsx --tsconfig ./tsconfig.node.json ./tests/emails.tsx",
 		"test:fortnox": "tsx --tsconfig ./tsconfig.node.json ./tests/fortnox.ts",
+		"test:webpaths": "tsx --tsconfig ./tsconfig.node.json ./tests/web-paths.ts",
 		"testfortnox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/test-fortnox.ts",
 		"testroundtrip": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/test-invoice-roundtrip.ts",
 		"deleteinvoices": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/delete-invoices.ts"
