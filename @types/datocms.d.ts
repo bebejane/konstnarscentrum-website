@@ -126,98 +126,6 @@ type AboutRecordintroArgs = {
   markdown?: InputMaybe<Scalars['Boolean']>;
 };
 
-type ActivityModelFilter = {
-  AND?: InputMaybe<Array<InputMaybe<ActivityModelFilter>>>;
-  OR?: InputMaybe<Array<InputMaybe<ActivityModelFilter>>>;
-  _createdAt?: InputMaybe<CreatedAtFilter>;
-  _firstPublishedAt?: InputMaybe<PublishedAtFilter>;
-  _isValid?: InputMaybe<BooleanFilter>;
-  _publicationScheduledAt?: InputMaybe<PublishedAtFilter>;
-  _publishedAt?: InputMaybe<PublishedAtFilter>;
-  _status?: InputMaybe<StatusFilter>;
-  _unpublishingScheduledAt?: InputMaybe<PublishedAtFilter>;
-  _updatedAt?: InputMaybe<UpdatedAtFilter>;
-  createdAt?: InputMaybe<CreatedAtFilter>;
-  id?: InputMaybe<ItemIdFilter>;
-  image?: InputMaybe<FileFilter>;
-  intro?: InputMaybe<TextFilter>;
-  slug?: InputMaybe<SlugFilter>;
-  title?: InputMaybe<StringFilter>;
-  updatedAt?: InputMaybe<UpdatedAtFilter>;
-  var?: InputMaybe<StringFilter>;
-  when?: InputMaybe<DateFilter>;
-};
-
-enum ActivityModelOrderBy {
-  _createdAt_ASC = '_createdAt_ASC',
-  _createdAt_DESC = '_createdAt_DESC',
-  _firstPublishedAt_ASC = '_firstPublishedAt_ASC',
-  _firstPublishedAt_DESC = '_firstPublishedAt_DESC',
-  _isValid_ASC = '_isValid_ASC',
-  _isValid_DESC = '_isValid_DESC',
-  _publicationScheduledAt_ASC = '_publicationScheduledAt_ASC',
-  _publicationScheduledAt_DESC = '_publicationScheduledAt_DESC',
-  _publishedAt_ASC = '_publishedAt_ASC',
-  _publishedAt_DESC = '_publishedAt_DESC',
-  _status_ASC = '_status_ASC',
-  _status_DESC = '_status_DESC',
-  _unpublishingScheduledAt_ASC = '_unpublishingScheduledAt_ASC',
-  _unpublishingScheduledAt_DESC = '_unpublishingScheduledAt_DESC',
-  _updatedAt_ASC = '_updatedAt_ASC',
-  _updatedAt_DESC = '_updatedAt_DESC',
-  createdAt_ASC = 'createdAt_ASC',
-  createdAt_DESC = 'createdAt_DESC',
-  id_ASC = 'id_ASC',
-  id_DESC = 'id_DESC',
-  title_ASC = 'title_ASC',
-  title_DESC = 'title_DESC',
-  updatedAt_ASC = 'updatedAt_ASC',
-  updatedAt_DESC = 'updatedAt_DESC',
-  var_ASC = 'var_ASC',
-  var_DESC = 'var_DESC',
-  when_ASC = 'when_ASC',
-  when_DESC = 'when_DESC'
-}
-
-/** Record of type Aktivitet (activity) */
-type ActivityRecord = RecordInterface & {
-  __typename?: 'ActivityRecord';
-  _createdAt: Scalars['DateTime'];
-  /** Editing URL */
-  _editingUrl?: Maybe<Scalars['String']>;
-  _firstPublishedAt: Scalars['DateTime'];
-  _isValid: Scalars['BooleanType'];
-  _modelApiKey: Scalars['String'];
-  _publicationScheduledAt?: Maybe<Scalars['DateTime']>;
-  _publishedAt: Scalars['DateTime'];
-  /** Generates SEO and Social card meta tags to be used in your frontend */
-  _seoMetaTags: Array<Tag>;
-  _status: ItemStatus;
-  _unpublishingScheduledAt?: Maybe<Scalars['DateTime']>;
-  _updatedAt: Scalars['DateTime'];
-  createdAt: Scalars['DateTime'];
-  id: Scalars['ItemId'];
-  image: FileField;
-  intro: Scalars['String'];
-  slug: Scalars['String'];
-  title: Scalars['String'];
-  updatedAt: Scalars['DateTime'];
-  var: Scalars['String'];
-  when: Scalars['Date'];
-};
-
-
-/** Record of type Aktivitet (activity) */
-type ActivityRecord_seoMetaTagsArgs = {
-  locale?: InputMaybe<SiteLocale>;
-};
-
-
-/** Record of type Aktivitet (activity) */
-type ActivityRecordintroArgs = {
-  markdown?: InputMaybe<Scalars['Boolean']>;
-};
-
 type ApplicationModelFilter = {
   AND?: InputMaybe<Array<InputMaybe<ApplicationModelFilter>>>;
   OR?: InputMaybe<Array<InputMaybe<ApplicationModelFilter>>>;
@@ -4527,8 +4435,6 @@ type Query = {
   /** Returns meta information regarding a record collection */
   _allAboutsMeta: CollectionMetadata;
   /** Returns meta information regarding a record collection */
-  _allActivitiesMeta: CollectionMetadata;
-  /** Returns meta information regarding a record collection */
   _allApplicationsMeta: CollectionMetadata;
   /** Returns meta information regarding a record collection */
   _allBoardsMeta: CollectionMetadata;
@@ -4568,12 +4474,8 @@ type Query = {
   _site: Site;
   /** Returns a specific record */
   about?: Maybe<AboutRecord>;
-  /** Returns a specific record */
-  activity?: Maybe<ActivityRecord>;
   /** Returns a collection of records */
   allAbouts: Array<AboutRecord>;
-  /** Returns a collection of records */
-  allActivities: Array<ActivityRecord>;
   /** Returns a collection of records */
   allApplications: Array<ApplicationRecord>;
   /** Returns a collection of records */
@@ -4665,14 +4567,6 @@ type Query = {
 type Query_allAboutsMetaArgs = {
   fallbackLocales?: InputMaybe<Array<SiteLocale>>;
   filter?: InputMaybe<AboutModelFilter>;
-  locale?: InputMaybe<SiteLocale>;
-};
-
-
-/** The query root for this schema */
-type Query_allActivitiesMetaArgs = {
-  fallbackLocales?: InputMaybe<Array<SiteLocale>>;
-  filter?: InputMaybe<ActivityModelFilter>;
   locale?: InputMaybe<SiteLocale>;
 };
 
@@ -4837,32 +4731,12 @@ type QueryaboutArgs = {
 
 
 /** The query root for this schema */
-type QueryactivityArgs = {
-  fallbackLocales?: InputMaybe<Array<SiteLocale>>;
-  filter?: InputMaybe<ActivityModelFilter>;
-  locale?: InputMaybe<SiteLocale>;
-  orderBy?: InputMaybe<Array<InputMaybe<ActivityModelOrderBy>>>;
-};
-
-
-/** The query root for this schema */
 type QueryallAboutsArgs = {
   fallbackLocales?: InputMaybe<Array<SiteLocale>>;
   filter?: InputMaybe<AboutModelFilter>;
   first?: InputMaybe<Scalars['IntType']>;
   locale?: InputMaybe<SiteLocale>;
   orderBy?: InputMaybe<Array<InputMaybe<AboutModelOrderBy>>>;
-  skip?: InputMaybe<Scalars['IntType']>;
-};
-
-
-/** The query root for this schema */
-type QueryallActivitiesArgs = {
-  fallbackLocales?: InputMaybe<Array<SiteLocale>>;
-  filter?: InputMaybe<ActivityModelFilter>;
-  first?: InputMaybe<Scalars['IntType']>;
-  locale?: InputMaybe<SiteLocale>;
-  orderBy?: InputMaybe<Array<InputMaybe<ActivityModelOrderBy>>>;
   skip?: InputMaybe<Scalars['IntType']>;
 };
 

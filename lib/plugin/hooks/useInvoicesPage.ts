@@ -162,8 +162,8 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	const [loading, setLoading] = useState(true);
 	const [running, setRunning] = useState(false);
 	const [aborted, setAborted] = useState(false);
-	const [error, setError] = useState<string | null>();
-	const [results, setResults] = useState<InvoiceResult | null>();
+	const [error, setError] = useState<string | null>(null);
+	const [results, setResults] = useState<InvoiceResult | null>(null);
 	const [progress, setProgress] = useState<RunProgress | null>(null);
 	const [statusById, setStatusById] = useState<Record<string, MemberRunState>>({});
 	const abortRef = useRef<AbortController | null>(null);
@@ -188,6 +188,11 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 			.catch((err) => setError(err.message || String(err)))
 			.finally(() => setLoading(false));
 	}, [ctx]);
+
+	useEffect(() => {
+		if (!error) return;
+		ctx.alert(error);
+	}, [error]);
 
 	const submit = async () => {
 		if (running) return;
