@@ -6,13 +6,14 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 
 export type InvoiceRow = {
-	id: string;
-	documentNumber: string | null;
-	invoiceYear: number | null;
-	paymentStatus: string | null;
-	paymentDate: string | null;
-	total: number | null;
-	region: string | null;
+  id: string;
+  documentNumber: string | null;
+  invoiceYear: number | null;
+  paymentStatus: string | null;
+  paymentDate: string | null;
+  dueDate: string | null;
+  total: number | null;
+  region: string | null;
 };
 
 export type Props = {
@@ -67,7 +68,7 @@ export default function Fakturor({ invoices, customerNumber }: Props) {
 							<tr key={inv.id}>
 								<td>{inv.documentNumber ?? '-'}</td>
 								<td>{inv.invoiceYear ?? '-'}</td>
-								<td>{inv.paymentDate ? format(parseISO(inv.paymentDate), 'yyyy-MM-dd') : '-'}</td>
+								<td>{inv.dueDate ? format(parseISO(inv.dueDate), 'yyyy-MM-dd') : '-'}</td>
 								<td>{inv.total != null ? `${inv.total.toFixed(2)} kr` : '-'}</td>
 								<td>
 									{statusLabel(inv.paymentStatus) === 'betald' ? (
@@ -141,6 +142,7 @@ export const getServerSideProps = requireAuthentication(async ({ props }: any, s
 		invoiceYear: inv.invoice_year ?? null,
 		paymentStatus: inv.payment_status ?? null,
 		paymentDate: parseDate(inv.payment_date),
+		dueDate: parseDate(inv.due_date),
 		total: typeof inv.total === 'number' ? inv.total : null,
 		region: inv.region ?? null,
 	}));

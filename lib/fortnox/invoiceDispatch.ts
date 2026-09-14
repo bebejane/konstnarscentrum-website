@@ -35,6 +35,7 @@ export type InvoiceRecord = {
 	fortnox_document_number?: string;
 	payment_status?: string;
 	payment_date?: string | null;
+	due_date?: string | null;
 	invoice_year?: number;
 	total?: number;
 	fortnox_customer_number?: string;
@@ -66,7 +67,10 @@ export const getYearlyInvoicesByMember = async (
 	regionSlug?: string,
 ): Promise<Record<string, InvoiceRecord>> => {
 	const fields: Record<string, unknown> = { invoice_year: { eq: invoiceYear } };
-	if (regionSlug) fields.region = { eq: regionSlug };
+	if (regionSlug) {
+		const region = regions.find((r) => r.slug === regionSlug);
+		if (region) fields.region = { eq: region.id };
+	}
 
 	const byMember: Record<string, InvoiceRecord> = {};
 	for await (const record of client.items.listPagedIterator({
@@ -176,10 +180,11 @@ export const createAnnualInvoiceForMember = async (
 			fortnox_document_number: String(invoice.DocumentNumber),
 			payment_status: invoice.Status ?? 'UNPAID',
 			payment_date: null,
+			due_date: invoice.DueDate ?? null,
 			invoice_year: invoiceYear,
 			total: typeof invoice.Total === 'number' ? invoice.Total : 0,
 			fortnox_customer_number: member.fortnox_customer_number,
-			region: region.slug,
+			region: region.id,
 			member: member.id,
 		} as any),
 	});
@@ -206,7 +211,7 @@ export const syncMemberInvoicePaymentStatus = async (
 
 	for (const rec of invoices) {
 		const docNumber = rec.fortnox_document_number;
-		const recRegion = rec.region ?? region.slug;
+		const recRegion = regions.find((r) => r.id === rec.region)?.slug ?? region.slug;
 		if (!docNumber) continue;
 
 		try {
@@ -220,12 +225,14 @@ export const syncMemberInvoicePaymentStatus = async (
 			const changes: Record<string, unknown> = {
 				payment_status,
 				total: typeof invoice.Total === 'number' ? invoice.Total : (rec.total ?? 0),
+				due_date: invoice.DueDate ?? rec.due_date ?? null,
 			};
 			if (payment_date) changes.payment_date = payment_date;
 
 			const needsUpdate =
 				rec.payment_status !== changes.payment_status ||
-				(payment_date && rec.payment_date !== payment_date);
+				(payment_date && rec.payment_date !== payment_date) ||
+				rec.due_date !== changes.due_date;
 
 			if (needsUpdate) {
 				await client.items.update(rec.id, changes as any);
