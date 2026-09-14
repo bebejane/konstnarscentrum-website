@@ -5,6 +5,7 @@ declare module '*/about.gql' {
   export const About: DocumentNode;
 export const AllAbouts: DocumentNode;
 export const AllAboutsMenu: DocumentNode;
+export const AboutFragment: DocumentNode;
 
   export default defaultDocument;
 }
@@ -19,6 +20,8 @@ export const AllCommissionsMenu: DocumentNode;
 export const AllCommissionCategories: DocumentNode;
 export const LatestCommissions: DocumentNode;
 export const RelatedCommissions: DocumentNode;
+export const CommissionFragment: DocumentNode;
+export const CommissionLightFragment: DocumentNode;
 
   export default defaultDocument;
 }
@@ -31,6 +34,8 @@ declare module '*/consult.gql' {
 export const AllConsults: DocumentNode;
 export const AllConsultsMenu: DocumentNode;
 export const AllConsultants: DocumentNode;
+export const ConsultFragment: DocumentNode;
+export const ConsultLightFragment: DocumentNode;
 
   export default defaultDocument;
 }
@@ -74,51 +79,6 @@ export const ForArtist: DocumentNode;
 }
     
 
-declare module '*/AboutFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const AboutFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/CommissionFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const CommissionFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/CommissionLightFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const CommissionLightFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/ConsultFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const ConsultFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/ConsultLightFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const ConsultLightFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
 declare module '*/ImageFragment.gql' {
   import { DocumentNode } from 'graphql';
   const defaultDocument: DocumentNode;
@@ -141,78 +101,6 @@ declare module '*/ImageThumbnailFragment.gql' {
   import { DocumentNode } from 'graphql';
   const defaultDocument: DocumentNode;
   export const ImageThumbnailFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/MediaGalleryFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const MediaGalleryFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/MemberFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const MemberFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/MemberLightFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const MemberLightFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/MemberNewsFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const MemberNewsFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/MemberNewsLightFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const MemberNewsLightFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/NewsFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const NewsFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/ProjectFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const ProjectFragment: DocumentNode;
-
-  export default defaultDocument;
-}
-    
-
-declare module '*/RegionFragment.gql' {
-  import { DocumentNode } from 'graphql';
-  const defaultDocument: DocumentNode;
-  export const RegionFragment: DocumentNode;
 
   export default defaultDocument;
 }
@@ -267,6 +155,11 @@ export const AllMemberNewsCategories: DocumentNode;
 export const LatestMemberNews: DocumentNode;
 export const RelatedMembers: DocumentNode;
 export const MembersList: DocumentNode;
+export const MediaGalleryFragment: DocumentNode;
+export const MemberFragment: DocumentNode;
+export const MemberLightFragment: DocumentNode;
+export const MemberNewsFragment: DocumentNode;
+export const MemberNewsLightFragment: DocumentNode;
 
   export default defaultDocument;
 }
@@ -278,6 +171,7 @@ declare module '*/news.gql' {
   export const AllNews: DocumentNode;
 export const News: DocumentNode;
 export const LatestNews: DocumentNode;
+export const NewsFragment: DocumentNode;
 
   export default defaultDocument;
 }
@@ -289,6 +183,7 @@ declare module '*/project.gql' {
   export const AllProjects: DocumentNode;
 export const ProjectsIntro: DocumentNode;
 export const LatestProjects: DocumentNode;
+export const ProjectFragment: DocumentNode;
 
   export default defaultDocument;
 }
@@ -299,6 +194,7 @@ declare module '*/region.gql' {
   const defaultDocument: DocumentNode;
   export const Region: DocumentNode;
 export const RegionMeta: DocumentNode;
+export const RegionFragment: DocumentNode;
 
   export default defaultDocument;
 }

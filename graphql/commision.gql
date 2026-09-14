@@ -1,6 +1,3 @@
-#import "./fragments/CommissionFragment.gql"
-#import "./fragments/CommissionLightFragment.gql"
-
 query Commission($slug: String!) {
 	commission(filter: { slug: { eq: $slug } }) {
 		...CommissionFragment
@@ -58,5 +55,86 @@ query RelatedCommissions(
 		skip: $skip
 	) {
 		...CommissionLightFragment
+	}
+}
+
+fragment CommissionFragment on CommissionRecord {
+	__typename
+	_modelApiKey
+	id
+	title
+	intro
+	slug
+	city
+	year
+	artist
+	consultant
+	work
+	commissioner
+	blackHeadline
+	image {
+		...ImageFragment
+	}
+	category {
+		id
+		title
+	}
+	content {
+		... on ImageRecord {
+			__typename
+			id
+			image {
+				...ImageFragment
+			}
+		}
+		... on VideoRecord {
+			__typename
+			id
+			title
+			video {
+				height
+				width
+				title
+				provider
+				providerUid
+				thumbnailUrl
+				url
+			}
+		}
+		... on RecordInterface {
+			__typename
+			id
+		}
+	}
+	region {
+		...RegionFragment
+	}
+	_seoMetaTags {
+		attributes
+		content
+		tag
+	}
+}
+
+fragment CommissionLightFragment on CommissionRecord {
+	__typename
+	_modelApiKey
+	id
+	title
+	slug
+	city
+	year
+	artist
+	consultant
+	blackHeadline
+	image {
+		...ImageThumbnailFragment
+	}
+	category {
+		id
+		title
+	}
+	region {
+		...RegionFragment
 	}
 }

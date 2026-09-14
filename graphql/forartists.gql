@@ -1,6 +1,3 @@
-#import "./fragment/ImageFragment.gql"
-#import "./fragment/ImageThumbnailFragment.gql"
-
 fragment ForArtistFragment on ForArtistRecord {
 	id
 	createdAt
