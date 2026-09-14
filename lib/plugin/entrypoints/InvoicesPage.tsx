@@ -4,7 +4,6 @@ import { RenderPageCtx } from 'datocms-plugin-sdk';
 import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
 import { useInvoicesPage, sortSwedish } from '../hooks/useInvoicesPage';
 import type { MemberRunState } from '../hooks/useInvoicesPage';
-import { IoRefreshOutline } from 'react-icons/io5';
 
 type Props = { ctx: RenderPageCtx };
 
@@ -23,7 +22,6 @@ export default function InvoicesPage({ ctx }: Props) {
 		region,
 		submit,
 		abort,
-		refresh,
 	} = useInvoicesPage(ctx);
 
 	const renderRunStatus = (state?: MemberRunState) => {
@@ -57,17 +55,6 @@ export default function InvoicesPage({ ctx }: Props) {
 						<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
 							<ToolbarTitle>Fakturera: {region?.name}</ToolbarTitle>
 							<div style={{ flex: '1' }} />
-							{/* {!running && (
-								<Button
-									buttonType='primary'
-									onClick={refresh}
-									type='button'
-									disabled={running || pendingMembers.length === 0}
-									className={s.refresh}
-									leftIcon={<IoRefreshOutline color='#fff' size={18} />}
-								/>
-							)} */}
-
 							{running && (
 								<Button buttonType='muted' onClick={abort}>
 									Avbryt
