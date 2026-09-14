@@ -51,21 +51,21 @@ export default function PluginBootstrap() {
 						fieldTypes: ['string'],
 						configurable: false,
 					},
-					// {
-					// 	id: 'invoice-link',
-					// 	name: 'Fortnox Invoice Link',
-					// 	type: 'addon' as const,
-					// 	fieldTypes: ['string'],
-					// },
+					{
+						id: 'invoice-link',
+						name: 'Fortnox Invoice Link',
+						type: 'addon' as const,
+						fieldTypes: ['string'],
+					},
 				];
 			},
-			// overrideFieldExtensions(field) {
-			// 	if (field.attributes.api_key === 'fortnox_document_number') {
-			// 		return {
-			// 			addons: [{ id: 'invoice-link' }],
-			// 		};
-			// 	}
-			// },
+			overrideFieldExtensions(field) {
+				if (field.attributes.api_key === 'fortnox_document_number') {
+					return {
+						addons: [{ id: 'invoice-link' }],
+					};
+				}
+			},
 			renderFieldExtension(fieldExtensionId: string, ctx: RenderFieldExtensionCtx) {
 				switch (fieldExtensionId) {
 					case 'region-field':
@@ -74,8 +74,8 @@ export default function PluginBootstrap() {
 						return ctx.itemStatus === 'published' ? render(<MemberApproval ctx={ctx} />) : null;
 					case 'model-selector':
 						return render(<ModelSelectorField ctx={ctx} />);
-					// case 'invoice-link':
-					// 	return render(<InvoiceLinkField ctx={ctx} />);
+					case 'invoice-link':
+						return render(<InvoiceLinkField ctx={ctx} />);
 				}
 			},
 			contentAreaSidebarItems(ctx: ContentAreaSidebarItemsCtx) {

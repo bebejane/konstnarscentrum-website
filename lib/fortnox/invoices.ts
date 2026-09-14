@@ -1,4 +1,6 @@
 import { fortnoxFetch } from './client'
+import { FORTNOX_API_BASE } from './constants'
+import { getAccessToken } from './auth'
 
 export type FortnoxInvoice = {
   DocumentNumber: string
@@ -61,6 +63,34 @@ export const sendInvoiceAsEPrint = async (regionSlug: string, documentNumber: st
 export const getInvoice = async (regionSlug: string, documentNumber: string): Promise<FortnoxInvoice> => {
   const res = await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}`)
   return res?.Invoice
+}
+
+/**
+ * Fetch the invoice PDF (printout) from Fortnox. Returns the raw PDF bytes.
+ */
+export const getInvoicePdf = async (
+  regionSlug: string,
+  documentNumber: string
+): Promise<ArrayBuffer> => {
+  const accessToken = await getAccessToken(regionSlug)
+  const url = `${FORTNOX_API_BASE}/invoices/${encodeURIComponent(documentNumber)}/print`
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+
+  if (!res.ok) {
+    let detail = ''
+    try {
+      const errBody = await res.json()
+      detail = errBody?.ErrorInformation?.Message ?? JSON.stringify(errBody)
+    } catch {
+      detail = await res.text()
+    }
+    throw new Error(`Fortnox PDF fetch failed (${res.status}): ${detail}`)
+  }
+
+  return res.arrayBuffer()
 }
 
 export const listInvoicesForCustomer = async (

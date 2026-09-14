@@ -1,9 +1,9 @@
 'use client';
 
-import { Canvas } from 'datocms-react-ui';
+import { useState } from 'react';
+import { Button, Canvas } from 'datocms-react-ui';
 import { RenderFieldExtensionCtx } from 'datocms-plugin-sdk';
 import { regionFromRoleName } from '/lib/plugin/utils';
-import { getFortnoxInvoiceUrl } from '/lib/fortnox/constants';
 
 type PropTypes = {
 	ctx: RenderFieldExtensionCtx;
@@ -11,18 +11,54 @@ type PropTypes = {
 
 export default function InvoiceLinkField({ ctx }: PropTypes) {
 	const invoiceId = ctx.formValues?.fortnox_document_number as string | undefined;
+	const [downloading, setDownloading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	if (!invoiceId) return null;
 	const region = regionFromRoleName(ctx.currentRole.attributes.name.toLowerCase());
-
 	if (!region) return null;
-	const href = getFortnoxInvoiceUrl(invoiceId, region.slug);
+
+	const download = async () => {
+		setDownloading(true);
+		setError(null);
+		try {
+			const { basicAuthUsername, basicAuthPassword } = ctx.plugin.attributes.parameters;
+			const res = await fetch(
+				`/api/fortnox/invoice-pdf?documentNumber=${encodeURIComponent(invoiceId)}&region=${encodeURIComponent(region.slug)}`,
+				{
+					headers: {
+						Authorization: `Basic ${btoa(`${basicAuthUsername}:${basicAuthPassword}`)}`,
+					},
+				},
+			);
+
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.error || `HTTP ${res.status}`);
+			}
+
+			const blob = await res.blob();
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `faktura-${invoiceId}.pdf`;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			URL.revokeObjectURL(url);
+		} catch (err: any) {
+			setError(err?.message ?? String(err));
+		} finally {
+			setDownloading(false);
+		}
+	};
 
 	return (
 		<Canvas ctx={ctx}>
-			<a href={href} target='_blank' rel='noopener noreferrer'>
-				Open in Fortnox ↗
-			</a>
+			<Button fullWidth buttonType='muted' disabled={downloading} onClick={download}>
+				{downloading ? 'Genererar...' : 'Fortnox faktura (PDF)'}
+			</Button>
+			{error && <p style={{ color: 'red', marginTop: 8 }}>{error}</p>}
 		</Canvas>
 	);
 }
