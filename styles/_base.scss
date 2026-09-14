@@ -46,7 +46,9 @@ body {
 	-webkit-font-smoothing: antialiased;
 	font-feature-settings: 'liga', 'kern';
 	overflow-x: hidden;
-	transition: color 0.5s ease-in-out, background-color 0.5s ease-in-out;
+	transition:
+		color 0.5s ease-in-out,
+		background-color 0.5s ease-in-out;
 }
 
 html {
@@ -133,11 +135,16 @@ button {
 	-webkit-box-sizing: border-box;
 	cursor: pointer;
 
-	transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+	transition:
+		color 0.3s ease-in-out,
+		background-color 0.3s ease-in-out;
 
 	&:hover {
 		background-color: var(--foreground);
 		color: var(--white);
+		a {
+			color: var(--white);
+		}
 	}
 
 	&.wide {

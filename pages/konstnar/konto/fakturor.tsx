@@ -1,145 +1,155 @@
-import s from "./fakturor.module.scss";
-import requireAuthentication from "/lib/auth/requireAuthentication";
-import client from "/lib/client";
-import { getMemberInvoices } from "/lib/fortnox/invoiceDispatch";
-import Link from "next/link";
-import { format, parseISO } from "date-fns";
+import s from './fakturor.module.scss';
+import requireAuthentication from '/lib/auth/requireAuthentication';
+import client from '/lib/client';
+import { getMemberInvoices } from '/lib/fortnox/invoiceDispatch';
+import Link from 'next/link';
+import { format, parseISO } from 'date-fns';
 
 export type InvoiceRow = {
-  id: string;
-  documentNumber: string | null;
-  invoiceYear: number | null;
-  paymentStatus: string | null;
-  paymentDate: string | null;
-  total: number | null;
-  region: string | null;
+	id: string;
+	documentNumber: string | null;
+	invoiceYear: number | null;
+	paymentStatus: string | null;
+	paymentDate: string | null;
+	total: number | null;
+	region: string | null;
 };
 
 export type Props = {
-  invoices: InvoiceRow[];
-  customerNumber: string | null;
+	invoices: InvoiceRow[];
+	customerNumber: string | null;
 };
 
-const parseDate = (d?: string | null) =>
-  d ? (Number.isNaN(Date.parse(d)) ? null : d) : null;
+const parseDate = (d?: string | null) => (d ? (Number.isNaN(Date.parse(d)) ? null : d) : null);
 
 const statusLabel = (status: string | null) => {
-  switch ((status ?? '').toUpperCase()) {
-    case 'FULLYPAID':
-    case 'PAID':
-      return 'betald';
-    case 'PARTIALLYPAID':
-    case 'PARTLYPAID':
-      return 'delvis betald';
-    default:
-      return 'inte betald';
-  }
+	switch ((status ?? '').toUpperCase()) {
+		case 'FULLYPAID':
+		case 'PAID':
+			return 'betald';
+		case 'PARTIALLYPAID':
+		case 'PARTLYPAID':
+			return 'delvis betald';
+		default:
+			return 'inte betald';
+	}
 };
 
 export default function Fakturor({ invoices, customerNumber }: Props) {
-  const list = invoices
-    .slice()
-    .sort((a, b) => (b.invoiceYear ?? 0) - (a.invoiceYear ?? 0));
+	const list = invoices.slice().sort((a, b) => (b.invoiceYear ?? 0) - (a.invoiceYear ?? 0));
 
-  return (
-    <div className={s.container}>
-      <h1>Fakturor</h1>
-      <p className="intro">
-        Här ser du dina historiska medlemsavgifter och om de är betalda.
-      </p>
+	return (
+		<div className={s.container}>
+			<h1>Fakturor</h1>
+			<p className='intro'>Här ser du dina historiska medlemsavgifter och om de är betalda.</p>
 
-      {!customerNumber ? (
-        <p>
-          Vi har ännu ingen faktura kopplad till ditt konto. Din första faktura
-          skickas ut när medlemsavgiften faktureras.
-        </p>
-      ) : list.length === 0 ? (
-        <p>Inga fakturor ännu.</p>
-      ) : (
-        <table className={s.invoiceTable}>
-          <thead>
-            <tr>
-              <th>Fakturanr</th>
-              <th>År</th>
-              <th>Förfaller</th>
-              <th>Belopp</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map(inv => (
-              <tr key={inv.id}>
-                <td>{inv.documentNumber ?? '-'}</td>
-                <td>{inv.invoiceYear ?? '-'}</td>
-                <td>
-                  {inv.paymentDate
-                    ? format(parseISO(inv.paymentDate), 'yyyy-MM-dd')
-                    : '-'}
-                </td>
-                <td>{inv.total != null ? `${inv.total.toFixed(2)} kr` : '-'}</td>
-                <td>
-                  {statusLabel(inv.paymentStatus) === 'betald' ? (
-                    <span className={s.paid}>Betald</span>
-                  ) : statusLabel(inv.paymentStatus) === 'delvis betald' ? (
-                    <span className={s.partiallyPaid}>Delvis betald</span>
-                  ) : (
-                    <span className={s.unpaid}>Inte betald</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+			{!customerNumber ? (
+				<p>
+					Vi har ännu ingen faktura kopplad till ditt konto. Din första faktura skickas ut när
+					medlemsavgiften faktureras.
+				</p>
+			) : list.length === 0 ? (
+				<p>Inga fakturor ännu.</p>
+			) : (
+				<table className={s.invoiceTable}>
+					<thead>
+						<tr>
+							<th>Fakturanr</th>
+							<th>År</th>
+							<th>Förfaller</th>
+							<th>Belopp</th>
+							<th>Status</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						{list.map((inv) => (
+							<tr key={inv.id}>
+								<td>{inv.documentNumber ?? '-'}</td>
+								<td>{inv.invoiceYear ?? '-'}</td>
+								<td>{inv.paymentDate ? format(parseISO(inv.paymentDate), 'yyyy-MM-dd') : '-'}</td>
+								<td>{inv.total != null ? `${inv.total.toFixed(2)} kr` : '-'}</td>
+								<td>
+									{statusLabel(inv.paymentStatus) === 'betald' ? (
+										<span className={s.paid}>Betald</span>
+									) : statusLabel(inv.paymentStatus) === 'delvis betald' ? (
+										<span className={s.partiallyPaid}>Delvis betald</span>
+									) : (
+										<span className={s.unpaid}>Inte betald</span>
+									)}
+								</td>
+								<td>
+									{inv.documentNumber && (
+										<a
+											className={s.downloadLink}
+											href={`/api/account/invoice-pdf?id=${encodeURIComponent(inv.documentNumber)}`}
+										>
+											PDF
+										</a>
+									)}
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			)}
 
-      <Link href="/konstnar/konto">Tillbaka till konto</Link>
-    </div>
-  );
+			<Link href='/konstnar/konto'>
+				<button className={s.back} type='button'>
+					Tillbaka till konto
+				</button>
+			</Link>
+		</div>
+	);
 }
 
-Fakturor.page = { title: 'Fakturor', crumbs: [{ title: 'Konto', regional: false }, { title: 'Fakturor', regional: false }] } as PageProps;
+Fakturor.page = {
+	title: 'Fakturor',
+	crumbs: [
+		{ title: 'Konto', regional: false },
+		{ title: 'Fakturor', regional: false },
+	],
+} as PageProps;
 
-export const getServerSideProps = requireAuthentication(
-  async ({ props }: any, session: any) => {
-    const email = session.user?.email;
-    if (!email) return { props: {} };
+export const getServerSideProps = requireAuthentication(async ({ props }: any, session: any) => {
+	const email = session.user?.email;
+	if (!email) return { props: {} };
 
-    const members = await client.items.list({
-      filter: {
-        type: "member",
-        fields: { email: { eq: email.toLowerCase() } }
-      }
-    });
-    const member = members[0] as
-      | {
-          id: string;
-          email?: string;
-          region?: string;
-          fortnox_customer_number?: string;
-        }
-      | undefined;
+	const members = await client.items.list({
+		filter: {
+			type: 'member',
+			fields: { email: { eq: email.toLowerCase() } },
+		},
+	});
+	const member = members[0] as
+		| {
+				id: string;
+				email?: string;
+				region?: string;
+				fortnox_customer_number?: string;
+		  }
+		| undefined;
 
-    if (!member?.fortnox_customer_number)
-      return { props: { ...props, invoices: [], customerNumber: null } };
+	if (!member?.fortnox_customer_number)
+		return { props: { ...props, invoices: [], customerNumber: null } };
 
-    const records = await getMemberInvoices(member.id);
+	const records = await getMemberInvoices(member.id);
 
-    const list: InvoiceRow[] = records.map(inv => ({
-      id: inv.id,
-      documentNumber: inv.fortnox_document_number ?? null,
-      invoiceYear: inv.invoice_year ?? null,
-      paymentStatus: inv.payment_status ?? null,
-      paymentDate: parseDate(inv.payment_date),
-      total: typeof inv.total === 'number' ? inv.total : null,
-      region: inv.region ?? null
-    }));
+	const list: InvoiceRow[] = records.map((inv) => ({
+		id: inv.id,
+		documentNumber: inv.fortnox_document_number ?? null,
+		invoiceYear: inv.invoice_year ?? null,
+		paymentStatus: inv.payment_status ?? null,
+		paymentDate: parseDate(inv.payment_date),
+		total: typeof inv.total === 'number' ? inv.total : null,
+		region: inv.region ?? null,
+	}));
 
-    return {
-      props: {
-        ...props,
-        invoices: list,
-        customerNumber: member.fortnox_customer_number
-      }
-    };
-  }
-);
+	return {
+		props: {
+			...props,
+			invoices: list,
+			customerNumber: member.fortnox_customer_number,
+		},
+	};
+});
