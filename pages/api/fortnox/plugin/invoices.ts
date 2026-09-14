@@ -20,6 +20,7 @@ type MemberResult = {
 	reason?: string;
 	documentNumber?: string;
 	invoiceRecordId?: string;
+	paymentStatus?: string;
 };
 
 type Task = {
@@ -69,8 +70,8 @@ const processMember = async (member: MemberItem, invoiceYear: number): Promise<M
 		const { eligible, reason } = await isEligibleForInvoice(member, invoiceYear);
 		if (!eligible) return { status: 'skipped', reason };
 
-		const { documentNumber, invoiceRecordId } = await createAnnualInvoiceForMember(member, invoiceYear);
-		return { status: 'created', documentNumber, invoiceRecordId };
+		const { documentNumber, invoiceRecordId, record } = await createAnnualInvoiceForMember(member, invoiceYear);
+		return { status: 'created', documentNumber, invoiceRecordId, paymentStatus: record?.payment_status };
 	} catch (err: any) {
 		return { status: 'failed', reason: err?.message ?? String(err) };
 	}
@@ -197,6 +198,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 						...(result.reason ? { reason: result.reason } : {}),
 						...(result.documentNumber ? { documentNumber: result.documentNumber } : {}),
 						...(result.invoiceRecordId ? { invoiceRecordId: result.invoiceRecordId } : {}),
+					...(result.paymentStatus ? { paymentStatus: result.paymentStatus } : {}),
 					});
 					if (!ok) break;
 				}

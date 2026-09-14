@@ -57,7 +57,7 @@ export default function InvoicesPage({ ctx }: Props) {
 						<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
 							<ToolbarTitle>Fakturera: {region?.name}</ToolbarTitle>
 							<div style={{ flex: '1' }} />
-							{!running && (
+							{/* {!running && (
 								<Button
 									buttonType='primary'
 									onClick={refresh}
@@ -66,7 +66,7 @@ export default function InvoicesPage({ ctx }: Props) {
 									className={s.refresh}
 									leftIcon={<IoRefreshOutline color='#fff' size={18} />}
 								/>
-							)}
+							)} */}
 
 							{running && (
 								<Button buttonType='muted' onClick={abort}>
@@ -144,6 +144,8 @@ export default function InvoicesPage({ ctx }: Props) {
 										const invoiceId = statusById[m.id]?.invoiceRecordId ?? m.invoice?.id;
 										const documentNumber =
 											statusById[m.id]?.documentNumber ?? m.invoice?.fortnox_document_number;
+										const paymentStatus =
+											statusById[m.id]?.paymentStatus ?? m.invoice?.payment_status ?? '';
 										return (
 											<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
 												<td>
@@ -160,7 +162,7 @@ export default function InvoicesPage({ ctx }: Props) {
 												>
 													{documentNumber && <a>#{documentNumber}</a>}
 												</td>
-												<td>{m.invoice?.payment_status || ''}</td>
+												<td>{paymentStatus}</td>
 												<td>
 													{renderRunStatus(invoiceId ? { status: 'created' } : statusById[m.id])}
 												</td>

@@ -138,7 +138,7 @@ export const isEligibleForInvoice = async (
 export const createAnnualInvoiceForMember = async (
 	member: MemberItem,
 	invoiceYear: number,
-): Promise<{ documentNumber: string; invoiceRecordId: string }> => {
+): Promise<{ documentNumber: string; invoiceRecordId: string; record: InvoiceRecord }> => {
 	const region = regions.find((r) => r.id === member.region);
 	if (!region) throw new Error(`Member ${member.id} has no region`);
 	if (!member.fortnox_customer_number)
@@ -189,7 +189,11 @@ export const createAnnualInvoiceForMember = async (
 		} as any),
 	});
 
-	return { documentNumber: invoice.DocumentNumber, invoiceRecordId: invoiceRecord.id };
+	return {
+		documentNumber: invoice.DocumentNumber,
+		invoiceRecordId: invoiceRecord.id,
+		record: invoiceRecord as unknown as InvoiceRecord,
+	};
 };
 
 /**
