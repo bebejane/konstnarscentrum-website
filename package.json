@@ -18,6 +18,7 @@
 		"postbuild": "next-sitemap",
 		"importmembers": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/import-members.tsx",
 		"updatemembers": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/update-members.tsx",
+		"guessmembersex": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/guess-member-sex.tsx",
 		"updateuploads": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/update-uploads.tsx",
 		"syncfortknox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/sync-fortknox-customers.tsx",
 		"migratememberfields": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/migrate-member-fields.tsx",

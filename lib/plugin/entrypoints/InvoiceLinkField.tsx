@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button, Canvas } from 'datocms-react-ui';
 import { RenderFieldExtensionCtx } from 'datocms-plugin-sdk';
 import { regionFromRoleName } from '/lib/plugin/utils';
+import { MdFileDownload } from 'react-icons/md';
 
 type PropTypes = {
 	ctx: RenderFieldExtensionCtx;
@@ -55,8 +56,14 @@ export default function InvoiceLinkField({ ctx }: PropTypes) {
 
 	return (
 		<Canvas ctx={ctx}>
-			<Button fullWidth buttonType='muted' disabled={downloading} onClick={download}>
-				{downloading ? 'Genererar...' : 'Fortnox faktura (PDF)'}
+			<Button
+				fullWidth
+				buttonType='muted'
+				disabled={downloading}
+				onClick={download}
+				leftIcon={!downloading ? <MdFileDownload /> : undefined}
+			>
+				{downloading ? 'Laddar ner...' : 'Fortnox faktura (PDF)'}
 			</Button>
 			{error && <p style={{ color: 'red', marginTop: 8 }}>{error}</p>}
 		</Canvas>

@@ -14,11 +14,24 @@
 		color: #fff;
 	}
 
+	.title {
+		position: relative;
+		width: 100%;
+	}
+	.subtitle {
+		font-weight: normal;
+	}
+
 	.help {
+		position: absolute;
+		left: 0;
+		bottom: -0.2rem;
+		transform: translateY(100%);
 		color: var(--color--ink-soft);
 		font-weight: normal;
 		font-size: var(--font-size-s);
 		margin-top: var(--spacing-s);
+		width: 70%;
 	}
 
 	.progress {

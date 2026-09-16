@@ -56,9 +56,16 @@ export default function InvoicesPage({ ctx }: Props) {
 				<>
 					<Toolbar style={{ minHeight: 60, maxHeight: 60 }}>
 						<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
-							<ToolbarTitle>
-								Fakturera: {region?.name} ({invoiceYear})
-								<div className={s.help}>Hjälp text här....</div>
+							<ToolbarTitle className={s.title}>
+								Fakturera&nbsp;
+								<span className={s.subtitle}>
+									{region?.name} ({invoiceYear})
+								</span>
+								<div className={s.help}>
+									Klicka på knappen för att skicka fakturor för medlemsavgiften {invoiceYear} till
+									Fortnox. Fakturorna kommer att skickas ut via e-post till medlemmarna. Fakturan
+									kommer att skickas ut på samma dag som fakturan skickades till Fortnox.
+								</div>
 							</ToolbarTitle>
 							<div style={{ flex: '1' }} />
 							{running && (
@@ -125,7 +132,6 @@ export default function InvoicesPage({ ctx }: Props) {
 									<tr>
 										<th>Namn</th>
 										<th>E-post</th>
-
 										<th>Kund nr.</th>
 										<th>Faktura nr.</th>
 										<th>Skapad</th>
@@ -156,7 +162,6 @@ export default function InvoicesPage({ ctx }: Props) {
 													<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
 												</td>
 												<td>{m.email || ''}</td>
-
 												<td>{m.fortnox_customer_number || ''}</td>
 												<td
 													onClick={(e) => {
