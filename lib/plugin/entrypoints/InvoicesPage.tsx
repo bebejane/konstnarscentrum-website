@@ -57,9 +57,9 @@ export default function InvoicesPage({ ctx }: Props) {
 					<Toolbar style={{ minHeight: 60, maxHeight: 60 }}>
 						<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
 							<ToolbarTitle className={s.title}>
-								Fakturera&nbsp;
+								Fakturera:&nbsp;
 								<span className={s.subtitle}>
-									{region?.name} ({invoiceYear})
+									{region?.name} ({invoiceYear}){' '}
 								</span>
 								<div className={s.help}>
 									Klicka på knappen för att skicka fakturor för medlemsavgiften {invoiceYear} till

@@ -264,7 +264,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 									documentNumber: event.documentNumber,
 									invoiceRecordId: event.invoiceRecordId,
 									paymentStatus: event.paymentStatus,
-								invoiceDate: event.invoiceDate,
+									invoiceDate: event.invoiceDate,
 								},
 							}));
 							setProgress({

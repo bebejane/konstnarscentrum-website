@@ -17,6 +17,18 @@
 	.title {
 		position: relative;
 		width: 100%;
+
+		.helpIcon {
+			display: inline-block;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: -0.15em;
+			opacity: 0.8;
+			cursor: pointer;
+			&:hover {
+				opacity: 1;
+			}
+		}
 	}
 	.subtitle {
 		font-weight: normal;
