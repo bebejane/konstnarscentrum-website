@@ -24,6 +24,7 @@ export type MemberRunState = {
 	documentNumber?: string;
 	invoiceRecordId?: string;
 	paymentStatus?: string;
+	invoiceDate?: string;
 };
 
 export type InvoiceResult = {
@@ -57,6 +58,7 @@ type StreamEvent =
 			documentNumber?: string;
 			invoiceRecordId?: string;
 			paymentStatus?: string;
+			invoiceDate?: string;
 	  }
 	| {
 			type: 'done';
@@ -262,6 +264,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 									documentNumber: event.documentNumber,
 									invoiceRecordId: event.invoiceRecordId,
 									paymentStatus: event.paymentStatus,
+								invoiceDate: event.invoiceDate,
 								},
 							}));
 							setProgress({

@@ -21,6 +21,7 @@ type MemberResult = {
 	documentNumber?: string;
 	invoiceRecordId?: string;
 	paymentStatus?: string;
+	invoiceDate?: string;
 };
 
 type Task = {
@@ -67,11 +68,28 @@ const resolveMember = async (id: string, regionId: string): Promise<MemberItem |
  */
 const processMember = async (member: MemberItem, invoiceYear: number): Promise<MemberResult> => {
 	try {
-		const { eligible, reason } = await isEligibleForInvoice(member, invoiceYear);
-		if (!eligible) return { status: 'skipped', reason };
+		const { eligible, reason, records } = await isEligibleForInvoice(member, invoiceYear);
+		if (!eligible) {
+			// Already invoiced: surface the existing linked invoice so the UI can
+			// show it as "Skickad" with its details instead of blank.
+			if (reason === `already invoiced ${invoiceYear}`) {
+				const existing = records.find((r) => r.invoice_year === invoiceYear);
+				if (existing) {
+					return {
+						status: 'skipped',
+						reason,
+						documentNumber: existing.fortnox_document_number,
+						invoiceRecordId: existing.id,
+						paymentStatus: existing.payment_status,
+						invoiceDate: existing.created_at,
+					};
+				}
+			}
+			return { status: 'skipped', reason };
+		}
 
-		const { documentNumber, invoiceRecordId, record } = await createAnnualInvoiceForMember(member, invoiceYear);
-		return { status: 'created', documentNumber, invoiceRecordId, paymentStatus: record?.payment_status };
+		const { documentNumber, invoiceRecordId, invoiceDate, record } = await createAnnualInvoiceForMember(member, invoiceYear);
+		return { status: 'created', documentNumber, invoiceRecordId, invoiceDate, paymentStatus: record?.payment_status };
 	} catch (err: any) {
 		return { status: 'failed', reason: err?.message ?? String(err) };
 	}
@@ -199,6 +217,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 						...(result.documentNumber ? { documentNumber: result.documentNumber } : {}),
 						...(result.invoiceRecordId ? { invoiceRecordId: result.invoiceRecordId } : {}),
 					...(result.paymentStatus ? { paymentStatus: result.paymentStatus } : {}),
+					...(result.invoiceDate ? { invoiceDate: result.invoiceDate } : {}),
 					});
 					if (!ok) break;
 				}

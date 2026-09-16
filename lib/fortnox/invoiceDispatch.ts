@@ -120,15 +120,16 @@ export const isEligibleForInvoiceFromRecords = (
 export const isEligibleForInvoice = async (
 	member: MemberItem,
 	invoiceYear: number,
-): Promise<{ eligible: boolean; reason?: string }> => {
+): Promise<{ eligible: boolean; reason?: string; records: InvoiceRecord[] }> => {
 	const region = regions.find((r) => r.id === member.region);
 	const records = await getMemberInvoices(member.id);
-	return isEligibleForInvoiceFromRecords(
+	const result = isEligibleForInvoiceFromRecords(
 		member,
 		invoiceYear,
 		records,
 		region ? hasFortnoxCredentials(region.slug) : false,
 	);
+	return { ...result, records };
 };
 
 /**
@@ -138,7 +139,7 @@ export const isEligibleForInvoice = async (
 export const createAnnualInvoiceForMember = async (
 	member: MemberItem,
 	invoiceYear: number,
-): Promise<{ documentNumber: string; invoiceRecordId: string; record: InvoiceRecord }> => {
+): Promise<{ documentNumber: string; invoiceRecordId: string; invoiceDate?: string; record: InvoiceRecord }> => {
 	const region = regions.find((r) => r.id === member.region);
 	if (!region) throw new Error(`Member ${member.id} has no region`);
 	if (!member.fortnox_customer_number)
@@ -147,6 +148,7 @@ export const createAnnualInvoiceForMember = async (
 		throw new Error(`Fortnox is disabled or not configured for region ${region.slug}`);
 
 	const invoiceDate = new Date();
+	const invoiceDateString = format(invoiceDate, 'yyyy-MM-dd');
 	const dueDate = new Date(invoiceDate);
 	dueDate.setDate(dueDate.getDate() + FORTNOX_INVOICE_DUE_DAYS);
 
@@ -192,6 +194,7 @@ export const createAnnualInvoiceForMember = async (
 	return {
 		documentNumber: invoice.DocumentNumber,
 		invoiceRecordId: invoiceRecord.id,
+		invoiceDate: (invoice.InvoiceDate as string | undefined) ?? invoiceDateString,
 		record: invoiceRecord as unknown as InvoiceRecord,
 	};
 };

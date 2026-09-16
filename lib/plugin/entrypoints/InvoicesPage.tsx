@@ -4,6 +4,7 @@ import { RenderPageCtx } from 'datocms-plugin-sdk';
 import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
 import { useInvoicesPage, sortSwedish } from '../hooks/useInvoicesPage';
 import type { MemberRunState } from '../hooks/useInvoicesPage';
+import { format } from 'date-fns';
 
 type Props = { ctx: RenderPageCtx };
 
@@ -27,14 +28,16 @@ export default function InvoicesPage({ ctx }: Props) {
 	const renderRunStatus = (state?: MemberRunState) => {
 		if (!state) return <span className={s.badgePlaceholder}>&nbsp;</span>;
 
-		const label =
-			state.status === 'created' ? 'Skickad' : state.status === 'skipped' ? 'Skippad' : 'Fel';
-		const className =
-			state.status === 'created'
-				? s.badgeCreated
-				: state.status === 'skipped'
-					? s.badgeSkipped
-					: s.badgeFailed;
+		// A skipped result that carries an existing invoice means it was already
+		// sent on a previous run — show it as sent, not skipped.
+		const isSent =
+			state.status === 'created' || (state.status === 'skipped' && !!state.documentNumber);
+		const label = isSent ? 'Skickad' : state.status === 'skipped' ? 'Skippad' : 'Fel';
+		const className = isSent
+			? s.badgeCreated
+			: state.status === 'skipped'
+				? s.badgeSkipped
+				: s.badgeFailed;
 		return (
 			<span className={className} title={state.reason || state.documentNumber || ''}>
 				{label}
@@ -53,7 +56,10 @@ export default function InvoicesPage({ ctx }: Props) {
 				<>
 					<Toolbar style={{ minHeight: 60, maxHeight: 60 }}>
 						<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
-							<ToolbarTitle>Fakturera: {region?.name}</ToolbarTitle>
+							<ToolbarTitle>
+								Fakturera: {region?.name} ({invoiceYear})
+								<div className={s.help}>Hjälp text här....</div>
+							</ToolbarTitle>
 							<div style={{ flex: '1' }} />
 							{running && (
 								<Button buttonType='muted' onClick={abort}>
@@ -122,6 +128,7 @@ export default function InvoicesPage({ ctx }: Props) {
 
 										<th>Kund nr.</th>
 										<th>Faktura nr.</th>
+										<th>Skapad</th>
 										<th>Betalningsstatus</th>
 										<th></th>
 									</tr>
@@ -133,6 +140,16 @@ export default function InvoicesPage({ ctx }: Props) {
 											statusById[m.id]?.documentNumber ?? m.invoice?.fortnox_document_number;
 										const paymentStatus =
 											statusById[m.id]?.paymentStatus ?? m.invoice?.payment_status ?? '';
+										const renderInvoiceDate = (
+											state: MemberRunState | undefined,
+											memberInvoice: any,
+										) => {
+											const raw = state?.invoiceDate ?? memberInvoice?.created_at ?? null;
+											if (!raw) return '';
+											const date = new Date(raw);
+											return isNaN(date.getTime()) ? String(raw) : format(date, 'yyyy-MM-dd');
+										};
+
 										return (
 											<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
 												<td>
@@ -149,6 +166,7 @@ export default function InvoicesPage({ ctx }: Props) {
 												>
 													{documentNumber && <a>#{documentNumber}</a>}
 												</td>
+												<td>{renderInvoiceDate(statusById[m.id], m.invoice)}</td>
 												<td>{paymentStatus}</td>
 												<td>
 													{renderRunStatus(invoiceId ? { status: 'created' } : statusById[m.id])}
