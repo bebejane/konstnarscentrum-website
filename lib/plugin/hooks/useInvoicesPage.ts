@@ -206,6 +206,25 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	const submit = async () => {
 		if (running) return;
 
+		const res = await ctx.openConfirm({
+			title: 'Fakturera',
+			content: `Är du säker på att du vill fakturera alla medlemmar för ${invoiceYear}?`,
+			cancel: {
+				label: 'Avbryt',
+				intent: 'negative',
+				value: 'cancel',
+			},
+			choices: [
+				{
+					label: 'Skicka',
+					value: 'confirm',
+					intent: 'positive',
+				},
+			],
+		});
+
+		if (res !== 'confirm') return;
+
 		setError(null);
 		setResults(null);
 		setStatusById({});

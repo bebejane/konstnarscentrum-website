@@ -63,7 +63,7 @@ export default function InvoiceLinkField({ ctx }: PropTypes) {
 				onClick={download}
 				leftIcon={!downloading ? <MdFileDownload /> : undefined}
 			>
-				{downloading ? 'Laddar ner...' : 'Fortnox faktura (PDF)'}
+				{downloading ? 'Laddar ner...' : 'Fortnox faktura (pdf)'}
 			</Button>
 			{error && <p style={{ color: 'red', marginTop: 8 }}>{error}</p>}
 		</Canvas>

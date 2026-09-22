@@ -4,7 +4,7 @@ dotenv.config({ path: './.env' });
 import { buildClient } from '@datocms/cma-client';
 import regions from '../../regions.json';
 import { createCustomer, listCustomers } from '../fortnox/customers';
-import { hasFortnoxCredentials } from '../fortnox/auth';
+import { getAccessToken, hasFortnoxCredentials } from '../fortnox/auth';
 import { memberToCustomer } from '../fortnox/sync';
 
 const environment = process.env.DATOCMS_ENVIRONMENT!;
@@ -27,6 +27,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const main = async () => {
 	console.log('Loading all members from DatoCMS...');
+
 	const members: MemberItem[] = [];
 	for await (const record of client.items.listPagedIterator({ filter: { type: 'member' } })) {
 		members.push(record as MemberItem);
@@ -46,12 +47,15 @@ const main = async () => {
 		console.log(`[${region.name}] Fetching existing Fortnox customers...`);
 		const customers = await listCustomers(region.slug);
 		const customersByEmail = new Map(customers.map((c) => [(c.Email ?? '').toLowerCase(), c]));
+		const notMembers = customers.filter((c) => !regionMembers.find((m) => m.email === c.Email));
+
 		console.log(`[${region.name}] Loaded ${customers.length} existing customers`);
 
 		let created = 0;
 		let linked = 0;
 		let updated = 0;
 		let skipped = 0;
+		let errored = 0;
 		const errors: string[] = [];
 
 		for (const member of regionMembers) {
@@ -71,10 +75,10 @@ const main = async () => {
 
 				// 1) Already linked by number?
 				if (member.fortnox_customer_number) {
-					await client.items.update(member.id, {
-						fortnox_customer_number: member.fortnox_customer_number,
-					});
-					updated++;
+					// await client.items.update(member.id, {
+					// 	fortnox_customer_number: member.fortnox_customer_number,
+					// });
+					skipped++;
 					continue;
 				}
 
@@ -95,14 +99,21 @@ const main = async () => {
 				created++;
 				await sleep(200); // be gentle with rate limits
 			} catch (err: any) {
-				skipped++;
+				errored++;
 				errors.push(`[${member.id}] ${err?.message ?? err}`);
 			}
 		}
 
 		console.log(
-			`[${region.name}] Done: ${created} created, ${linked} linked by email, ${updated} already linked, ${errors.length} errors`,
+			`\n[${region.name}] Done: ${created} created, ${linked} linked by email, ${updated} already linked, ${errors.length} errors`,
 		);
+
+		notMembers.length &&
+			console.log(
+				'Non members\n' +
+					notMembers.map((c) => `${c.CustomerNumber}#${c.Name.trim()}#${c.Email}`).join('\r\n'),
+			);
+
 		if (errors.length) {
 			console.log(`[${region.name}] Errors:`);
 			errors.forEach((e) => console.log('  -', e));
