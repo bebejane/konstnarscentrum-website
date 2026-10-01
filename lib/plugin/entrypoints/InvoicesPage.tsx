@@ -50,7 +50,7 @@ export default function InvoicesPage({ ctx }: Props) {
 		<Canvas ctx={ctx}>
 			{loading && (
 				<div className={s.loading}>
-					<Spinner /> Laddar medlemmar...
+					<Spinner /> Laddar medlemmar....
 				</div>
 			)}
 			<div className={s.container}>
