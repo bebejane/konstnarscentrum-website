@@ -45,12 +45,12 @@ export default function InvoicesPage({ ctx }: Props) {
 			</span>
 		);
 	};
-
+	console.log(company);
 	return (
 		<Canvas ctx={ctx}>
 			{loading && (
 				<div className={s.loading}>
-					<Spinner /> Laddar medlemmar....
+					<Spinner /> Laddar medlemmar
 				</div>
 			)}
 			<div className={s.container}>
