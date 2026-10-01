@@ -15,7 +15,13 @@ Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONM
 2. If the token is missing, authorize via the OAuth callback:
 
    ```
-   https://apps.fortnox.se/oauth-v1/auth?client_id=<CLIENT_ID>&redirect_uri=http://localhost:3000/api/fortnox/callback&scope=customer+invoice&access_type=offline&response_type=code&state=ost
+   https://apps.fortnox.se/oauth-v1/auth?client_id=<CLIENT_ID>&redirect_uri=http://localhost:3000/api/fortnox/callback&scope=customer%20invoice%20companyinformation&access_type=offline&response_type=code&state=ost
+
+   Notes:
+   - Scopes are separated with `%20` (URL-encoded space), per Fortnox docs — `+` separators can be parsed as a single literal scope and rejected with `invalid_scope`.
+   - `companyinformation` is required for GET /companyinformation (`lib/fortnox/company.ts`). It must also be selected on the integration in the **Fortnox Developer Portal** ("Select scopes" on the integration) or the auth URL is rejected with `invalid_scope`.
+   - Re-authorize whenever scopes change — the scopes are bound to the refresh token and cannot be added to an already-issued token.
+   - `pnpm fortnoxlogin` prints the same URL filled in from `.env` (add `--open` to launch the browser). Log into the target company first — the token belongs to whichever company approves the consent.
    ```
 
    With the dev server running, the callback prints the `FORTNOX_OST_REFRESH_TOKEN` line to paste into `.env`.
@@ -74,6 +80,25 @@ KV keeps a valid rotated token. If it expires or the consent is revoked, the
 OAuth callback re-issues everything: run the URL above again, update the Vercel
 env bootstrap token, and rotate KV out of sync is harmless (next refresh
 overwrites it).
+
+### Switching / verifying the Fortnox environment (sandbox vs live)
+
+`pnpm fortnoxenv` reports which Fortnox company the refresh token configured in
+`.env` points to, and keeps the two token stores (`.env` + KV) consistent — KV
+is preferred when reading tokens, so a stale KV token silently shadows `.env`:
+
+```
+pnpm fortnoxenv                          # validate + report + sync current token(s)
+pnpm fortnoxenv --region ost             # single region
+```
+
+To switch environment, edit `FORTNOX_OST_REFRESH_TOKEN` in `.env` manually
+(sandbox token ↔ live token), then run `pnpm fortnoxenv` again. It refreshes the
+token (Fortnox rotates it), calls `/companyinformation`, and classifies the
+result as **SANDBOX** (org number `555555-5555` / "(dev)" name) or **LIVE**. The
+rotated token is written back to both `.env` and KV so the two stores can't
+diverge. Exit code 1 means the token is invalid/rotated — re-authorize via the
+OAuth URL and paste the fresh token into `.env`.
 
 ## 1. Unit tests (no network / no credentials)
 

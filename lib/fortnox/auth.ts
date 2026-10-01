@@ -41,7 +41,7 @@ const getRefreshTokenForRegion = async (regionSlug: string): Promise<string | un
  * Exchange a refresh token for a fresh access token + rotated refresh token.
  * Fortnox access tokens expire after ~5 minutes.
  */
-const refreshAccessToken = async (
+export const refreshAccessToken = async (
 	regionSlug: string,
 	tokenOverride?: string,
 ): Promise<{ accessToken: string; refreshToken?: string }> => {
