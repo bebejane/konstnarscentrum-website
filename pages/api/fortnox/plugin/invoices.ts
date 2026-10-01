@@ -4,9 +4,9 @@ import regions from '/regions.json';
 import { getAllMembers, MemberItem } from '/lib/fortnox/sync';
 import { getCompany, classifyCompanyEnvironment, RegionCompany } from '/lib/fortnox/company';
 import {
-  createAnnualInvoiceForMember,
-  getYearlyInvoicesByMember,
-  isEligibleForInvoice,
+	createAnnualInvoiceForMember,
+	getYearlyInvoicesByMember,
+	isEligibleForInvoice,
 } from '/lib/fortnox/invoiceDispatch';
 import { parseDatoError } from '/lib/utils';
 
@@ -47,7 +47,8 @@ const findRegionByRole = (roleName: string) =>
 const resolveRegionCompany = async (regionSlug: string): Promise<RegionCompany | null> => {
 	try {
 		return classifyCompanyEnvironment(await getCompany(regionSlug));
-	} catch {
+	} catch (err) {
+		console.log(err);
 		return null;
 	}
 };
@@ -98,8 +99,15 @@ const processMember = async (member: MemberItem, invoiceYear: number): Promise<M
 			return { status: 'skipped', reason };
 		}
 
-		const { documentNumber, invoiceRecordId, invoiceDate, record } = await createAnnualInvoiceForMember(member, invoiceYear);
-		return { status: 'created', documentNumber, invoiceRecordId, invoiceDate, paymentStatus: record?.payment_status };
+		const { documentNumber, invoiceRecordId, invoiceDate, record } =
+			await createAnnualInvoiceForMember(member, invoiceYear);
+		return {
+			status: 'created',
+			documentNumber,
+			invoiceRecordId,
+			invoiceDate,
+			paymentStatus: record?.payment_status,
+		};
 	} catch (err: any) {
 		return { status: 'failed', reason: err?.message ?? String(err) };
 	}
@@ -227,8 +235,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 						...(result.reason ? { reason: result.reason } : {}),
 						...(result.documentNumber ? { documentNumber: result.documentNumber } : {}),
 						...(result.invoiceRecordId ? { invoiceRecordId: result.invoiceRecordId } : {}),
-					...(result.paymentStatus ? { paymentStatus: result.paymentStatus } : {}),
-					...(result.invoiceDate ? { invoiceDate: result.invoiceDate } : {}),
+						...(result.paymentStatus ? { paymentStatus: result.paymentStatus } : {}),
+						...(result.invoiceDate ? { invoiceDate: result.invoiceDate } : {}),
 					});
 					if (!ok) break;
 				}
