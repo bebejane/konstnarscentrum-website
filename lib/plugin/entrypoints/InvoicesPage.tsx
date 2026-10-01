@@ -45,7 +45,7 @@ export default function InvoicesPage({ ctx }: Props) {
 			</span>
 		);
 	};
-	console.log(company);
+
 	return (
 		<Canvas ctx={ctx}>
 			{loading && (

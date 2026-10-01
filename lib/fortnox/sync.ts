@@ -62,10 +62,50 @@ const findCustomerByEmail = async (
 };
 
 /**
+ * Only write the customer number back to DatoCMS when it actually changes.
+ * DatoCMS fires an item::update webhook on *every* update call, so writing an
+ * unchanged value would trigger a redundant sync round-trip (and, if the payload
+ * kept missing the field, an endless loop via the email-match path).
+ */
+const writeBackCustomerNumber = async (
+	member: MemberItem,
+	customerNumber: string,
+): Promise<void> => {
+	if (member.fortnox_customer_number === customerNumber) return;
+	await client.items.update(member.id, { fortnox_customer_number: customerNumber });
+	member.fortnox_customer_number = customerNumber;
+};
+
+/**
+ * When the webhook payload does not carry `fortnox_customer_number`, read it
+ * from DatoCMS so an already-linked member takes the "update existing
+ * customer" path instead of the write-back paths (email-match / create). This
+ * is the guard that makes the webhook chain terminate even if DatoCMS ever
+ * sends partial attributes.
+ */
+const resolveStoredCustomerNumber = async (member: MemberItem): Promise<void> => {
+	if (member.fortnox_customer_number) return;
+	try {
+		const record = (await client.items.find(member.id)) as unknown as MemberItem;
+		if (record?.fortnox_customer_number)
+			member.fortnox_customer_number = record.fortnox_customer_number;
+	} catch (err: any) {
+		console.warn(
+			`[fortnox] could not read member ${member.id} for customer number: ${err?.message ?? err}`,
+		);
+	}
+};
+
+/**
  * Sync a single member to its region's Fortnox account.
  * - If member already has a customer number, update that Fortnox customer.
  * - Else try to link an existing Fortnox customer by email.
  * - Else create a new Fortnox customer.
+ *
+ * Webhook-safe: the DatoCMS write-back in the link/create paths happens only
+ * when the number actually changes, and a stored number is authoritative even
+ * when the payload omits it — so the feedback webhook terminates instead of
+ * looping.
  *
  * Returns the Fortnox customer number and whether a new customer was created.
  */
@@ -80,6 +120,9 @@ export const syncMemberToFortKnox = async (
 	if (!hasFortnoxCredentials(region.slug))
 		throw new Error(`Fortnox is disabled or not configured for region ${region.slug}`);
 
+	// The payload may omit the linked number — trust the stored DatoCMS value.
+	await resolveStoredCustomerNumber(member);
+
 	const data = memberToCustomer(member);
 
 	// 1) Already linked to a customer?
@@ -89,20 +132,28 @@ export const syncMemberToFortKnox = async (
 			await updateCustomer(region.slug, member.fortnox_customer_number, data);
 			return { customerNumber: member.fortnox_customer_number, created: false };
 		}
-		// Number set but missing in Fortnox -> fall through and create
+		// Number set but missing in Fortnox -> fall through and (re)link/create
 	}
 
 	// 2) Match an existing Fortnox customer by email (handles pre-existing customers)
 	const match = await findCustomerByEmail(region.slug, member.email);
 	if (match) {
-		await client.items.update(member.id, { fortnox_customer_number: match.CustomerNumber });
+		await writeBackCustomerNumber(member, match.CustomerNumber);
 		await updateCustomer(region.slug, match.CustomerNumber, data);
 		return { customerNumber: match.CustomerNumber, created: false };
 	}
 
-	// 3) Create a new customer
+	// 3) Create a new customer — re-check first so concurrent webhooks for a
+	//    brand-new member link instead of creating duplicate Fortnox customers.
+	const recheck = await findCustomerByEmail(region.slug, member.email);
+	if (recheck) {
+		await writeBackCustomerNumber(member, recheck.CustomerNumber);
+		await updateCustomer(region.slug, recheck.CustomerNumber, data);
+		return { customerNumber: recheck.CustomerNumber, created: false };
+	}
+
 	const created = await createCustomer(region.slug, data);
-	await client.items.update(member.id, { fortnox_customer_number: created.CustomerNumber });
+	await writeBackCustomerNumber(member, created.CustomerNumber);
 	return { customerNumber: created.CustomerNumber, created: true };
 };
 

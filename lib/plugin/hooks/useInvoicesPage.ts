@@ -193,7 +193,6 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 				return res.json();
 			})
 			.then((data) => {
-				console.log('useInvoicesPage', data);
 				setMembers(data.members);
 				setCompany(data.company ?? null);
 			})
