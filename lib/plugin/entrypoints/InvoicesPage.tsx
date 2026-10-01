@@ -12,6 +12,7 @@ export default function InvoicesPage({ ctx }: Props) {
 	const {
 		members,
 		pendingMembers,
+		company,
 		loading,
 		running,
 		aborted,
@@ -67,6 +68,26 @@ export default function InvoicesPage({ ctx }: Props) {
 									kommer att skickas ut på samma dag som fakturan skickades till Fortnox.
 								</div>
 							</ToolbarTitle>
+							{company && (
+								<span
+									className={cn(
+										s.companyBadge,
+										company.environment === 'sandbox'
+											? s.companySandbox
+											: company.environment === 'live'
+												? s.companyLive
+												: s.companyUnknown,
+									)}
+									title={company.organizationNumber || undefined}
+								>
+									{company.companyName ? `${company.companyName} · ` : ''}
+									{company.environment === 'sandbox'
+										? 'SANDBOX'
+										: company.environment === 'live'
+											? 'LIVE'
+											: 'OKÄND'}
+								</span>
+							)}
 							<div style={{ flex: '1' }} />
 							{running && (
 								<Button buttonType='muted' onClick={abort}>

@@ -34,6 +34,17 @@
 		font-weight: normal;
 	}
 
+	.companyBadge {
+		align-self: center;
+		display: inline-block;
+		margin-right: var(--spacing-m);
+		padding: var(--spacing-s);
+		font-size: var(--font-size-s);
+		font-weight: 600;
+		white-space: nowrap;
+		background: var(--color--surface-muted);
+	}
+
 	.help {
 		position: absolute;
 		left: 0;

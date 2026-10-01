@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import client from '/lib/client';
 import regions from '/regions.json';
 import { getAllMembers, MemberItem } from '/lib/fortnox/sync';
+import { getCompany, classifyCompanyEnvironment, RegionCompany } from '/lib/fortnox/company';
 import {
   createAnnualInvoiceForMember,
   getYearlyInvoicesByMember,
@@ -41,6 +42,15 @@ const isAuthorized = (req: NextApiRequest) => {
 const findRegionByRole = (roleName: string) =>
 	regions.find((r) => r.slug.toLowerCase() === roleName.toLowerCase()) ??
 	regions.find((r) => r.slug.toLowerCase() === 'ost');
+
+// Best-effort: a missing scope/token must never break the plugin page.
+const resolveRegionCompany = async (regionSlug: string): Promise<RegionCompany | null> => {
+	try {
+		return classifyCompanyEnvironment(await getCompany(regionSlug));
+	} catch {
+		return null;
+	}
+};
 
 const filterMembersByRegion = (members: MemberItem[], regionId: string) =>
 	members.filter((m) => m.region === regionId);
@@ -145,9 +155,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				...m,
 				invoice: yearlyInvoices[m.id] ?? null,
 			}));
+			const company = await resolveRegionCompany(region.slug);
 			return res
 				.status(200)
-				.json({ members: membersWithInvoices, region: region.slug, invoiceYear });
+				.json({ members: membersWithInvoices, region: region.slug, invoiceYear, company });
 		} catch (err) {
 			return res.status(500).json({ error: parseDatoError(err) });
 		}

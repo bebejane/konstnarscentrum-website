@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RenderPageCtx } from 'datocms-plugin-sdk';
 import { regionFromRoleName } from '/lib/plugin/utils';
 import type { InvoiceRecord } from '/lib/fortnox/invoiceDispatch';
+import type { RegionCompany } from '/lib/fortnox/company';
 
 export type Member = {
 	id: string;
@@ -143,6 +144,7 @@ const streamBatch = async (
 export type UseInvoicesPage = {
 	members: Member[];
 	pendingMembers: Member[];
+	company: RegionCompany | null;
 	loading: boolean;
 	running: boolean;
 	aborted: boolean;
@@ -164,6 +166,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	const region = regionFromRoleName(roleName);
 
 	const [members, setMembers] = useState<Member[]>([]);
+	const [company, setCompany] = useState<RegionCompany | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [running, setRunning] = useState(false);
 	const [aborted, setAborted] = useState(false);
@@ -189,7 +192,10 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 				}
 				return res.json();
 			})
-			.then((data) => setMembers(data.members))
+			.then((data) => {
+				setMembers(data.members);
+				setCompany(data.company ?? null);
+			})
 			.catch((err) => setError(err.message || String(err)))
 			.finally(() => setLoading(false));
 	};
@@ -323,6 +329,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	return {
 		members,
 		pendingMembers,
+		company,
 		loading,
 		running,
 		aborted,
