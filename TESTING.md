@@ -26,43 +26,44 @@ Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONM
 
    With the dev server running, the callback prints the `FORTNOX_OST_REFRESH_TOKEN` line to paste into `.env`.
 
-## Token persistence on Vercel (no database)
+## Token persistence on Vercel (Turso database)
 
 Fortnox **rotates** the refresh token on every OAuth refresh — the old one is
 invalidated. On Vercel the `.env` file isn't writable, so rotated tokens are
-persisted to **Vercel KV** (Upstash), using only `KV_REST_API_URL` and
-`KV_REST_API_TOKEN` — no database, no extra package (the store calls the
-Upstash REST API directly).
+persisted to a **Turso database** (SQLite, libSQL driver) via
+**Drizzle ORM** (`lib/db/`), one row per region in the `fortnox_tokens` table.
 
 How `lib/fortnox/tokenStore.ts` picks a backend per write/read:
 
-- **KV configured** (`KV_REST_API_URL` + `KV_REST_API_TOKEN` set) → read the
-  freshest token from KV, write rotated tokens to KV.
-- **No KV** (local dev/scripts) → write rotated tokens back to `.env` (current
-  `FORTNOX_<REGION>_REFRESH_TOKEN`). The env value is the bootstrap: the first
-  refresh on Vercel reads it if KV is empty, then stores the rotated result.
+- **Database configured** (`TURSO_DATABASE_URL` set, `TURSO_AUTH_TOKEN` for
+  remote) → read the freshest token from `fortnox_tokens`, write rotated tokens
+  there. The table is created lazily (`CREATE TABLE IF NOT EXISTS`) on first use.
+- **No database** (local dev/scripts without Turso) → write rotated tokens back
+  to `.env` (current `FORTNOX_<REGION>_REFRESH_TOKEN`). The env value is the
+  bootstrap: the first refresh on Vercel reads it if the table is empty, then
+  stores the rotated result. Local dev can also point `TURSO_DATABASE_URL` at a
+  `file:local.db` to exercise the same code path.
 
 `lib/fortnox/auth.ts` also caches access tokens in-memory per region (4.5 min
-TTL) to minimize refreshes, and on a failed refresh re-reads KV once before
-throwing (a statically configured `FORTNOX_<REGION>_ACCESS_TOKEN` is used only
-if present — it is *not* required).
+TTL) to minimize refreshes, and on a failed refresh re-reads the database once
+before throwing (a statically configured `FORTNOX_<REGION>_ACCESS_TOKEN` is used
+only if present — it is *not* required).
 
 ### Vercel setup (one time)
 
-1. In the Vercel dashboard: **Storage → Create Database → KV** (Upstash). Link
-   it to this project; Vercel auto-injects `KV_REST_API_URL` and
-   `KV_REST_API_TOKEN`.
-2. Add these env vars in the project's Production environment (they are the
-   bootstrap, not auto-injected from `.env`):
-   - `FORTNOX_OST_REFRESH_TOKEN` (current value from `.env` — the *latest*
-     one, since old values are invalidated by rotation)
+1. Create a Turso database (dashboard or `turso` CLI) and copy the `libsql://…`
+   URL + auth token.
+2. Add these env vars in the project's Production environment:
+   - `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`
+   - `FORTNOX_OST_REFRESH_TOKEN` (current value from `.env` — the *latest* one,
+     since old values are invalidated by rotation)
    - `FORTNOX_CLIENT_ID`, `FORTNOX_CLIENT_SECRET`
-   - `KV_REST_API_URL`, `KV_REST_API_TOKEN` (from the linked KV store; also
-     auto-set by Vercel)
-3. Verify: locally, set `KV_REST_API_URL` and `KV_REST_API_TOKEN` temporarily
-   in the shell, then run `npm run testfortnox`. The rotated refresh token is
-   written to KV (`fortnox:OST:refresh_token`) — check it via the Upstash
-   console or a second run. Unset them again when done.
+3. Locally, make sure `.env` has the same `TURSO_*`, then run:
+   ```
+   pnpm db:setup       # create the table (idempotent)
+   pnpm db:backfill    # copy current tokens (KV/.env) into the database (one time)
+   ```
+   Verify with `pnpm fortnoxenv` (reads from Turso) or `npm run testfortnox`.
 
 ### Why not Fortnox Client Credentials?
 
@@ -70,22 +71,23 @@ Fortnox offers `grant_type=client_credentials` + a `TenantId` header (no
 refresh token at all). Tried it — Fortnox returns
 `401 consent_not_found`: client credentials require a consent created with
 `account_type=service`, which doesn't apply to this app's CurrentCustomer
-token. So rotation + KV persistence is the mechanism used.
+token. So rotation + Turso persistence is the mechanism used.
 
 ### If the token chain ever breaks
 
 The `FORTNOX_OST_REFRESH_TOKEN` in the Vercel env is only the bootstrap. As
 long as a refresh succeeds at least once every ~60 days (the daily cron does),
-KV keeps a valid rotated token. If it expires or the consent is revoked, the
+Turso keeps a valid rotated token. If it expires or the consent is revoked, the
 OAuth callback re-issues everything: run the URL above again, update the Vercel
-env bootstrap token, and rotate KV out of sync is harmless (next refresh
+env bootstrap token, and a stale database token is harmless (next refresh
 overwrites it).
 
 ### Switching / verifying the Fortnox environment (sandbox vs live)
 
 `pnpm fortnoxenv` reports which Fortnox company the refresh token configured in
-`.env` points to, and keeps the two token stores (`.env` + KV) consistent — KV
-is preferred when reading tokens, so a stale KV token silently shadows `.env`:
+`.env` points to, and keeps the two token stores (`.env` + database) consistent
+— the database is preferred when reading tokens, so a stale database token
+silently shadows `.env`:
 
 ```
 pnpm fortnoxenv                          # validate + report + sync current token(s)

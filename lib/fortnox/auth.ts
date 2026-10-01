@@ -6,7 +6,7 @@ import {
 	isFortnoxEnabled,
 } from './constants';
 import {
-	hasKvStore,
+	hasDb,
 	persistRefreshToken,
 	readRefreshTokenFromEnv,
 	readStoredRefreshToken,
@@ -108,9 +108,9 @@ export const getAccessToken = async (regionSlug: string): Promise<string> => {
 		} catch (err) {
 			const errMessage = err instanceof Error ? err.message : String(err);
 			console.warn(`[fortnox] refresh failed for ${regionSlug}: ${errMessage}; retrying`);
-			// KV-stored token may be stale (rotated by another run). Retry via KV
-			// then fall back to the .env bootstrap value before giving up.
-			if (hasKvStore()) {
+			// DB-stored token may be stale (rotated by another run). Retry via the
+			// database then fall back to the .env bootstrap value before giving up.
+			if (hasDb()) {
 				tokenCache[regionSlug] = { accessToken: '', refreshToken: undefined, expiresAt: 0 };
 				try {
 					const { accessToken, refreshToken } = await refreshAccessToken(regionSlug);
@@ -123,7 +123,7 @@ export const getAccessToken = async (regionSlug: string): Promise<string> => {
 					return accessToken;
 				} catch (retryErr) {
 					const retryMessage = retryErr instanceof Error ? retryErr.message : String(retryErr);
-					console.warn(`[fortnox] KV retry failed for ${regionSlug}: ${retryMessage}`);
+					console.warn(`[fortnox] DB retry failed for ${regionSlug}: ${retryMessage}`);
 				}
 			}
 			// Try the .env bootstrap token directly (KV may shadow a valid .env token)

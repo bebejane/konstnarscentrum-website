@@ -29,6 +29,8 @@
 		"testfortnox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/test-fortnox.ts",
 		"fortnoxenv": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/fortnox-env.ts",
 		"fortnoxlogin": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/fortnox-login.ts",
+		"db:setup": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/setup-db.ts",
+		"db:backfill": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/backfill-tokens-to-turso.ts",
 		"testroundtrip": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/test-invoice-roundtrip.ts",
 		"deleteinvoices": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/delete-invoices.ts"
 	},

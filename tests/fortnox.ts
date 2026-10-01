@@ -12,7 +12,7 @@ import {
 import { isEmailAllowedToSend } from "../lib/fortnox/constants";
 import {
   canPersistTokens,
-  hasKvStore,
+  hasDb,
   readRefreshTokenFromEnv
 } from "../lib/fortnox/tokenStore";
 
@@ -150,17 +150,14 @@ async function main() {
   ok("isEmailAllowedToSend runs");
 
   // ---------- tokenStore ----------
-  const prevKvUrl = process.env.KV_REST_API_URL;
-  const prevKvToken = process.env.KV_REST_API_TOKEN;
+  const prevTursoUrl = process.env.TURSO_DATABASE_URL;
   const prevEnvRefresh = process.env.FORTNOX_OST_REFRESH_TOKEN;
 
-  delete process.env.KV_REST_API_URL;
-  delete process.env.KV_REST_API_TOKEN;
-  assert("hasKvStore false without KV env vars", !hasKvStore());
+  delete process.env.TURSO_DATABASE_URL;
+  assert("hasDb false without TURSO_DATABASE_URL", !hasDb());
 
-  process.env.KV_REST_API_URL = "https://example.upstash.io";
-  process.env.KV_REST_API_TOKEN = "token";
-  assert("hasKvStore true with KV env vars", hasKvStore());
+  process.env.TURSO_DATABASE_URL = "file:./test-local.db";
+  assert("hasDb true with TURSO_DATABASE_URL", hasDb());
   assert("canPersistTokens true in local dev", canPersistTokens());
 
   process.env.FORTNOX_OST_REFRESH_TOKEN = "test-refresh-token";
@@ -168,10 +165,8 @@ async function main() {
   delete process.env.FORTNOX_OST_REFRESH_TOKEN;
   assert("readRefreshTokenFromEnv undefined when unset", readRefreshTokenFromEnv("ost") === undefined);
 
-  if (prevKvUrl) process.env.KV_REST_API_URL = prevKvUrl;
-  else delete process.env.KV_REST_API_URL;
-  if (prevKvToken) process.env.KV_REST_API_TOKEN = prevKvToken;
-  else delete process.env.KV_REST_API_TOKEN;
+  if (prevTursoUrl) process.env.TURSO_DATABASE_URL = prevTursoUrl;
+  else delete process.env.TURSO_DATABASE_URL;
   if (prevEnvRefresh) process.env.FORTNOX_OST_REFRESH_TOKEN = prevEnvRefresh;
   else delete process.env.FORTNOX_OST_REFRESH_TOKEN;
   ok("tokenStore runs");

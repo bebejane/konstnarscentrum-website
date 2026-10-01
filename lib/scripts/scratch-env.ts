@@ -3,10 +3,33 @@ dotenv.config({ path: './.env' });
 
 import { getAccessToken } from '../fortnox/auth';
 import { FORTNOX_API_BASE } from '../fortnox/constants';
+import { hasDb, readStoredRefreshToken } from '../fortnox/tokenStore';
+
+/**
+ * Quick Fortnox diagnostics: token store status + direct API calls.
+ *
+ * Usage:
+ *   npx tsx lib/scripts/scratch-env.ts            # region ost
+ *   npx tsx lib/scripts/scratch-env.ts --region syd
+ */
+
+const flagValue = (args: string[], name: string): string | undefined => {
+	const i = args.indexOf(name);
+	return i >= 0 && i + 1 < args.length ? args[i + 1] : undefined;
+};
 
 const main = async () => {
-	const token = await getAccessToken('ost');
-	for (const path of ['/meta', '/me', '/settings', '/companies', '/companyinformation']) {
+	const region = flagValue(process.argv.slice(2), '--region') ?? 'ost';
+
+	const backend = hasDb() ? 'database (Turso)' : '.env fallback';
+	const stored = await readStoredRefreshToken(region);
+	console.log(`region     : ${region}`);
+	console.log(`token store: ${backend}`);
+	console.log(`token      : ${stored ? `${stored.slice(0, 6)}…${stored.slice(-4)}` : '(none)'}`);
+
+	const token = await getAccessToken(region);
+
+	for (const path of ['/companyinformation', '/me']) {
 		try {
 			const res = await fetch(`${FORTNOX_API_BASE}${path}`, {
 				headers: { Authorization: `Bearer ${token}` },
