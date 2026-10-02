@@ -80,12 +80,15 @@ export const getInvoicePdf = async (
   })
 
   if (!res.ok) {
-    let detail = ''
+    // Read the body exactly once — undici throws "Body has already been read"
+    // if .json()/.text() is called twice, which was masking real errors.
+    const raw = await res.text()
+    let detail = raw
     try {
-      const errBody = await res.json()
-      detail = errBody?.ErrorInformation?.Message ?? JSON.stringify(errBody)
+      const parsed = JSON.parse(raw)
+      detail = parsed?.ErrorInformation?.Message ?? JSON.stringify(parsed)
     } catch {
-      detail = await res.text()
+      // not JSON — keep the raw body as detail
     }
     throw new Error(`Fortnox PDF fetch failed (${res.status}): ${detail}`)
   }

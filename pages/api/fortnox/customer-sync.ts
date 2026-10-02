@@ -1,19 +1,21 @@
-import { NextApiRequest, NextApiResponse } from 'next'
-import regions from '../../../regions.json'
-import { hasFortnoxCredentials } from '/lib/fortnox/auth'
-import { syncMemberToFortKnox, webhookEntityToMember, webhookModelApiKey } from '/lib/fortnox/sync'
-import { parseDatoError } from '/lib/utils'
+import { NextApiRequest, NextApiResponse } from 'next';
+import regions from '../../../regions.json';
+import { hasFortnoxCredentials } from '/lib/fortnox/auth';
+import { syncMemberToFortKnox, webhookEntityToMember, webhookModelApiKey } from '/lib/fortnox/sync';
+import { parseDatoError } from '/lib/utils';
 
 export const config = {
 	maxDuration: 60,
-}
+};
 
 const isAuthorized = (req: NextApiRequest) => {
-	const auth = req.headers.authorization
-	if (!auth) return false
-	const [user, pwd] = Buffer.from(auth.split(' ')[1] ?? '', 'base64').toString().split(':')
-	return user === process.env.BASIC_AUTH_USER && pwd === process.env.BASIC_AUTH_PASSWORD
-}
+	const auth = req.headers.authorization;
+	if (!auth) return false;
+	const [user, pwd] = Buffer.from(auth.split(' ')[1] ?? '', 'base64')
+		.toString()
+		.split(':');
+	return user === process.env.BASIC_AUTH_USER && pwd === process.env.BASIC_AUTH_PASSWORD;
+};
 
 /**
  * DatoCMS webhook → Fortnox customer sync.
@@ -35,38 +37,41 @@ const isAuthorized = (req: NextApiRequest) => {
  * retry; transient Fortnox/API errors return 500 so DatoCMS will retry them.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-	if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-	if (!isAuthorized(req)) return res.status(401).json({ error: 'Access denied' })
+	if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+	if (!isAuthorized(req)) return res.status(401).json({ error: 'Access denied' });
 
-	const body = req.body ?? {}
-	if (body.ping) return res.status(200).json({ pong: true })
+	const body = req.body ?? {};
+	if (body.ping) return res.status(200).json({ pong: true });
 
-	const { entity, entity_type: entityType, event_type: eventType } = body
+	const { entity, entity_type: entityType, event_type: eventType } = body;
 
 	if (entityType !== 'item' || !entity?.id || eventType === 'item::destroy') {
-		return res.status(200).json({ skipped: true, reason: 'not a member item event' })
+		return res.status(200).json({ skipped: true, reason: 'not a member item event' });
 	}
 
 	if (webhookModelApiKey(body) !== 'member')
-		return res.status(200).json({ skipped: true, reason: 'not a member item' })
+		return res.status(200).json({ skipped: true, reason: 'not a member item' });
 
-	const member = webhookEntityToMember(entity)
+	const member = webhookEntityToMember(entity);
 
-	const region = regions.find((r) => r.id === member.region)
-	if (!region) return res.status(200).json({ skipped: true, reason: 'member has no region' })
+	const region = regions.find((r) => r.id === member.region);
+	if (!region) return res.status(200).json({ skipped: true, reason: 'member has no region' });
 	if (!hasFortnoxCredentials(region.slug))
-		return res.status(200).json({ skipped: true, reason: `fortnox not configured for ${region.slug}` })
-	if (!member.email) return res.status(200).json({ skipped: true, reason: 'member has no email' })
-	if (!member.first_name && !member.last_name)
-		return res.status(200).json({ skipped: true, reason: 'member has no name' })
-
-	try {
-		const { customerNumber, created } = await syncMemberToFortKnox(member)
 		return res
 			.status(200)
-			.json({ synced: true, memberId: member.id, customerNumber, created, event_type: eventType })
+			.json({ skipped: true, reason: `fortnox not configured for ${region.slug}` });
+	if (!member.email) return res.status(200).json({ skipped: true, reason: 'member has no email' });
+	if (!member.first_name && !member.last_name)
+		return res.status(200).json({ skipped: true, reason: 'member has no name' });
+
+	try {
+		const { customerNumber, created } = await syncMemberToFortKnox(member);
+		console.log('synced member', member.id, member.email, customerNumber, 'created=', created);
+		return res
+			.status(200)
+			.json({ synced: true, memberId: member.id, customerNumber, created, event_type: eventType });
 	} catch (err) {
-		console.error(`[fortnox] customer sync failed for member ${member.id}`, err)
-		return res.status(500).json({ error: parseDatoError(err) })
+		console.error(`[fortnox] customer sync failed for member ${member.id} ${member.email}`, err);
+		return res.status(500).json({ error: parseDatoError(err) });
 	}
 }

@@ -75,9 +75,9 @@ const main = async () => {
 
 				// 1) Already linked by number?
 				if (member.fortnox_customer_number) {
-					// await client.items.update(member.id, {
-					// 	fortnox_customer_number: member.fortnox_customer_number,
-					// });
+					await client.items.update(member.id, {
+						fortnox_customer_number: member.fortnox_customer_number,
+					});
 					skipped++;
 					continue;
 				}
