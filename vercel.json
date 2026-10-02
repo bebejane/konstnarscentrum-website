@@ -6,6 +6,10 @@
 		{
 			"path": "/api/backup?max=1",
 			"schedule": "0 22 * * *"
+		},
+		{
+			"path": "/api/fortnox/sync-status",
+			"schedule": "0 6 * * *"
 		}
 	]
 }

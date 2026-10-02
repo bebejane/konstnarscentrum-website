@@ -1,6 +1,3 @@
-#import "./fragments/ImageFragment.gql"
-#import "./fragments/NewsFragment.gql"
-
 query AllNews($first: IntType = 10, $skip: IntType = 0, $regionId: ItemId) {
 	news: allNews(
 		filter: { region: { eq: $regionId } }
@@ -29,5 +26,48 @@ query LatestNews($first: IntType = 2, $skip: IntType = 0, $regionId: ItemId) {
 		skip: $skip
 	) {
 		...NewsFragment
+	}
+}
+
+fragment NewsFragment on NewsRecord {
+	__typename
+	_modelApiKey
+	id
+	title
+	slug
+	intro
+	createdAt
+	blackHeadline
+	image {
+		...ImageFragment
+	}
+	region {
+		...RegionFragment
+	}
+	content {
+		value
+		blocks {
+			__typename
+			... on RelatedMemberNewsRecord {
+				id
+				memberNews {
+					...MemberNewsFragment
+				}
+			}
+			... on ImageRecord {
+				id
+				image {
+					...ImageFragment
+				}
+			}
+			... on RecordInterface {
+				id
+			}
+		}
+	}
+	_seoMetaTags {
+		attributes
+		content
+		tag
 	}
 }

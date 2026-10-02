@@ -1,29 +1,19 @@
-import React, { ReactElement } from "react";
-import {
-  MjmlHead,
-  MjmlFont,
-  MjmlAttributes,
-  MjmlAll,
-  MjmlStyle,
-  MjmlRaw,
-} from "mjml-react";
-import { black, grayDark, grayLight } from "./theme";
+import React, { ReactElement } from 'react';
+import { MjmlHead, MjmlFont, MjmlAttributes, MjmlAll, MjmlStyle, MjmlRaw } from 'mjml-react';
+import { black, grayDark, grayLight } from './theme';
 
 type HeadProps = { children?: ReactElement };
 
 const Head: React.FC<HeadProps> = ({ children }) => {
-  return (
-    <MjmlHead>
-      <>
-        <MjmlRaw>
-          <meta name="color-scheme" content="light dark" />
-          <meta name="supported-color-schemes" content="light dark" />
-        </MjmlRaw>
-        <MjmlFont
-          name="Jazz"
-          href={`${process.env.NEXT_PUBLIC_LIVE_URL}/fonts/email.css`}
-        />
-        <MjmlStyle>{`
+	return (
+		<MjmlHead>
+			<>
+				<MjmlRaw>
+					<meta name='color-scheme' content='light dark' />
+					<meta name='supported-color-schemes' content='light dark' />
+				</MjmlRaw>
+				<MjmlFont name='Jazz' href={`${process.env.NEXT_PUBLIC_SITE_URL}/fonts/email.css`} />
+				<MjmlStyle>{`
         strong {
           font-weight: 700;
           font-style: bold;
@@ -75,17 +65,17 @@ const Head: React.FC<HeadProps> = ({ children }) => {
           }
         }
       `}</MjmlStyle>
-        <MjmlAttributes>
-          <MjmlAll
-            font-family='"Jazz", Univers, "Univers", Helvetica, Arial, -apple-system, BlinkMacSystemFont, 
+				<MjmlAttributes>
+					<MjmlAll
+						font-family='"Jazz", Univers, "Univers", Helvetica, Arial, -apple-system, BlinkMacSystemFont, 
             sans-serif'
-            font-weight="400"
-          />
-        </MjmlAttributes>
-        {children}
-      </>
-    </MjmlHead>
-  );
+						font-weight='400'
+					/>
+				</MjmlAttributes>
+				{children}
+			</>
+		</MjmlHead>
+	);
 };
 
 export default Head;

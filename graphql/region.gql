@@ -1,9 +1,3 @@
-#import "./fragments/ImagaFragment.gql"
-#import "./fragments/ImagaThumbnailFragment.gql"
-#import "./fragments/RegionFragment.gql"
-#import "./fragments/CommissionsFragment.gql"
-#import "./fragments/MemberLightFragment.gql"
-
 query Region($regionId: ItemId) {
 	region(filter: { id: { eq: $regionId } }) {
 		__typename
@@ -135,4 +129,12 @@ query RegionMeta($regionId: ItemId) {
 			position
 		}
 	}
+}
+
+fragment RegionFragment on RegionRecord {
+	id
+	name
+	slug
+	global
+	position
 }
