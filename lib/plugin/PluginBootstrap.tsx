@@ -79,8 +79,6 @@ export default function PluginBootstrap() {
 				}
 			},
 			contentAreaSidebarItems(ctx: ContentAreaSidebarItemsCtx) {
-				if (ctx.environment !== 'dev') return [];
-
 				return [
 					{
 						label: 'Fakturera' + (isDev ? ' (dev)' : ''),
