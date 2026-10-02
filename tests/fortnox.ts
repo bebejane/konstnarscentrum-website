@@ -124,9 +124,9 @@ async function main() {
   assert("memberToCustomer handles missing city", noName.City === undefined);
 
   const clearedCity = memberToCustomer({ id: "Member3", email: "y@example.com", city: "" });
-  assert("memberToCustomer empty-string city clears (sends empty string)", clearedCity.City === "");
+  assert("memberToCustomer empty-string city clears with API_BLANK", clearedCity.City === "API_BLANK");
   const whitespaceCity = memberToCustomer({ id: "Member4", email: "z@example.com", city: "   " });
-  assert("memberToCustomer whitespace-only city clears", whitespaceCity.City === "");
+  assert("memberToCustomer whitespace-only city clears with API_BLANK", whitespaceCity.City === "API_BLANK");
   const emptyEmail = memberToCustomer({ id: "Member5", email: "", city: "Stockholm" });
   assert("memberToCustomer email passed through (not optional-clearing)", emptyEmail.Email === "");
   ok("memberToCustomer runs");

@@ -31,13 +31,18 @@ export const sanitizeText = (value: string | undefined): string | undefined => {
 	return cleaned || undefined;
 };
 
+/** Fortnox's documented sentinel for "delete/clear this field". */
+const FORTNOX_BLANK = 'API_BLANK';
+
 /**
  * undefined/null → omitted from the request (Fortnox keeps its current value).
- * "" / whitespace  → sent as "" so Fortnox clears the field.
+ * "" / whitespace  → sent as "API_BLANK" so Fortnox clears the field — a plain
+ * empty string is ignored on update (see Fortnox "Delete Values" docs).
  */
 const optionalClearingString = (value: string | undefined | null): string | undefined => {
 	if (value === undefined || value === null) return undefined;
-	return sanitizeText(value) ?? '';
+	const cleaned = sanitizeText(value);
+	return cleaned === undefined ? FORTNOX_BLANK : cleaned;
 };
 
 /**
