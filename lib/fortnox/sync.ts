@@ -32,6 +32,15 @@ export const sanitizeText = (value: string | undefined): string | undefined => {
 };
 
 /**
+ * undefined/null → omitted from the request (Fortnox keeps its current value).
+ * "" / whitespace  → sent as "" so Fortnox clears the field.
+ */
+const optionalClearingString = (value: string | undefined | null): string | undefined => {
+	if (value === undefined || value === null) return undefined;
+	return sanitizeText(value) ?? '';
+};
+
+/**
  * Map a DatoCMS member to the data we send to Fortnox as a customer.
  * Email is the join key between the systems.
  */
@@ -40,7 +49,7 @@ export const memberToCustomer = (member: MemberItem): Partial<FortnoxCustomer> =
 	return {
 		Name: sanitizeText(fullName),
 		Email: member.email,
-		City: sanitizeText(member.city) || '',
+		City: optionalClearingString(member.city),
 		// Store the DatoCMS member id for reverse lookup
 		ExternalReference: member.id,
 	};

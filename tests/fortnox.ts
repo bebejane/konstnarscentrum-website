@@ -122,6 +122,13 @@ async function main() {
   const noName = memberToCustomer({ id: "Member2", email: "x@example.com" });
   assert("memberToCustomer handles missing name", noName.Name === undefined);
   assert("memberToCustomer handles missing city", noName.City === undefined);
+
+  const clearedCity = memberToCustomer({ id: "Member3", email: "y@example.com", city: "" });
+  assert("memberToCustomer empty-string city clears (sends empty string)", clearedCity.City === "");
+  const whitespaceCity = memberToCustomer({ id: "Member4", email: "z@example.com", city: "   " });
+  assert("memberToCustomer whitespace-only city clears", whitespaceCity.City === "");
+  const emptyEmail = memberToCustomer({ id: "Member5", email: "", city: "Stockholm" });
+  assert("memberToCustomer email passed through (not optional-clearing)", emptyEmail.Email === "");
   ok("memberToCustomer runs");
 
   // ---------- sanitizeText ----------
