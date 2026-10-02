@@ -84,11 +84,11 @@ importers:
         specifier: github:bebejane/dato-nextjs-utils
         version: https://codeload.github.com/bebejane/dato-nextjs-utils/tar.gz/9b1d76b0345400f0a1a230dd02e7489f99de819a(@apollo/client@3.14.0(@types/react@18.3.26)(graphql-ws@5.12.1(graphql@16.11.0))(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@datocms/cma-client-browser@3.4.5)(@datocms/cma-client-node@3.0.2)(@datocms/cma-client@3.0.1)(@types/node@18.19.130)(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(datocms-listen@0.1.15(graphql@16.11.0))(next-seo@5.15.0(next@14.2.35(@babel/core@7.28.5(supports-color@8.1.1))(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.35(@babel/core@7.28.5(supports-color@8.1.1))(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.93.2))(react-datocms@4.2.2(@types/react-dom@19.2.2(@types/react@18.3.26))(@types/react@18.3.26)(graphql@16.11.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       datocms-plugin-sdk:
-        specifier: ^2.4.2
-        version: 2.4.2
+        specifier: ^2.5.0
+        version: 2.5.0
       datocms-react-ui:
-        specifier: ^2.2.7
-        version: 2.2.7(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
+        specifier: ^2.5.1
+        version: 2.5.1(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       datocms-structured-text-utils:
         specifier: ^2.0.4
         version: 2.1.12
@@ -3571,11 +3571,11 @@ packages:
   datocms-listen@0.1.15:
     resolution: {integrity: sha512-0LcdKYW/ilWdyrRzQ+YbkAk4r2dge63vzHtfv19L8pfbfYurQgXP9/ck703QZL//YqBoc0OKBS4BP4WUQ6JDKA==}
 
-  datocms-plugin-sdk@2.4.2:
-    resolution: {integrity: sha512-YP/hHXrUDJmVumcJK5D6BSIhGeJRWt+bugLIWsbtXAJi/Bk8hkRslbQSR+ad+G4o/MweaEB7ZL1KLFn7JJq6Hw==}
+  datocms-plugin-sdk@2.5.0:
+    resolution: {integrity: sha512-XYpRqA7+0+sBsGtLwTzd8MHDu9kGZP7f/6cC8yPyAr0m6zCnn33xeyVjk0pWmqMYqrVhL7kKAIoEAJk1Xhtytg==}
 
-  datocms-react-ui@2.2.7:
-    resolution: {integrity: sha512-Yiweve3io8OJ0fRiIada4RPB2Py5rHVJkIbvhKZCi43Fx1c7TmB7BkvEx8Y7PJegfjmOcK8lHN8GCjmN1Z2BeQ==}
+  datocms-react-ui@2.5.1:
+    resolution: {integrity: sha512-QLNRDGQNOAL+qFwVodwWEwIUYWEV+mutI3BHXC3KiFhm4AsgDwfL9U3tfyOaBIQWRlYuC8+RCNb5KhTvZi62IA==}
 
   datocms-structured-text-generic-html-renderer@2.1.12:
     resolution: {integrity: sha512-1Vj/24iaKUcNm3xG9kD09EHz00rIVIQVD6RSGNBvi+BQPPJGdGfFUcPME9xQv3KZrcw/pyNkAkBXO2q4wqEslw==}
@@ -12229,7 +12229,7 @@ snapshots:
     transitivePeerDependencies:
       - graphql
 
-  datocms-plugin-sdk@2.4.2:
+  datocms-plugin-sdk@2.5.0:
     dependencies:
       '@datocms/cma-client': 6.2.0
       '@types/react': 17.0.93
@@ -12237,11 +12237,11 @@ snapshots:
       emoji-regex-xs: 2.0.1
       penpal: 4.1.1
 
-  datocms-react-ui@2.2.7(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1):
+  datocms-react-ui@2.5.1(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1):
     dependencies:
       '@floating-ui/react': 0.27.20(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       classnames: 2.5.1
-      datocms-plugin-sdk: 2.4.2
+      datocms-plugin-sdk: 2.5.0
       react-intersection-observer: 8.34.0(react@18.3.1)
       react-select: 5.10.2(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       scroll-into-view-if-needed: 2.2.31
