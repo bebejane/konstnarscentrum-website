@@ -168,6 +168,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				.status(200)
 				.json({ members: membersWithInvoices, region: region.slug, invoiceYear, company });
 		} catch (err) {
+			console.error(err);
 			return res.status(500).json({ error: parseDatoError(err) });
 		}
 	}
