@@ -46,13 +46,15 @@ const optionalClearingString = (value: string | undefined | null): string | unde
  */
 export const memberToCustomer = (member: MemberItem): Partial<FortnoxCustomer> => {
 	const fullName = [member.first_name, member.last_name].filter(Boolean).join(' ') || undefined;
-	return {
+	const data = {
 		Name: sanitizeText(fullName),
 		Email: member.email,
 		City: optionalClearingString(member.city),
 		// Store the DatoCMS member id for reverse lookup
 		ExternalReference: member.id,
 	};
+	console.log(data);
+	return data;
 };
 
 /**
