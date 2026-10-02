@@ -40,7 +40,7 @@ export const memberToCustomer = (member: MemberItem): Partial<FortnoxCustomer> =
 	return {
 		Name: sanitizeText(fullName),
 		Email: member.email,
-		City: sanitizeText(member.city || undefined),
+		City: sanitizeText(member.city || ''),
 		// Store the DatoCMS member id for reverse lookup
 		ExternalReference: member.id,
 	};
