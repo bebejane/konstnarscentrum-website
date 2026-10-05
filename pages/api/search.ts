@@ -1,42 +1,54 @@
-import type { NextRequest, NextResponse } from 'next/server';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiQuery } from 'dato-nextjs-utils/api';
 import { apiQueryAll } from '/lib/utils';
 import { buildClient } from '@datocms/cma-client';
 import { SearchMembersDocument, SearchMembersFreeDocument, SiteSearchDocument } from '/graphql';
 import { truncateParagraph, isEmptyObject, recordToSlug } from '/lib/utils';
 
-export const runtime = 'edge';
-export const maxDuration = 10;
+// The Edge runtime ignores maxDuration and hard-stops the function if it does not
+// begin responding within 25s, which intermittently timed this endpoint out. The
+// Node.js runtime honours maxDuration and is the runtime Vercel recommends for
+// functions that call out to several APIs.
+export const config = { runtime: 'nodejs', maxDuration: 30 };
 
 const client = buildClient({ apiToken: process.env.GRAPHQL_API_TOKEN });
 
-export default async function handler(req: NextRequest, res: NextResponse) {
+// Hard ceiling so a stalled upstream (DatoCMS GraphQL/CMA) can never hang the
+// function until the platform kills it — we always send a response in time.
+const SEARCH_TIMEOUT_MS = 20000;
+
+const withTimeout = <T,>(promise: Promise<T>, ms: number = SEARCH_TIMEOUT_MS): Promise<T> =>
+	new Promise<T>((resolve, reject) => {
+		const timer = setTimeout(() => reject(new Error('Search timed out')), ms);
+		promise.then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(error) => {
+				clearTimeout(timer);
+				reject(error);
+			},
+		);
+	});
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+	if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
 	try {
-		const params = await req.json();
+		const params = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
 
 		if (params.type === 'member') {
-			const members = await memberSearch(params);
-			return new Response(JSON.stringify({ members }), {
-				status: 200,
-				headers: { 'content-type': 'application/json' },
-			});
+			const members = await withTimeout(memberSearch(params));
+			return res.status(200).json({ members });
 		} else if (params.type === 'site') {
-			const results = await siteSearch(params);
-			return new Response(JSON.stringify(results), {
-				status: 200,
-				headers: { 'content-type': 'application/json' },
-			});
-		} else {
-			return new Response(JSON.stringify({}), {
-				status: 200,
-				headers: { 'content-type': 'application/json' },
-			});
+			const results = await withTimeout(siteSearch(params));
+			return res.status(200).json(results);
 		}
+
+		return res.status(200).json({});
 	} catch (err) {
-		return new Response(JSON.stringify(err), {
-			status: 500,
-			headers: { 'content-type': 'application/json' },
-		});
+		return res.status(500).json({ error: err?.message ?? String(err) });
 	}
 }
 
