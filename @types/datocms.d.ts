@@ -1266,6 +1266,24 @@ type FileFilter = {
   notIn?: InputMaybe<Array<InputMaybe<Scalars['UploadId']>>>;
 };
 
+/** Specifies how to filter Floating-point fields */
+type FloatFilter = {
+  /** Search for records with an exact match */
+  eq?: InputMaybe<Scalars['FloatType']>;
+  /** Filter records with the specified field defined (i.e. with any value) or not */
+  exists?: InputMaybe<Scalars['BooleanType']>;
+  /** Filter records with a value that's strictly greater than the one specified */
+  gt?: InputMaybe<Scalars['FloatType']>;
+  /** Filter records with a value that's greater than or equal to the one specified */
+  gte?: InputMaybe<Scalars['FloatType']>;
+  /** Filter records with a value that's less than the one specified */
+  lt?: InputMaybe<Scalars['FloatType']>;
+  /** Filter records with a value that's less or equal than the one specified */
+  lte?: InputMaybe<Scalars['FloatType']>;
+  /** Exclude records with an exact match */
+  neq?: InputMaybe<Scalars['FloatType']>;
+};
+
 /** Record of type Sidfot (footer) */
 type FooterRecord = RecordInterface & {
   __typename?: 'FooterRecord';
@@ -3568,6 +3586,106 @@ type IntroInitiativeRecordintroArgs = {
   markdown?: InputMaybe<Scalars['Boolean']>;
 };
 
+type InvoiceModelFilter = {
+  AND?: InputMaybe<Array<InputMaybe<InvoiceModelFilter>>>;
+  OR?: InputMaybe<Array<InputMaybe<InvoiceModelFilter>>>;
+  _createdAt?: InputMaybe<CreatedAtFilter>;
+  _firstPublishedAt?: InputMaybe<PublishedAtFilter>;
+  _isValid?: InputMaybe<BooleanFilter>;
+  _publicationScheduledAt?: InputMaybe<PublishedAtFilter>;
+  _publishedAt?: InputMaybe<PublishedAtFilter>;
+  _status?: InputMaybe<StatusFilter>;
+  _unpublishingScheduledAt?: InputMaybe<PublishedAtFilter>;
+  _updatedAt?: InputMaybe<UpdatedAtFilter>;
+  createdAt?: InputMaybe<CreatedAtFilter>;
+  dueDate?: InputMaybe<DateFilter>;
+  fortnoxCustomerNumber?: InputMaybe<StringFilter>;
+  fortnoxDocumentNumber?: InputMaybe<StringFilter>;
+  id?: InputMaybe<ItemIdFilter>;
+  invoiceYear?: InputMaybe<IntegerFilter>;
+  member?: InputMaybe<LinkFilter>;
+  paymentDate?: InputMaybe<DateFilter>;
+  paymentStatus?: InputMaybe<StringFilter>;
+  region?: InputMaybe<LinkFilter>;
+  total?: InputMaybe<FloatFilter>;
+  updatedAt?: InputMaybe<UpdatedAtFilter>;
+};
+
+enum InvoiceModelOrderBy {
+  _createdAt_ASC = '_createdAt_ASC',
+  _createdAt_DESC = '_createdAt_DESC',
+  _firstPublishedAt_ASC = '_firstPublishedAt_ASC',
+  _firstPublishedAt_DESC = '_firstPublishedAt_DESC',
+  _isValid_ASC = '_isValid_ASC',
+  _isValid_DESC = '_isValid_DESC',
+  _publicationScheduledAt_ASC = '_publicationScheduledAt_ASC',
+  _publicationScheduledAt_DESC = '_publicationScheduledAt_DESC',
+  _publishedAt_ASC = '_publishedAt_ASC',
+  _publishedAt_DESC = '_publishedAt_DESC',
+  _status_ASC = '_status_ASC',
+  _status_DESC = '_status_DESC',
+  _unpublishingScheduledAt_ASC = '_unpublishingScheduledAt_ASC',
+  _unpublishingScheduledAt_DESC = '_unpublishingScheduledAt_DESC',
+  _updatedAt_ASC = '_updatedAt_ASC',
+  _updatedAt_DESC = '_updatedAt_DESC',
+  createdAt_ASC = 'createdAt_ASC',
+  createdAt_DESC = 'createdAt_DESC',
+  dueDate_ASC = 'dueDate_ASC',
+  dueDate_DESC = 'dueDate_DESC',
+  fortnoxCustomerNumber_ASC = 'fortnoxCustomerNumber_ASC',
+  fortnoxCustomerNumber_DESC = 'fortnoxCustomerNumber_DESC',
+  fortnoxDocumentNumber_ASC = 'fortnoxDocumentNumber_ASC',
+  fortnoxDocumentNumber_DESC = 'fortnoxDocumentNumber_DESC',
+  id_ASC = 'id_ASC',
+  id_DESC = 'id_DESC',
+  invoiceYear_ASC = 'invoiceYear_ASC',
+  invoiceYear_DESC = 'invoiceYear_DESC',
+  paymentDate_ASC = 'paymentDate_ASC',
+  paymentDate_DESC = 'paymentDate_DESC',
+  paymentStatus_ASC = 'paymentStatus_ASC',
+  paymentStatus_DESC = 'paymentStatus_DESC',
+  total_ASC = 'total_ASC',
+  total_DESC = 'total_DESC',
+  updatedAt_ASC = 'updatedAt_ASC',
+  updatedAt_DESC = 'updatedAt_DESC'
+}
+
+/** Record of type Faktura (invoice) */
+type InvoiceRecord = RecordInterface & {
+  __typename?: 'InvoiceRecord';
+  _createdAt: Scalars['DateTime'];
+  /** Editing URL */
+  _editingUrl?: Maybe<Scalars['String']>;
+  _firstPublishedAt: Scalars['DateTime'];
+  _isValid: Scalars['BooleanType'];
+  _modelApiKey: Scalars['String'];
+  _publicationScheduledAt?: Maybe<Scalars['DateTime']>;
+  _publishedAt: Scalars['DateTime'];
+  /** Generates SEO and Social card meta tags to be used in your frontend */
+  _seoMetaTags: Array<Tag>;
+  _status: ItemStatus;
+  _unpublishingScheduledAt?: Maybe<Scalars['DateTime']>;
+  _updatedAt: Scalars['DateTime'];
+  createdAt: Scalars['DateTime'];
+  dueDate: Scalars['Date'];
+  fortnoxCustomerNumber: Scalars['String'];
+  fortnoxDocumentNumber: Scalars['String'];
+  id: Scalars['ItemId'];
+  invoiceYear: Scalars['IntType'];
+  member: MemberRecord;
+  paymentDate?: Maybe<Scalars['Date']>;
+  paymentStatus: Scalars['String'];
+  region: RegionRecord;
+  total: Scalars['FloatType'];
+  updatedAt: Scalars['DateTime'];
+};
+
+
+/** Record of type Faktura (invoice) */
+type InvoiceRecord_seoMetaTagsArgs = {
+  locale?: InputMaybe<SiteLocale>;
+};
+
 /** Specifies how to filter by ID */
 type ItemIdFilter = {
   /** Search the record with the specified ID */
@@ -3763,6 +3881,7 @@ type MemberModelFilter = {
   createdAt?: InputMaybe<CreatedAtFilter>;
   email?: InputMaybe<StringFilter>;
   firstName?: InputMaybe<StringFilter>;
+  fortnoxCustomerNumber?: InputMaybe<StringFilter>;
   fullName?: InputMaybe<StringFilter>;
   id?: InputMaybe<ItemIdFilter>;
   image?: InputMaybe<FileFilter>;
@@ -3808,6 +3927,8 @@ enum MemberModelOrderBy {
   email_DESC = 'email_DESC',
   firstName_ASC = 'firstName_ASC',
   firstName_DESC = 'firstName_DESC',
+  fortnoxCustomerNumber_ASC = 'fortnoxCustomerNumber_ASC',
+  fortnoxCustomerNumber_DESC = 'fortnoxCustomerNumber_DESC',
   fullName_ASC = 'fullName_ASC',
   fullName_DESC = 'fullName_DESC',
   id_ASC = 'id_ASC',
@@ -4047,6 +4168,7 @@ type MemberRecord = RecordInterface & {
   createdAt: Scalars['DateTime'];
   email: Scalars['String'];
   firstName: Scalars['String'];
+  fortnoxCustomerNumber?: Maybe<Scalars['String']>;
   fullName: Scalars['String'];
   id: Scalars['ItemId'];
   image?: Maybe<FileField>;
@@ -4453,6 +4575,8 @@ type Query = {
   /** Returns meta information regarding a record collection */
   _allHelpsMeta: CollectionMetadata;
   /** Returns meta information regarding a record collection */
+  _allInvoicesMeta: CollectionMetadata;
+  /** Returns meta information regarding a record collection */
   _allMemberCategoriesMeta: CollectionMetadata;
   /** Returns meta information regarding a record collection */
   _allMemberNewsCategoriesMeta: CollectionMetadata;
@@ -4494,6 +4618,8 @@ type Query = {
   allForArtists: Array<ForArtistRecord>;
   /** Returns a collection of records */
   allHelps: Array<HelpRecord>;
+  /** Returns a collection of records */
+  allInvoices: Array<InvoiceRecord>;
   /** Returns a collection of records */
   allMemberCategories: Array<MemberCategoryRecord>;
   /** Returns a collection of records */
@@ -4540,6 +4666,8 @@ type Query = {
   inEnglish?: Maybe<InEnglishRecord>;
   /** Returns the single instance record */
   introInitiative?: Maybe<IntroInitiativeRecord>;
+  /** Returns a specific record */
+  invoice?: Maybe<InvoiceRecord>;
   /** Returns a specific record */
   member?: Maybe<MemberRecord>;
   /** Returns a specific record */
@@ -4639,6 +4767,14 @@ type Query_allForArtistsMetaArgs = {
 type Query_allHelpsMetaArgs = {
   fallbackLocales?: InputMaybe<Array<SiteLocale>>;
   filter?: InputMaybe<HelpModelFilter>;
+  locale?: InputMaybe<SiteLocale>;
+};
+
+
+/** The query root for this schema */
+type Query_allInvoicesMetaArgs = {
+  fallbackLocales?: InputMaybe<Array<SiteLocale>>;
+  filter?: InputMaybe<InvoiceModelFilter>;
   locale?: InputMaybe<SiteLocale>;
 };
 
@@ -4836,6 +4972,17 @@ type QueryallHelpsArgs = {
   first?: InputMaybe<Scalars['IntType']>;
   locale?: InputMaybe<SiteLocale>;
   orderBy?: InputMaybe<Array<InputMaybe<HelpModelOrderBy>>>;
+  skip?: InputMaybe<Scalars['IntType']>;
+};
+
+
+/** The query root for this schema */
+type QueryallInvoicesArgs = {
+  fallbackLocales?: InputMaybe<Array<SiteLocale>>;
+  filter?: InputMaybe<InvoiceModelFilter>;
+  first?: InputMaybe<Scalars['IntType']>;
+  locale?: InputMaybe<SiteLocale>;
+  orderBy?: InputMaybe<Array<InputMaybe<InvoiceModelOrderBy>>>;
   skip?: InputMaybe<Scalars['IntType']>;
 };
 
@@ -5052,6 +5199,15 @@ type QueryinEnglishArgs = {
 type QueryintroInitiativeArgs = {
   fallbackLocales?: InputMaybe<Array<SiteLocale>>;
   locale?: InputMaybe<SiteLocale>;
+};
+
+
+/** The query root for this schema */
+type QueryinvoiceArgs = {
+  fallbackLocales?: InputMaybe<Array<SiteLocale>>;
+  filter?: InputMaybe<InvoiceModelFilter>;
+  locale?: InputMaybe<SiteLocale>;
+  orderBy?: InputMaybe<Array<InputMaybe<InvoiceModelOrderBy>>>;
 };
 
 
@@ -6518,6 +6674,8 @@ type SearchMembersFreeQueryVariables = Exact<{
   first?: InputMaybe<Scalars['IntType']>;
   skip?: InputMaybe<Scalars['IntType']>;
   query: Scalars['String'];
+  memberCategoryIds?: InputMaybe<Array<InputMaybe<Scalars['ItemId']>> | InputMaybe<Scalars['ItemId']>>;
+  regionId?: InputMaybe<Scalars['ItemId']>;
 }>;
 
 

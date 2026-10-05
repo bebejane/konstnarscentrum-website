@@ -21,10 +21,11 @@ export default function Thumbnail({ image, slug, title, subtitle, regional = tru
   const [hover, setHover] = useState<undefined | boolean>(false);
   const [ratio, setRatio] = useState<number>(0)
   const { isDesktop } = useDevice()
-  const horizontal = title.split('').slice((title.length * ratio))
-  const vertical = title.split('').slice(0, Math.round(title.length * ratio))
-  const readMore = subtitle || 'Visa'
-  const more = readMore.split('').slice(readMore.length - (readMore.length * ratio))
+  const chars = Array.from(title) // Array.from splits by code point, so emoji/surrogate pairs stay intact
+  const readMoreChars = Array.from(subtitle || 'Visa')
+  const horizontal = chars.slice((chars.length * ratio))
+  const vertical = chars.slice(0, Math.round(chars.length * ratio))
+  const more = readMoreChars.slice(readMoreChars.length - (readMoreChars.length * ratio))
   const interval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function Thumbnail({ image, slug, title, subtitle, regional = tru
       }
       <span className={cn('mid', s.title, s.vertical)}>
         <span>{vertical.map((c, idx) =>
-          <React.Fragment key={Math.random()}>{c}</React.Fragment>)}
+          <React.Fragment key={idx}>{c}</React.Fragment>)}
         </span>
         <div className={s.fade}></div>
       </span>

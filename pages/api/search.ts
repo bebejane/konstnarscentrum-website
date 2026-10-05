@@ -46,17 +46,82 @@ const memberSearch = async (opt) => {
 	const variables = {
 		regionId,
 		memberCategoryIds,
-		query: query
-			? `${query
-					.split(' ')
-					.filter((el) => el)
-					.join('|')}`
-			: undefined,
+		query: query ? buildSearchPattern(query) : undefined,
 		first: 100,
 	};
 
 	const { members } = await apiQueryAll(query ? SearchMembersFreeDocument : SearchMembersDocument, { variables });
-	return members;
+
+	if (!query) return members;
+
+	return rankMembers(members, query);
+};
+
+// Turn a free-text query into a case-insensitive regex matching any of its
+// terms. The query may already be pipe-joined by the client, so split on both
+// `|` and whitespace, and escape regex metacharacters so a stray "(" etc. can
+// never produce an invalid pattern and 500 the request.
+const buildSearchPattern = (query: string) =>
+	query
+		.split(/[|\s]+/)
+		.map((term) => term.trim())
+		.filter(Boolean)
+		.map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+		.join('|');
+
+// Lowercase and strip diacritics so "a" matches "å/ä" and comparisons are
+// accent- and case-insensitive.
+const normalize = (str = '') =>
+	str
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase();
+
+// DatoCMS can only sort members alphabetically, so score each hit by how well
+// its name matches the query terms and return the most relevant first. Ties
+// fall back to Swedish alphabetical order for a stable, deterministic result.
+const rankMembers = (members: any[], query: string) => {
+	const terms = normalize(query)
+		.split(/[|\s]+/)
+		.filter(Boolean);
+
+	if (!terms.length) return members;
+
+	const scoreMember = (member: any) => {
+		const first = normalize(member.firstName);
+		const last = normalize(member.lastName);
+		const full = normalize(member.fullName);
+		const words = full.split(/\s+/);
+		const names = [first, last, full];
+
+		let score = 0;
+		let matched = 0;
+
+		for (const term of terms) {
+			const contains = names.some((name) => name.includes(term));
+			if (contains) matched += 1;
+
+			if (first === term || last === term) score += 100;
+			else if (first.startsWith(term) || last.startsWith(term)) score += 60;
+			else if (words.some((word) => word.startsWith(term))) score += 40;
+			else if (contains) score += 10;
+		}
+
+		// Prefer members matching every term, and all else equal more of them.
+		if (terms.length > 1 && matched === terms.length) score += 50;
+		score += matched * 5;
+
+		return score;
+	};
+
+	return members
+		.map((member) => ({ member, score: scoreMember(member) }))
+		.sort(
+			(a, b) =>
+				b.score - a.score ||
+				(a.member.fullName ?? '').localeCompare(b.member.fullName ?? '', 'sv'),
+		)
+		.map(({ member }) => member);
 };
 
 export const siteSearch = async (opt: any) => {

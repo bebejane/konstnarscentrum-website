@@ -54,7 +54,7 @@ query SearchMembers(
 			region: { eq: $regionId }
 			memberCategory: { anyIn: $memberCategoryIds }
 		}
-		orderBy: _createdAt_DESC
+		orderBy: [_createdAt_DESC, id_ASC]
 		first: $first
 		skip: $skip
 	) {
@@ -72,19 +72,27 @@ query SearchMembers(
 	}
 }
 
-query SearchMembersFree($first: IntType = 100, $skip: IntType = 0, $query: String!) {
+query SearchMembersFree(
+	$first: IntType = 100
+	$skip: IntType = 0
+	$query: String!
+	$memberCategoryIds: [ItemId]
+	$regionId: ItemId
+) {
 	members: allMembers(
 		first: $first
 		skip: $skip
 		filter: {
 			image: { exists: true }
 			active: { eq: true }
+			region: { eq: $regionId }
+			memberCategory: { anyIn: $memberCategoryIds }
 			OR: [
 				{ firstName: { matches: { pattern: $query, caseSensitive: false } } }
 				{ lastName: { matches: { pattern: $query, caseSensitive: false } } }
 			]
 		}
-		orderBy: firstName_ASC
+		orderBy: [firstName_ASC, lastName_ASC, id_ASC]
 	) {
 		...MemberLightFragment
 	}
@@ -92,6 +100,8 @@ query SearchMembersFree($first: IntType = 100, $skip: IntType = 0, $query: Strin
 		filter: {
 			image: { exists: true }
 			active: { eq: true }
+			region: { eq: $regionId }
+			memberCategory: { anyIn: $memberCategoryIds }
 			OR: [
 				{ firstName: { matches: { pattern: $query, caseSensitive: false } } }
 				{ lastName: { matches: { pattern: $query, caseSensitive: false } } }
