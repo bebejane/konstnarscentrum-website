@@ -6,6 +6,10 @@ import { isEligibleForInvoiceFromRecords } from "../lib/fortnox/invoiceDispatch"
 import {
   memberToCustomer,
   sanitizeText,
+  checkCustomerOwnership,
+  selectUniqueCustomerByEmail,
+  dropRedundantClears,
+  dataWouldChange,
   webhookEntityToMember,
   webhookModelApiKey
 } from "../lib/fortnox/sync";
@@ -140,6 +144,79 @@ async function main() {
   assert("sanitizeText returns undefined when only symbols", sanitizeText("🌏🌏") === undefined);
   assert("sanitizeText passes undefined through", sanitizeText(undefined) === undefined);
   ok("sanitizeText runs");
+
+  // ---------- overwrite safeguards ----------
+  const memberA = {
+    id: "MemberA",
+    email: "anna@example.com",
+    first_name: "Anna",
+    last_name: "Andersson",
+    city: "Malmö"
+  };
+  const cust = (overrides: Record<string, any> = {}) =>
+    ({
+      CustomerNumber: "100",
+      Email: "anna@example.com",
+      Name: "Anna Andersson",
+      City: "Malmö",
+      ...overrides
+    }) as any;
+
+  assert(
+    "ownership: own ExternalReference is ok",
+    checkCustomerOwnership(cust({ ExternalReference: "MemberA" }), memberA).ok
+  );
+  assert(
+    "ownership: different ExternalReference is refused",
+    !checkCustomerOwnership(cust({ ExternalReference: "MemberB" }), memberA).ok
+  );
+  assert("ownership: no reference + matching email is ok", checkCustomerOwnership(cust(), memberA).ok);
+  assert(
+    "ownership: no reference + different email is refused",
+    !checkCustomerOwnership(cust({ Email: "someone-else@example.com" }), memberA).ok
+  );
+  assert(
+    "ownership: own reference + changed email is still ok",
+    checkCustomerOwnership(cust({ ExternalReference: "MemberA", Email: "old@example.com" }), memberA).ok
+  );
+  ok("checkCustomerOwnership runs");
+
+  const twoCustomers = [cust({ CustomerNumber: "100" }), cust({ CustomerNumber: "101", Email: "other@example.com" })];
+  assert(
+    "unique match: finds the single match",
+    selectUniqueCustomerByEmail(twoCustomers, "anna@example.com").customer?.CustomerNumber === "100"
+  );
+  const noMatch = selectUniqueCustomerByEmail(twoCustomers, "nobody@example.com");
+  assert("unique match: no match is not an error", !noMatch.error && noMatch.customer === undefined);
+  assert(
+    "unique match: duplicate emails are refused",
+    !!selectUniqueCustomerByEmail(
+      [cust({ CustomerNumber: "100" }), cust({ CustomerNumber: "101" })],
+      "anna@example.com"
+    ).error
+  );
+  ok("selectUniqueCustomerByEmail runs");
+
+  const withCity = cust({ CustomerNumber: "100", City: "Malmö" });
+  const noCity = cust({ CustomerNumber: "100", City: "" });
+  assert(
+    "dropRedundantClears: keeps API_BLANK when the customer has a value",
+    dropRedundantClears({ City: "API_BLANK" }, withCity).City === "API_BLANK"
+  );
+  assert(
+    "dropRedundantClears: drops API_BLANK when the customer is already empty",
+    dropRedundantClears({ City: "API_BLANK" }, noCity).City === undefined
+  );
+  assert(
+    "dataWouldChange: identical data is a no-op",
+    !dataWouldChange({ Name: "Anna Andersson", City: "Malmö" }, withCity)
+  );
+  assert(
+    "dataWouldChange: changed name is a change",
+    dataWouldChange({ Name: "Anna A", City: "Malmö" }, withCity)
+  );
+  assert("dataWouldChange: API_BLANK against empty is a no-op", !dataWouldChange({ City: "API_BLANK" }, noCity));
+  ok("overwrite safeguards run");
 
   // ---------- isEmailAllowedToSend ----------
   const prevAllowlist = process.env.FORTNOX_EMAIL_ALLOWLIST;

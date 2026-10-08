@@ -6,6 +6,7 @@ Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONM
 
 - **Email allowlist** — `.env` sets `FORTNOX_EMAIL_ALLOWLIST=bjorn@konst-teknik.se,mattias@konst-teknik.se`. When invoices are created, only these emails get the Fortnox email. Unset the var (leave empty) in production so everyone is emailed.
 - **Region guard** — `FORTNOX_ENABLED_REGIONS = ['ost']`. Nothing outside that region is touched.
+- **Wrong-customer guard** — `syncMemberToFortKnox` (`lib/fortnox/sync.ts`) only overwrites a Fortnox customer it can *prove* belongs to the member: its `ExternalReference` must match the member id, or — when no reference is stored — its email must match. A stored customer number pointing at another member, an ambiguous email (several customers share it), or a write that would change nothing is **skipped** and logged (HTTP 200, `{ skipped: true, reason }`) instead of overwriting the wrong customer. The bulk `syncfortknox` script refuses the same ambiguous/foreign links.
 - **Amount/account** — `FORTNOX_INVOICE_AMOUNT` and `FORTNOX_INVOICE_ACCOUNT` in `.env`. Set a test amount (e.g. `100`) before creating invoices; a 0-amount may be rejected.
 
 ## Prerequisites

@@ -46,7 +46,14 @@ const main = async () => {
 
 		console.log(`[${region.name}] Fetching existing Fortnox customers...`);
 		const customers = await listCustomers(region.slug);
-		const customersByEmail = new Map(customers.map((c) => [(c.Email ?? '').toLowerCase(), c]));
+		// Group by email; a duplicate email makes the match ambiguous and is
+		// refused below rather than linking a member to an arbitrary customer.
+		const customersByEmail = new Map<string, typeof customers>();
+		for (const c of customers) {
+			const key = (c.Email ?? '').trim().toLowerCase();
+			if (!key) continue;
+			customersByEmail.set(key, [...(customersByEmail.get(key) ?? []), c]);
+		}
 		const notMembers = customers.filter((c) => !regionMembers.find((m) => m.email === c.Email));
 
 		console.log(`[${region.name}] Loaded ${customers.length} existing customers`);
@@ -82,9 +89,27 @@ const main = async () => {
 					continue;
 				}
 
-				// 2) Link by email
-				const match = customersByEmail.get(member.email.toLowerCase());
+				// 2) Link by email — only a single, unambiguous match that isn't
+				//    already linked to another member.
+				const matches = customersByEmail.get(member.email.trim().toLowerCase()) ?? [];
+				if (matches.length > 1) {
+					errored++;
+					errors.push(
+						`[${member.id}] ${matches.length} Fortnox customers share ${member.email} (#${matches
+							.map((c) => c.CustomerNumber)
+							.join(', #')}), skipped`,
+					);
+					continue;
+				}
+				const match = matches[0];
 				if (match) {
+					if (match.ExternalReference && match.ExternalReference !== member.id) {
+						errored++;
+						errors.push(
+							`[${member.id}] customer #${match.CustomerNumber} belongs to ${match.ExternalReference}, skipped`,
+						);
+						continue;
+					}
 					await client.items.update(member.id, { fortnox_customer_number: match.CustomerNumber });
 					linked++;
 					continue;

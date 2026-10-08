@@ -33,6 +33,11 @@ const isAuthorized = (req: NextApiRequest) => {
  *   store the returned number on the member in DatoCMS (that single follow-up
  *   webhook ends as an update — no further loop).
  *
+ * Wrong-customer protection: a customer is only overwritten when it can be
+ * proven to belong to the member. If the stored customer number points at
+ * someone else, the email match is ambiguous, or nothing would change, the
+ * sync is skipped (200 + `skipped`) instead of overwriting the wrong customer.
+ *
  * Anything that is not a member item returns 200 "skipped" so DatoCMS does not
  * retry; transient Fortnox/API errors return 500 so DatoCMS will retry them.
  */
@@ -65,7 +70,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		return res.status(200).json({ skipped: true, reason: 'member has no name' });
 
 	try {
-		const { customerNumber, created } = await syncMemberToFortKnox(member);
+		const result = await syncMemberToFortKnox(member);
+		if (result.skipped) {
+			// A refused write is a permanent condition — return 200 so DatoCMS
+			// does not retry; the reason is logged for manual follow-up.
+			return res.status(200).json({
+				synced: false,
+				skipped: true,
+				memberId: member.id,
+				reason: result.reason,
+				event_type: eventType,
+			});
+		}
+		const { customerNumber, created } = result;
 		console.log('synced member', member.id, member.email, customerNumber, 'created=', created);
 		return res
 			.status(200)
