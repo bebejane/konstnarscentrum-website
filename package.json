@@ -109,7 +109,7 @@
 		"remark-gfm": "^3.0.1",
 		"rooks": "^7.4.1",
 		"sass": "^1.56.0",
-		"slugify": "^1.6.5",
+		"slugify": "^1.6.9",
 		"swiper": "^8.4.4",
 		"thumbnail-youtube-vimeo": "^1.1.1",
 		"universal-base64": "^2.1.0",

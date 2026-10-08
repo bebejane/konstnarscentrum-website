@@ -1,109 +1,99 @@
-import s from './MemberApproval.module.scss'
+import s from './MemberApproval.module.scss';
 import { RenderFieldExtensionCtx } from 'datocms-plugin-sdk';
 import { Canvas, Button, Spinner } from 'datocms-react-ui';
 import { useEffect, useState } from 'react';
 import { siteUrl } from '../utils';
 
-const approvalEndpoint = `${siteUrl}/api/auth/approve`
+const approvalEndpoint = `${siteUrl}/api/auth/approve`;
+const isDev = process.env.NODE_ENV === 'development';
 
 export type PropTypes = {
-  ctx: RenderFieldExtensionCtx;
+	ctx: RenderFieldExtensionCtx;
 };
 
 export default function MemberApproval({ ctx }: PropTypes) {
+	const { basicAuthPassword, basicAuthUsername } = ctx.plugin.attributes.parameters;
+	const [approved, setApproved] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<Error | undefined>();
 
-  const { basicAuthPassword, basicAuthUsername } = ctx.plugin.attributes.parameters
-  const [approved, setApproved] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<Error | undefined>()
+	const approveApplication = async () => {
+		setLoading(true);
+		setError(undefined);
 
-  const approveApplication = async () => {
+		console.time('call approve endpoint');
 
-    //if (approved) return
-    setLoading(true)
-    setError(undefined)
+		try {
+			const formData = { ...ctx.formValues };
 
-    console.time('call approve endpoint');
+			const res = await fetch(approvalEndpoint, {
+				method: 'POST',
+				body: JSON.stringify({ ...formData, id: ctx.item.id, approved: true }),
+				headers: {
+					'Content-type': 'application/json',
+					'Accept': 'application/json',
+					'Authorization': 'Basic ' + btoa(basicAuthUsername + ':' + basicAuthPassword),
+				},
+			});
 
-    try {
-      const formData = { ...ctx.formValues }
+			const body = await res.json();
 
-      const res = await fetch(approvalEndpoint, {
-        method: 'POST',
-        body: JSON.stringify({ ...formData, approved: true }),
-        headers: {
-          'Content-type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Basic ' + btoa(basicAuthUsername + ":" + basicAuthPassword)
-        }
-      })
+			if (res.status !== 200) throw new Error('Server error: ' + body.error);
 
-      const body = await res.json()
+			try {
+				console.log(body.approved, ctx.item?.attributes.approved);
 
-      if (res.status !== 200)
-        throw new Error('Server error: ' + body.error)
+				if (body.approved !== ctx.item?.attributes.approved) {
+					await ctx.setFieldValue(ctx.field.attributes.api_key as string, true);
+					await ctx.saveCurrentItem();
+					ctx.notice('Ansökan godkänd!');
+				} else if (body.approved && body.approved === ctx.item?.attributes.approved) {
+					ctx.notice('Ansöknings meddelande skickat!');
+				}
+			} catch (err) {
+				console.warn(err);
+			}
+			console.timeEnd('call approve endpoint');
+			setApproved(true);
+		} catch (err) {
+			console.error(err);
+			setError(err as Error);
+		}
 
-      try {
-        console.log(body.approved, ctx.item?.attributes.approved)
+		setLoading(false);
+	};
 
-        if (body.approved !== ctx.item?.attributes.approved) {
-          console.log('set field value');
-          await ctx.setFieldValue(ctx.field.attributes.api_key as string, true)
-          await ctx.saveCurrentItem()
-          ctx.notice('Ansökan godkänd!')
-        } else if (body.approved && body.approved === ctx.item?.attributes.approved) {
-          ctx.notice('Ansöknings meddelande skickat!')
-        }
-      } catch (err) {
-        console.warn(err)
-      }
-      console.timeEnd('call approve endpoint');
-      setApproved(true)
+	useEffect(() => {
+		setApproved(ctx.formValues[ctx.field.attributes.api_key] as boolean);
+	}, [ctx.formValues, ctx.field]);
 
-    } catch (err) {
-      console.error(err)
-      setError(err as Error)
-    }
+	return (
+		<Canvas ctx={ctx}>
+			<div className={s.container}>
+				<strong>{approved ? 'GODKÄND' : 'EJ GODKÄND'}</strong>
+				<p>
+					Genom att klicka på knappen nedan godkänns ansökan och medlemmen skickas ett e-post
+					meddelande med instruktioner för att skapa sitt konto och portfolio.
+				</p>
+				<Button className={s.button} fullWidth disabled={loading} onClick={approveApplication}>
+					{!loading ? (
+						approved ? (
+							'Skicka bekfräftelse meddelande igen'
+						) : (
+							'Godkänn ansökan'
+						)
+					) : (
+						<Spinner />
+					)}
+					{isDev && <span> (dev)</span>}
+				</Button>
 
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    fetch(approvalEndpoint, {
-      method: 'POST',
-      body: JSON.stringify({ ping: true }),
-      headers: {
-        'Authorization': 'Basic ' + btoa(basicAuthUsername + ":" + basicAuthPassword),
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    }).then(() => { console.log('pinged endpoint') }).catch(err => console.error(err));
-
-  }, [basicAuthUsername, basicAuthPassword])
-
-  useEffect(() => {
-    setApproved(ctx.formValues[ctx.field.attributes.api_key] as boolean)
-  }, [ctx.formValues, ctx.field])
-
-  return (
-    <Canvas ctx={ctx}>
-      <div className={s.container}>
-        <strong>{approved ? 'GODKÄND' : 'EJ GODKÄND'}</strong>
-        <p>
-          Genom att klicka på knappen nedan godkänns ansökan
-          och medlemmen skickas ett e-post meddelande med instruktioner
-          för att skapa sitt konto och portfolio.
-        </p>
-        <Button className={s.button} fullWidth disabled={loading} onClick={approveApplication}>
-          {!loading ? approved ? 'Skicka bekfräftelse meddelande igen' : 'Godkänn ansökan' : <Spinner />}
-        </Button>
-
-        {error &&
-          <p className={s.error}>
-            <>Fel: {error?.message || error}</>
-          </p>
-        }
-      </div>
-    </Canvas>
-  )
+				{error && (
+					<p className={s.error}>
+						<>Fel: {error?.message || error}</>
+					</p>
+				)}
+			</div>
+		</Canvas>
+	);
 }
