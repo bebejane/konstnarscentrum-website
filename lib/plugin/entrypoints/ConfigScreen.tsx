@@ -1,7 +1,6 @@
 import { RenderConfigScreenCtx } from 'datocms-plugin-sdk';
 import { Canvas, Button, TextField } from 'datocms-react-ui';
 import { useEffect, useState } from 'react';
-import ModelSelector from './ModelSelector';
 
 export type Props = {
 	ctx: RenderConfigScreenCtx;

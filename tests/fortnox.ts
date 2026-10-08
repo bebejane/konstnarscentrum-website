@@ -3,11 +3,16 @@ dotenv.config({ path: "./.env" });
 
 import { isInvoicePaid, isInvoicePartiallyPaid, FortnoxInvoice } from "../lib/fortnox/invoices";
 import { isEligibleForInvoiceFromRecords } from "../lib/fortnox/invoiceDispatch";
-import { memberToCustomer, sanitizeText } from "../lib/fortnox/sync";
+import {
+  memberToCustomer,
+  sanitizeText,
+  webhookEntityToMember,
+  webhookModelApiKey
+} from "../lib/fortnox/sync";
 import { isEmailAllowedToSend } from "../lib/fortnox/constants";
 import {
   canPersistTokens,
-  hasKvStore,
+  hasDb,
   readRefreshTokenFromEnv
 } from "../lib/fortnox/tokenStore";
 
@@ -145,17 +150,14 @@ async function main() {
   ok("isEmailAllowedToSend runs");
 
   // ---------- tokenStore ----------
-  const prevKvUrl = process.env.KV_REST_API_URL;
-  const prevKvToken = process.env.KV_REST_API_TOKEN;
+  const prevTursoUrl = process.env.TURSO_DATABASE_URL;
   const prevEnvRefresh = process.env.FORTNOX_OST_REFRESH_TOKEN;
 
-  delete process.env.KV_REST_API_URL;
-  delete process.env.KV_REST_API_TOKEN;
-  assert("hasKvStore false without KV env vars", !hasKvStore());
+  delete process.env.TURSO_DATABASE_URL;
+  assert("hasDb false without TURSO_DATABASE_URL", !hasDb());
 
-  process.env.KV_REST_API_URL = "https://example.upstash.io";
-  process.env.KV_REST_API_TOKEN = "token";
-  assert("hasKvStore true with KV env vars", hasKvStore());
+  process.env.TURSO_DATABASE_URL = "file:./test-local.db";
+  assert("hasDb true with TURSO_DATABASE_URL", hasDb());
   assert("canPersistTokens true in local dev", canPersistTokens());
 
   process.env.FORTNOX_OST_REFRESH_TOKEN = "test-refresh-token";
@@ -163,13 +165,62 @@ async function main() {
   delete process.env.FORTNOX_OST_REFRESH_TOKEN;
   assert("readRefreshTokenFromEnv undefined when unset", readRefreshTokenFromEnv("ost") === undefined);
 
-  if (prevKvUrl) process.env.KV_REST_API_URL = prevKvUrl;
-  else delete process.env.KV_REST_API_URL;
-  if (prevKvToken) process.env.KV_REST_API_TOKEN = prevKvToken;
-  else delete process.env.KV_REST_API_TOKEN;
+  if (prevTursoUrl) process.env.TURSO_DATABASE_URL = prevTursoUrl;
+  else delete process.env.TURSO_DATABASE_URL;
   if (prevEnvRefresh) process.env.FORTNOX_OST_REFRESH_TOKEN = prevEnvRefresh;
   else delete process.env.FORTNOX_OST_REFRESH_TOKEN;
   ok("tokenStore runs");
+
+  // ---------- webhookEntityToMember / webhookModelApiKey ----------
+  const itemTypeId = "itemTypeMember";
+
+  const entity = {
+    id: "Member3",
+    attributes: {
+      email: "web@example.com",
+      first_name: "Karin",
+      last_name: "Karlsson",
+      city: "Göteborg",
+      vilande: false,
+      fortnox_customer_number: "10001",
+      region: "143685113"
+    },
+    relationships: {
+      item_type: { data: { id: itemTypeId, type: "item_type" } },
+      region: { data: { id: "143685113", type: "item_type" } }
+    }
+  };
+
+  const m = webhookEntityToMember(entity as any);
+  assert("webhookEntityToMember id", m.id === "Member3");
+  assert("webhookEntityToMember email", m.email === "web@example.com");
+  assert("webhookEntityToMember first_name", m.first_name === "Karin");
+  assert("webhookEntityToMember last_name", m.last_name === "Karlsson");
+  assert("webhookEntityToMember city", m.city === "Göteborg");
+  assert("webhookEntityToMember vilande", m.vilande === false);
+  assert(
+    "webhookEntityToMember fortnox_customer_number",
+    m.fortnox_customer_number === "10001"
+  );
+  assert("webhookEntityToMember region from attributes", m.region === "143685113");
+
+  const noAttrs = webhookEntityToMember({ id: "Member4", relationships: { region: { data: { id: "143707759" } } } } as any);
+  assert("webhookEntityToMember region falls back to relationships", noAttrs.region === "143707759");
+  assert("webhookEntityToMember missing fields undefined", noAttrs.email === undefined);
+
+  const payload = {
+    entity,
+    entity_type: "item",
+    event_type: "item::create",
+    related_entities: [
+      { id: itemTypeId, type: "item_type", attributes: { api_key: "member" } },
+      { id: "x", type: "item_type", attributes: { api_key: "region" } }
+    ]
+  };
+  assert("webhookModelApiKey returns member", webhookModelApiKey(payload as any) === "member");
+  assert("webhookModelApiKey undefined without related entity", webhookModelApiKey({ entity: { id: "a" } } as any) === undefined);
+  assert("webhookModelApiKey undefined without payload", webhookModelApiKey({} as any) === undefined);
+  ok("webhook entity helpers run");
 
   // ---------- report ----------
   results.forEach(r => {

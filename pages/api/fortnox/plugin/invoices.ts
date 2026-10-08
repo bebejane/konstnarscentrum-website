@@ -2,7 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import client from '/lib/client';
 import regions from '/regions.json';
 import { getAllMembers, MemberItem } from '/lib/fortnox/sync';
-import { createAnnualInvoiceForMember, isEligibleForInvoice } from '/lib/fortnox/invoiceDispatch';
+import { getCompany, classifyCompanyEnvironment, RegionCompany } from '/lib/fortnox/company';
+import {
+	createAnnualInvoiceForMember,
+	getYearlyInvoicesByMember,
+	isEligibleForInvoice,
+} from '/lib/fortnox/invoiceDispatch';
 import { parseDatoError } from '/lib/utils';
 
 export const config = {
@@ -15,6 +20,9 @@ type MemberResult = {
 	status: MemberStatus;
 	reason?: string;
 	documentNumber?: string;
+	invoiceRecordId?: string;
+	paymentStatus?: string;
+	invoiceDate?: string;
 };
 
 type Task = {
@@ -32,7 +40,18 @@ const isAuthorized = (req: NextApiRequest) => {
 };
 
 const findRegionByRole = (roleName: string) =>
-	regions.find((r) => r.slug.toLowerCase() === roleName.toLowerCase());
+	regions.find((r) => r.slug.toLowerCase() === roleName.toLowerCase()) ??
+	regions.find((r) => r.slug.toLowerCase() === 'ost');
+
+// Best-effort: a missing scope/token must never break the plugin page.
+const resolveRegionCompany = async (regionSlug: string): Promise<RegionCompany | null> => {
+	try {
+		return classifyCompanyEnvironment(await getCompany(regionSlug));
+	} catch (err) {
+		console.log(err);
+		return null;
+	}
+};
 
 const filterMembersByRegion = (members: MemberItem[], regionId: string) =>
 	members.filter((m) => m.region === regionId);
@@ -60,11 +79,35 @@ const resolveMember = async (id: string, regionId: string): Promise<MemberItem |
  */
 const processMember = async (member: MemberItem, invoiceYear: number): Promise<MemberResult> => {
 	try {
-		const { eligible, reason } = await isEligibleForInvoice(member, invoiceYear);
-		if (!eligible) return { status: 'skipped', reason };
+		const { eligible, reason, records } = await isEligibleForInvoice(member, invoiceYear);
+		if (!eligible) {
+			// Already invoiced: surface the existing linked invoice so the UI can
+			// show it as "Skickad" with its details instead of blank.
+			if (reason === `already invoiced ${invoiceYear}`) {
+				const existing = records.find((r) => r.invoice_year === invoiceYear);
+				if (existing) {
+					return {
+						status: 'skipped',
+						reason,
+						documentNumber: existing.fortnox_document_number,
+						invoiceRecordId: existing.id,
+						paymentStatus: existing.payment_status,
+						invoiceDate: existing.created_at,
+					};
+				}
+			}
+			return { status: 'skipped', reason };
+		}
 
-		const { documentNumber } = await createAnnualInvoiceForMember(member, invoiceYear);
-		return { status: 'created', documentNumber };
+		const { documentNumber, invoiceRecordId, invoiceDate, record } =
+			await createAnnualInvoiceForMember(member, invoiceYear);
+		return {
+			status: 'created',
+			documentNumber,
+			invoiceRecordId,
+			invoiceDate,
+			paymentStatus: record?.payment_status,
+		};
 	} catch (err: any) {
 		return { status: 'failed', reason: err?.message ?? String(err) };
 	}
@@ -114,7 +157,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		try {
 			const allMembers = await getAllMembers(region.id);
 			const members = filterMembersByRegion(allMembers, region.id);
-			return res.status(200).json({ members, region: region.slug });
+			const invoiceYear = new Date().getFullYear();
+			const yearlyInvoices = await getYearlyInvoicesByMember(invoiceYear, region.slug);
+			const membersWithInvoices = members.map((m) => ({
+				...m,
+				invoice: yearlyInvoices[m.id] ?? null,
+			}));
+			const company = await resolveRegionCompany(region.slug);
+			return res
+				.status(200)
+				.json({ members: membersWithInvoices, region: region.slug, invoiceYear, company });
 		} catch (err) {
 			return res.status(500).json({ error: parseDatoError(err) });
 		}
@@ -138,12 +190,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		try {
 			const tasks: Task[] = memberIds
 				? await Promise.all(
-						memberIds.map(async (id) => ({ id, member: await resolveMember(id, region.id) }))
-				  )
+						memberIds.map(async (id) => ({ id, member: await resolveMember(id, region.id) })),
+					)
 				: filterMembersByRegion(await getAllMembers(region.id), region.id).map((member) => ({
 						id: member.id,
 						member,
-				  }));
+					}));
 
 			if (stream) {
 				res.setHeader('Content-Type', 'application/x-ndjson');
@@ -182,6 +234,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 						status: result.status,
 						...(result.reason ? { reason: result.reason } : {}),
 						...(result.documentNumber ? { documentNumber: result.documentNumber } : {}),
+						...(result.invoiceRecordId ? { invoiceRecordId: result.invoiceRecordId } : {}),
+						...(result.paymentStatus ? { paymentStatus: result.paymentStatus } : {}),
+						...(result.invoiceDate ? { invoiceDate: result.invoiceDate } : {}),
 					});
 					if (!ok) break;
 				}

@@ -1,19 +1,22 @@
-require("dotenv").config({ path: "./.env" });
-const fs = require("fs");
-const slugify = require("slugify");
-const { buildClient } = require("@datocms/cma-client-node");
+require('dotenv').config({ path: './.env' });
+const fs = require('fs');
+const slugify = require('slugify');
+const { buildClient } = require('@datocms/cma-client-node');
 
 (async () => {
-	const client = buildClient({ apiToken: process.env.GRAPHQL_API_TOKEN_FULL });
+	const client = buildClient({
+		apiToken: process.env.GRAPHQL_API_TOKEN_FULL,
+		environment: process.env.DATOCMS_ENVIRONMENT,
+	});
 
 	const roles = await client.roles.list();
-	const editor = roles.filter((r) => r.name.toLowerCase() === "editor")[0];
+	const editor = roles.filter((r) => r.name.toLowerCase() === 'editor')[0];
 	const tokens = await client.accessTokens.list();
 	const users = await client.users.list();
 
 	const districts = await client.items.list({
-		filter: { type: "region" },
-		order_by: "position_DESC",
+		filter: { type: 'region' },
+		order_by: 'position_DESC',
 	});
 
 	const regions = roles
@@ -23,8 +26,8 @@ const { buildClient } = require("@datocms/cma-client-node");
 			id: districts.find((el) => el.slug === slugify(name, { lower: true })).id,
 			roleId,
 			name,
-			userId: users.find((el) => el.role.id === roleId && el.email !== "bjornthief@gmail.com")?.id,
-			userName: users.find((el) => el.role.id === roleId && el.email !== "bjornthief@gmail.com")
+			userId: users.find((el) => el.role.id === roleId && el.email !== 'bjornthief@gmail.com')?.id,
+			userName: users.find((el) => el.role.id === roleId && el.email !== 'bjornthief@gmail.com')
 				?.full_name,
 			//userId: users.find((el) => el.role.id === roleId)?.id,
 			email: districts.find((el) => el.slug === slugify(name, { lower: true })).email,
@@ -35,9 +38,9 @@ const { buildClient } = require("@datocms/cma-client-node");
 		}))
 		.sort((a, b) => (a.position > b.position ? 1 : -1));
 
-	if (!regions.length) throw new Error("No regions found!");
+	if (!regions.length) throw new Error('No regions found!');
 
-	fs.writeFileSync("regions.json", JSON.stringify(regions, null, 2));
+	fs.writeFileSync('regions.json', JSON.stringify(regions, null, 2));
 	console.log(`generated regions.json (${regions.length})`);
 })();
 

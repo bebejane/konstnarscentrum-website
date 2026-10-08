@@ -14,10 +14,9 @@ import ConfigScreen from '/lib/plugin/entrypoints/ConfigScreen';
 import RegionField from '/lib/plugin/entrypoints/RegionField';
 import ModelSelectorField from '/lib/plugin/entrypoints/ModelSelectorField';
 import MemberApproval from '/lib/plugin/entrypoints/MemberApproval';
-import InvoicesPage from '/lib/plugin/InvoicesPage';
-import { InvoiceLinkField } from '/lib/plugin/InvoiceLinkField';
+import InvoicesPage from '/lib/plugin/entrypoints/InvoicesPage';
+import InvoiceLinkField from '/lib/plugin/entrypoints/InvoiceLinkField';
 import { isDev } from '/lib/plugin/utils';
-import { sleep } from '/lib/utils';
 
 export default function PluginBootstrap() {
 	const connecting = useRef(false);
@@ -84,7 +83,7 @@ export default function PluginBootstrap() {
 
 				return [
 					{
-						label: 'Fakturera',
+						label: 'Fakturera' + (isDev ? ' (dev)' : ''),
 						icon: 'file-lines',
 						pointsTo: { pageId: 'invoices' },
 						placement: ['after', 'menuItems'],

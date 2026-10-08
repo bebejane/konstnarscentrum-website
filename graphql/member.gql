@@ -1,8 +1,3 @@
-#import "./fragment/MemberFragment.gql"
-#import "./fragment/MemberLightFragment.gql"
-#import "./fragment/MemberNewsLightFragment.gql"
-#import "./fragment/MediaGalleryFragment.gql"
-
 query AllMembers($regionId: ItemId, $first: IntType = 10, $skip: IntType = 0) {
 	members: allMembers(filter: { region: { eq: $regionId } }, first: $first, skip: $skip) {
 		...MemberLightFragment
@@ -254,5 +249,218 @@ query RelatedMembers(
 query MembersList {
 	membersList {
 		intro(markdown: false)
+	}
+}
+
+fragment MediaGalleryFragment on FileField {
+	_createdAt
+	id
+	mimeType
+	url
+	title
+	alt
+	responsiveImage(imgixParams: { q: 70, auto: format, w: 1000 }) {
+		src
+		width
+		height
+		alt
+		title
+		base64
+		bgColor
+		sizes
+	}
+}
+
+fragment MemberFragment on MemberRecord {
+	__typename
+	_modelApiKey
+	id
+	firstName
+	lastName
+	fullName
+	email
+	bio(markdown: false)
+	yearOfBirth
+	birthPlace
+	city
+	webpage
+	instagram
+	active
+	showContact
+	memberCategory {
+		id
+		categoryType
+	}
+	region {
+		...RegionFragment
+	}
+	image {
+		...ImageThumbnailFragment
+	}
+	content {
+		... on ImageRecord {
+			__typename
+			id
+			image {
+				...ImageFragment
+			}
+		}
+		... on VideoRecord {
+			__typename
+			id
+			title
+			video {
+				height
+				width
+				title
+				provider
+				providerUid
+				thumbnailUrl
+				url
+			}
+		}
+		... on RecordInterface {
+			__typename
+			id
+		}
+	}
+	slug
+	resettoken
+	_status
+	_firstPublishedAt
+	_seoMetaTags {
+		attributes
+		content
+		tag
+	}
+}
+
+fragment MemberLightFragment on MemberRecord {
+	__typename
+	_modelApiKey
+	id
+	firstName
+	lastName
+	fullName
+	email
+	region {
+		...RegionFragment
+	}
+	image {
+		...ImageThumbnailFragment
+	}
+	slug
+	_status
+	_firstPublishedAt
+}
+
+fragment MemberNewsFragment on MemberNewsRecord {
+	__typename
+	_modelApiKey
+	id
+	createdAt
+	title
+	blackHeadline
+	image {
+		...ImageFragment
+	}
+	intro(markdown: false)
+	category {
+		id
+		category
+	}
+	date
+	dateEnd
+	location
+	slug
+	content {
+		value
+		blocks {
+			__typename
+			... on ImageRecord {
+				__typename
+				id
+				image {
+					...ImageFragment
+				}
+			}
+			... on ButtonRecord {
+				__typename
+				id
+				text
+				url
+			}
+			... on VideoRecord {
+				__typename
+				id
+				title
+				video {
+					height
+					width
+					title
+					provider
+					providerUid
+					thumbnailUrl
+					url
+				}
+			}
+			... on RecordInterface {
+				__typename
+				id
+			}
+			... on FormRecord {
+				__typename
+				id
+				subject
+				reciever
+				confirmation
+				formFields {
+					__typename
+					... on FormTextRecord {
+						id
+						title
+					}
+					... on FormTextblockRecord {
+						id
+						title
+					}
+					... on PdfFormRecord {
+						id
+						title
+					}
+				}
+			}
+		}
+	}
+	region {
+		...RegionFragment
+	}
+	_seoMetaTags {
+		attributes
+		content
+		tag
+	}
+}
+
+fragment MemberNewsLightFragment on MemberNewsRecord {
+	__typename
+	_modelApiKey
+	id
+	createdAt
+	title
+	image {
+		...ImageThumbnailFragment
+	}
+	intro(markdown: false)
+	category {
+		id
+		category
+	}
+	date
+	dateEnd
+	location
+	slug
+	region {
+		...RegionFragment
 	}
 }

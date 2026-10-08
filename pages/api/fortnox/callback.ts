@@ -9,14 +9,21 @@ export const config = {
  * OAuth callback helper.
  *
  * This exchanges the Fortnox authorization code for access + refresh tokens and
- * renders them so you can copy them into `.env` (per-region tokens are stored
- * manually in `.env`).
+ * renders them so you can copy them into `.env`. Only the refresh token is
+ * required in `.env` (the access token is fetched automatically via refresh and
+ * held in process memory; a static access token is optional for debugging).
  *
  * Redirect URI configured in the Fortnox developer portal must match:
  *   FORTNOX_REDIRECT_URI (e.g. http://localhost:3000/api/fortnox/callback)
  *
  * To start the flow, visit:
- *   https://apps.fortnox.se/oauth-v1/auth?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=customer+invoice&access_type=offline&response_type=code&state={regionSlug}
+ *   https://apps.fortnox.se/oauth-v1/auth?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=customer%20invoice%20companyinformation&access_type=offline&response_type=code&state={regionSlug}
+ *
+ * Scopes are separated with %20 (URL-encoded space), per Fortnox docs —
+ * `+` separators can be parsed as a single literal scope and rejected.
+ * `companyinformation` is required for GET /companyinformation (lib/fortnox/company.ts)
+ * and must also be enabled on the integration in the Fortnox Developer Portal
+ * (otherwise Fortnox returns invalid_scope at authorization time).
  *
  * You can pass ?state={regionSlug} (e.g. nord) to label which region's tokens
  * are being captured, though the value is informational only.
@@ -63,17 +70,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const region = state ? String(state).toUpperCase() : 'REGION'
 
     const envSnippet = [
-      `# Region: ${region}`,
-      `FORTNOX_${region}_ACCESS_TOKEN=${data.access_token ?? ''}`,
+      `# Region: ${region} — paste into .env:`,
       `FORTNOX_${region}_REFRESH_TOKEN=${data.refresh_token ?? ''}`,
+      `# Optional (debugging only): FORTNOX_${region}_ACCESS_TOKEN=${data.access_token ?? ''}`,
       ''
     ].join('\n')
 
     res.setHeader('Content-Type', 'text/plain')
     return res.status(200).send(
       `Fortnox OAuth success for region: ${region}\n\n` +
-      `Copy these lines into your .env:\n\n${envSnippet}` +
-      `Access tokens expire after ~5 minutes; the refresh token can be used to obtain new ones.`
+      `Copy this into your .env:\n\n${envSnippet}` +
+      `Only the refresh token is required — access tokens are fetched automatically via refresh and live in process memory.` +
+      ` The rotated refresh token is also persisted to KV when KV_REST_API_* are set.`
     )
   } catch (err: any) {
     res.setHeader('Content-Type', 'text/plain')

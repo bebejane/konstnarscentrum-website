@@ -1,14 +1,10 @@
-import s from './InvoicesPage.module.scss';
-import 'datocms-react-ui/styles.css';
-import cn from 'classnames';
-import { RenderPageCtx } from 'datocms-plugin-sdk';
-import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
 import { useEffect, useRef, useState } from 'react';
-import { regions } from '/lib/region';
+import type { RenderPageCtx } from 'datocms-plugin-sdk';
+import { regionFromRoleName } from '/lib/plugin/utils';
+import type { InvoiceRecord } from '/lib/fortnox/invoiceDispatch';
+import type { RegionCompany } from '/lib/fortnox/company';
 
-type Props = { ctx: RenderPageCtx };
-
-type Member = {
+export type Member = {
 	id: string;
 	email?: string;
 	first_name?: string;
@@ -18,17 +14,21 @@ type Member = {
 	active?: boolean;
 	region?: string;
 	fortnox_customer_number?: string;
+	invoice?: InvoiceRecord | null;
 };
 
-type MemberStatus = 'created' | 'skipped' | 'failed';
+export type MemberStatus = 'created' | 'skipped' | 'failed';
 
-type MemberRunState = {
+export type MemberRunState = {
 	status: MemberStatus;
 	reason?: string;
 	documentNumber?: string;
+	invoiceRecordId?: string;
+	paymentStatus?: string;
+	invoiceDate?: string;
 };
 
-type InvoiceResult = {
+export type InvoiceResult = {
 	created: number;
 	skipped: number;
 	failed: number;
@@ -37,7 +37,7 @@ type InvoiceResult = {
 	invoiceYear: number;
 };
 
-type RunProgress = {
+export type RunProgress = {
 	processed: number;
 	total: number;
 	currentName: string;
@@ -57,6 +57,9 @@ type StreamEvent =
 			status: MemberStatus;
 			reason?: string;
 			documentNumber?: string;
+			invoiceRecordId?: string;
+			paymentStatus?: string;
+			invoiceDate?: string;
 	  }
 	| {
 			type: 'done';
@@ -68,7 +71,7 @@ type StreamEvent =
 
 const BATCH_SIZE = 20;
 
-const sortSwedish = (arr: any[], key: string): any[] => {
+export const sortSwedish = (arr: any[], key: string): any[] => {
 	const sorter = new Intl.Collator('sv', { usage: 'sort' });
 	return arr.sort((a: any, b: any) => sorter.compare(a[key], b[key]));
 };
@@ -138,25 +141,46 @@ const streamBatch = async (
 	}
 };
 
-export default function InvoicesPage({ ctx }: Props) {
-	const roleName =
-		ctx.currentRole.attributes.name.toLowerCase() === 'admin'
-			? 'ost'
-			: ctx.currentRole.attributes.name.toLowerCase();
-	const region = regions.find((r) => r.slug.toLowerCase() === roleName);
+export type UseInvoicesPage = {
+	members: Member[];
+	pendingMembers: Member[];
+	company: RegionCompany | null;
+	loading: boolean;
+	running: boolean;
+	aborted: boolean;
+	error?: string | null;
+	results: InvoiceResult | null;
+	progress: RunProgress | null;
+	statusById: Record<string, MemberRunState>;
+	percent: number;
+	invoiceYear: number;
+	region: ReturnType<typeof regionFromRoleName>;
+	submit: () => Promise<void>;
+	abort: () => void;
+	dismissError: () => void;
+	refresh: () => void;
+};
+
+export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
+	const roleName = ctx.currentRole.attributes.name.toLowerCase();
+	const region = regionFromRoleName(roleName);
 
 	const [members, setMembers] = useState<Member[]>([]);
+	const [company, setCompany] = useState<RegionCompany | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [running, setRunning] = useState(false);
-	const [error, setError] = useState<string | null>();
-	const [results, setResults] = useState<InvoiceResult | null>();
+	const [aborted, setAborted] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [results, setResults] = useState<InvoiceResult | null>(null);
 	const [progress, setProgress] = useState<RunProgress | null>(null);
 	const [statusById, setStatusById] = useState<Record<string, MemberRunState>>({});
 	const abortRef = useRef<AbortController | null>(null);
 
 	const invoiceYear = new Date().getFullYear();
+	const pendingMembers = members.filter((m) => !m.invoice);
+	const percent = progress ? (progress.processed / Math.max(progress.total, 1)) * 100 : 0;
 
-	useEffect(() => {
+	const refresh = async () => {
 		setLoading(true);
 		fetch(`/api/fortnox/plugin/invoices?role=${encodeURIComponent(roleName)}`, {
 			headers: basicAuthHeaders(ctx),
@@ -168,20 +192,52 @@ export default function InvoicesPage({ ctx }: Props) {
 				}
 				return res.json();
 			})
-			.then((data) => setMembers(data.members))
+			.then((data) => {
+				setMembers(data.members);
+				setCompany(data.company ?? null);
+			})
 			.catch((err) => setError(err.message || String(err)))
 			.finally(() => setLoading(false));
+	};
+
+	useEffect(() => {
+		refresh();
 	}, [ctx]);
 
-	const handleSubmit = async () => {
+	useEffect(() => {
+		if (!error) return;
+		ctx.alert(error);
+	}, [error]);
+
+	const submit = async () => {
 		if (running) return;
+
+		const res = await ctx.openConfirm({
+			title: 'Fakturera',
+			content: `Är du säker på att du vill fakturera alla medlemmar för ${invoiceYear}?`,
+			cancel: {
+				label: 'Avbryt',
+				intent: 'negative',
+				value: 'cancel',
+			},
+			choices: [
+				{
+					label: 'Skicka',
+					value: 'confirm',
+					intent: 'positive',
+				},
+			],
+		});
+
+		if (res !== 'confirm') return;
 
 		setError(null);
 		setResults(null);
 		setStatusById({});
+		setAborted(false);
 		setRunning(true);
 
-		const ordered = sortSwedish([...members], 'last_name');
+		const ordered = sortSwedish([...pendingMembers], 'last_name');
 		const total = ordered.length;
 		const counts = { created: 0, skipped: 0, failed: 0 };
 		const summary: Omit<InvoiceResult, 'invoiceYear'> = {
@@ -231,6 +287,9 @@ export default function InvoicesPage({ ctx }: Props) {
 									status: event.status,
 									reason: event.reason,
 									documentNumber: event.documentNumber,
+									invoiceRecordId: event.invoiceRecordId,
+									paymentStatus: event.paymentStatus,
+									invoiceDate: event.invoiceDate,
 								},
 							}));
 							setProgress({
@@ -257,146 +316,33 @@ export default function InvoicesPage({ ctx }: Props) {
 			if (!controller.signal.aborted) setError(err?.message || String(err));
 		}
 
-		if (total > 0) setResults({ ...summary, invoiceYear });
+		if (total > 0 && !controller.signal.aborted) setResults({ ...summary, invoiceYear });
+		setAborted(controller.signal.aborted);
 		setProgress((prev) => (prev ? { ...prev, done: true, currentName: '' } : prev));
 		setRunning(false);
 		abortRef.current = null;
 	};
 
-	const handleAbort = () => abortRef.current?.abort();
+	const abort = () => abortRef.current?.abort();
+	const dismissError = () => setError(null);
 
-	const renderRunStatus = (state?: MemberRunState) => {
-		if (!state) return '';
-		const label =
-			state.status === 'created' ? 'Skickad' : state.status === 'skipped' ? 'Skippad' : 'Fel';
-		const className =
-			state.status === 'created'
-				? s.badgeCreated
-				: state.status === 'skipped'
-					? s.badgeSkipped
-					: s.badgeFailed;
-		return (
-			<span className={className} title={state.reason || state.documentNumber || ''}>
-				{label}
-			</span>
-		);
+	return {
+		members,
+		pendingMembers,
+		company,
+		loading,
+		running,
+		aborted,
+		error,
+		results,
+		progress,
+		statusById,
+		percent,
+		invoiceYear,
+		region,
+		submit,
+		abort,
+		dismissError,
+		refresh,
 	};
-
-	const percent = progress ? (progress.processed / Math.max(progress.total, 1)) * 100 : 0;
-
-	return (
-		<Canvas ctx={ctx}>
-			<div className={s.container}>
-				{loading ? (
-					<div className={s.loading}>
-						<Spinner /> Laddar medlemmar...
-					</div>
-				) : error ? (
-					<div className={s.error}>
-						<p>Fel: {error}</p>
-						<button onClick={() => setError(null)}>Stäng</button>
-					</div>
-				) : (
-					<>
-						<Toolbar style={{ minHeight: 60, maxHeight: 60 }}>
-							<ToolbarStack stackSize='m' style={{ paddingRight: 0 }}>
-								<ToolbarTitle>Fakturera: {region?.name}</ToolbarTitle>
-								<div style={{ flex: '1' }} />
-								{running && (
-									<Button buttonType='muted' onClick={handleAbort} style={{ marginRight: 8 }}>
-										Avbryt
-									</Button>
-								)}
-								<Button
-									buttonType='primary'
-									onClick={handleSubmit}
-									disabled={running || members.length === 0}
-									className={s.submit}
-								>
-									{running ? <Spinner /> : `Skicka fakturor (${invoiceYear})`}
-								</Button>
-							</ToolbarStack>
-						</Toolbar>
-						<div className={s.invoices}>
-							{progress && progress.total > 0 && (
-								<div className={s.progress}>
-									<div className={s.bar}>
-										<div className={s.barFill} style={{ width: `${percent}%` }} />
-									</div>
-									<div className={s.progressLabel}>
-										{running
-											? `Bearbetar ${progress.processed} / ${progress.total}${
-													progress.currentName ? `: ${progress.currentName}` : ''
-												}`
-											: `Klart: ${progress.processed} / ${progress.total} bearbetade`}
-									</div>
-									<div className={s.legend}>
-										<span className={s.badgeCreated}>{progress.created} skickade</span>
-										<span className={s.badgeSkipped}>{progress.skipped} skippade</span>
-										{progress.failed > 0 && (
-											<span className={s.badgeFailed}>{progress.failed} misslyckade</span>
-										)}
-									</div>
-								</div>
-							)}
-
-							{results && (
-								<div className={cn(s.results, results.failed > 0 ? s.failed : s.ok)}>
-									<strong>Resultat ({results.invoiceYear}):</strong>
-									<ul>
-										<li>{results.created} skapade</li>
-										<li>{results.skipped} hoppade över</li>
-										{results.failed > 0 && <li>{results.failed} misslyckades</li>}
-									</ul>
-									{results.errors.length > 0 && (
-										<div>
-											{results.errors.map((err, i) => (
-												<div key={i}>{err}</div>
-											))}
-										</div>
-									)}
-								</div>
-							)}
-
-							{members.length > 0 && (
-								<table>
-									<thead>
-										<tr>
-											<th>Namn</th>
-											<th>E-post</th>
-											<th>Stad</th>
-											<th>Kundnr.</th>
-											<th>Status</th>
-											<th>Faktura</th>
-										</tr>
-									</thead>
-									<tbody>
-										{sortSwedish([...members], 'last_name').map((m) => (
-											<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
-												<td>
-													<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
-												</td>
-												<td>{m.email || ''}</td>
-												<td>{m.city || ''}</td>
-
-												<td>{m.fortnox_customer_number || ''}</td>
-												<td>
-													{m.active ? (
-														<span style={{ color: 'var(--color--ink-success)' }}>Aktiv</span>
-													) : (
-														<span style={{ color: 'var(--color--ink-subtle)' }}>Inaktiv</span>
-													)}
-												</td>
-												<td>{renderRunStatus(statusById[m.id])}</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							)}
-						</div>
-					</>
-				)}
-			</div>
-		</Canvas>
-	);
 }

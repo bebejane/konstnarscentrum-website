@@ -1,35 +1,41 @@
 .container {
-  max-width: 720px;
+	.invoiceTable {
+		width: 100%;
+		border-collapse: collapse;
+		margin-bottom: var(--space);
 
-  .invoiceTable {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1rem 0 2rem;
+		th,
+		td {
+			text-align: left;
+			padding: 0.5rem;
+			padding-left: 0;
+			border-bottom: 1px solid var(--beige-dark, #ccc);
+			white-space: nowrap;
+		}
+	}
 
-    th,
-    td {
-      text-align: left;
-      padding: 0.6rem 0.8rem;
-      border-bottom: 1px solid var(--beige-dark, #ccc);
-    }
+	.paid {
+		color: var(--green, #2e7d32);
+		font-weight: 600;
+	}
 
-    th {
-      font-weight: 600;
-    }
-  }
+	.partiallyPaid {
+		color: var(--orange, #b26a00);
+		font-weight: 600;
+	}
 
-  .paid {
-    color: var(--green, #2e7d32);
-    font-weight: 600;
-  }
+	.unpaid {
+		color: var(--red, #c0392b);
+		font-weight: 600;
+	}
 
-  .partiallyPaid {
-    color: var(--orange, #b26a00);
-    font-weight: 600;
-  }
+	.downloadLink {
+		color: var(--link, inherit);
+		text-decoration: underline;
+		white-space: nowrap;
+	}
 
-  .unpaid {
-    color: var(--red, #c0392b);
-    font-weight: 600;
-  }
+	.back {
+		width: 100%;
+	}
 }

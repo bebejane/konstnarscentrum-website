@@ -10,54 +10,60 @@ Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONM
 
 ## Prerequisites
 
-1. `.env` must contain `FORTNOX_CLIENT_ID`, `FORTNOX_CLIENT_SECRET`, and per-region tokens for `ost`:
-   - `FORTNOX_OST_ACCESS_TOKEN`
-   - `FORTNOX_OST_REFRESH_TOKEN`
-2. If tokens are missing, authorize via the OAuth callback:
+1. `.env` must contain `FORTNOX_CLIENT_ID`, `FORTNOX_CLIENT_SECRET`, and per-region refresh token for `ost`:
+   - `FORTNOX_OST_REFRESH_TOKEN` (access tokens are *not* required — they're fetched via refresh and only live in process memory; a static `FORTNOX_OST_ACCESS_TOKEN` is optional and only used as a last-resort fallback)
+2. If the token is missing, authorize via the OAuth callback:
 
    ```
-   https://apps.fortnox.se/oauth-v1/auth?client_id=<CLIENT_ID>&redirect_uri=http://localhost:3000/api/fortnox/callback&scope=customer+invoice&access_type=offline&response_type=code&state=ost
+   https://apps.fortnox.se/oauth-v1/auth?client_id=<CLIENT_ID>&redirect_uri=http://localhost:3000/api/fortnox/callback&scope=customer%20invoice%20companyinformation&access_type=offline&response_type=code&state=ost
+
+   Notes:
+   - Scopes are separated with `%20` (URL-encoded space), per Fortnox docs — `+` separators can be parsed as a single literal scope and rejected with `invalid_scope`.
+   - `companyinformation` is required for GET /companyinformation (`lib/fortnox/company.ts`). It must also be selected on the integration in the **Fortnox Developer Portal** ("Select scopes" on the integration) or the auth URL is rejected with `invalid_scope`.
+   - Re-authorize whenever scopes change — the scopes are bound to the refresh token and cannot be added to an already-issued token.
+   - `pnpm fortnoxlogin` prints the same URL filled in from `.env` (add `--open` to launch the browser). Log into the target company first — the token belongs to whichever company approves the consent.
    ```
 
-   With the dev server running, the callback prints the `FORTNOX_OST_*` lines to paste into `.env`.
+   With the dev server running, the callback prints the `FORTNOX_OST_REFRESH_TOKEN` line to paste into `.env`.
 
-## Token persistence on Vercel (no database)
+## Token persistence on Vercel (Turso database)
 
 Fortnox **rotates** the refresh token on every OAuth refresh — the old one is
 invalidated. On Vercel the `.env` file isn't writable, so rotated tokens are
-persisted to **Vercel KV** (Upstash), using only `KV_REST_API_URL` and
-`KV_REST_API_TOKEN` — no database, no extra package (the store calls the
-Upstash REST API directly).
+persisted to a **Turso database** (SQLite, libSQL driver) via
+**Drizzle ORM** (`lib/db/`), one row per region in the `fortnox_tokens` table.
 
 How `lib/fortnox/tokenStore.ts` picks a backend per write/read:
 
-- **KV configured** (`KV_REST_API_URL` + `KV_REST_API_TOKEN` set) → read the
-  freshest token from KV, write rotated tokens to KV.
-- **No KV** (local dev/scripts) → write rotated tokens back to `.env` (current
-  `FORTNOX_<REGION>_REFRESH_TOKEN`). The env value is the bootstrap: the first
-  refresh on Vercel reads it if KV is empty, then stores the rotated result.
+- **Database configured** (`TURSO_DATABASE_URL` set, `TURSO_AUTH_TOKEN` for
+  remote) → read the freshest token from `fortnox_tokens`, write rotated tokens
+  there. The table is created lazily (`CREATE TABLE IF NOT EXISTS`) on first use.
+- **No database** (local dev/scripts without Turso) → write rotated tokens back
+  to `.env` (current `FORTNOX_<REGION>_REFRESH_TOKEN`). The env value is the
+  bootstrap: the first refresh on Vercel reads it if the table is empty, then
+  stores the rotated result. Local dev can also point `TURSO_DATABASE_URL` at a
+  `file:local.db` to exercise the same code path.
 
 `lib/fortnox/auth.ts` also caches access tokens in-memory per region (4.5 min
-TTL) to minimize refreshes, and on a failed refresh re-reads KV once before
-falling back to the statically configured access token (handles two lambdas
-rotating concurrently).
+TTL) to minimize refreshes, and on a failed refresh re-reads the database once
+before throwing (a statically configured `FORTNOX_<REGION>_ACCESS_TOKEN` is used
+only if present — it is *not* required).
 
 ### Vercel setup (one time)
 
-1. In the Vercel dashboard: **Storage → Create Database → KV** (Upstash). Link
-   it to this project; Vercel auto-injects `KV_REST_API_URL` and
-   `KV_REST_API_TOKEN`.
-2. Add these env vars in the project's Production environment (they are the
-   bootstrap, not auto-injected from `.env`):
-   - `FORTNOX_OST_REFRESH_TOKEN` (current value from `.env` — the *latest*
-     one, since old values are invalidated by rotation)
+1. Create a Turso database (dashboard or `turso` CLI) and copy the `libsql://…`
+   URL + auth token.
+2. Add these env vars in the project's Production environment:
+   - `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`
+   - `FORTNOX_OST_REFRESH_TOKEN` (current value from `.env` — the *latest* one,
+     since old values are invalidated by rotation)
    - `FORTNOX_CLIENT_ID`, `FORTNOX_CLIENT_SECRET`
-   - `KV_REST_API_URL`, `KV_REST_API_TOKEN` (from the linked KV store; also
-     auto-set by Vercel)
-3. Verify: locally, set `KV_REST_API_URL` and `KV_REST_API_TOKEN` temporarily
-   in the shell, then run `npm run testfortnox`. The rotated refresh token is
-   written to KV (`fortnox:OST:refresh_token`) — check it via the Upstash
-   console or a second run. Unset them again when done.
+3. Locally, make sure `.env` has the same `TURSO_*`, then run:
+   ```
+   pnpm db:setup       # create the table (idempotent)
+   pnpm db:backfill    # copy current tokens (KV/.env) into the database (one time)
+   ```
+   Verify with `pnpm fortnoxenv` (reads from Turso) or `npm run testfortnox`.
 
 ### Why not Fortnox Client Credentials?
 
@@ -65,16 +71,36 @@ Fortnox offers `grant_type=client_credentials` + a `TenantId` header (no
 refresh token at all). Tried it — Fortnox returns
 `401 consent_not_found`: client credentials require a consent created with
 `account_type=service`, which doesn't apply to this app's CurrentCustomer
-token. So rotation + KV persistence is the mechanism used.
+token. So rotation + Turso persistence is the mechanism used.
 
 ### If the token chain ever breaks
 
 The `FORTNOX_OST_REFRESH_TOKEN` in the Vercel env is only the bootstrap. As
 long as a refresh succeeds at least once every ~60 days (the daily cron does),
-KV keeps a valid rotated token. If it expires or the consent is revoked, the
+Turso keeps a valid rotated token. If it expires or the consent is revoked, the
 OAuth callback re-issues everything: run the URL above again, update the Vercel
-env bootstrap token, and rotate KV out of sync is harmless (next refresh
+env bootstrap token, and a stale database token is harmless (next refresh
 overwrites it).
+
+### Switching / verifying the Fortnox environment (sandbox vs live)
+
+`pnpm fortnoxenv` reports which Fortnox company the refresh token configured in
+`.env` points to, and keeps the two token stores (`.env` + database) consistent
+— the database is preferred when reading tokens, so a stale database token
+silently shadows `.env`:
+
+```
+pnpm fortnoxenv                          # validate + report + sync current token(s)
+pnpm fortnoxenv --region ost             # single region
+```
+
+To switch environment, edit `FORTNOX_OST_REFRESH_TOKEN` in `.env` manually
+(sandbox token ↔ live token), then run `pnpm fortnoxenv` again. It refreshes the
+token (Fortnox rotates it), calls `/companyinformation`, and classifies the
+result as **SANDBOX** (org number `555555-5555` / "(dev)" name) or **LIVE**. The
+rotated token is written back to both `.env` and KV so the two stores can't
+diverge. Exit code 1 means the token is invalid/rotated — re-authorize via the
+OAuth URL and paste the fresh token into `.env`.
 
 ## 1. Unit tests (no network / no credentials)
 
@@ -126,6 +152,23 @@ These are the same endpoints the DatoCMS plugin and the daily cron call. Use Bas
   ```
   curl -u konstnarscentrum:<password> http://localhost:3000/api/fortnox/sync-status
   ```
+
+- **Customer sync (DatoCMS webhook)**:
+
+  ```
+  curl -u konstnarscentrum:<password> -X POST http://localhost:3000/api/fortnox/customer-sync \
+    -H "Content-Type: application/json" \
+    -d '{"entity_type":"item","event_type":"item::create","related_entities":[{"id":"TYPE_ID","attributes":{"api_key":"member"}}],"entity":{"id":"MEMBER_ID","attributes":{"email":"bjorn@konst-teknik.se","first_name":"Björn","last_name":"Test","city":"Norrköping","region":"143685113"}}}'
+  ```
+
+  A new member (no `fortnox_customer_number`) is created in Fortnox for `ost` and
+  the returned number is written back to the DatoCMS member. Re-run the same curl
+  with the number added to confirm it updates instead of recreating. To register
+  the real webhook in the DatoCMS project: **Project settings → Webhooks**,
+  event type *Item*, events *Create* + *Update*, URL
+  `https://<site>/api/fortnox/customer-sync`, HTTP Basic Auth
+  (`BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`). Non-member events are skipped
+  with a 200.
 
 - **Member invoices API** (requires a logged-in member session):
 

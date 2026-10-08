@@ -1,6 +1,3 @@
-#import './frqagmets/ImageThumbnailFragment.gql'
-#import './frqagmets/ImageFragment.gql'
-
 query Footer {
 	footer {
 		aboutKc(markdown: false)

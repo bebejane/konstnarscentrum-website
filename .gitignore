@@ -18,3 +18,4 @@ current.json
 success.json
 sitemap*
 .env*
+/docs*

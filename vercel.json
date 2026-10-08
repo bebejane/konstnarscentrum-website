@@ -8,7 +8,7 @@
 			"schedule": "0 22 * * *"
 		},
 		{
-			"path": "/api/fortknox/sync-status",
+			"path": "/api/fortnox/sync-status",
 			"schedule": "0 6 * * *"
 		}
 	]

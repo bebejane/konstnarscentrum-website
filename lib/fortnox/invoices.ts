@@ -1,4 +1,6 @@
 import { fortnoxFetch } from './client'
+import { FORTNOX_API_BASE } from './constants'
+import { getAccessToken } from './auth'
 
 export type FortnoxInvoice = {
   DocumentNumber: string
@@ -26,6 +28,7 @@ export type CreateInvoiceInput = {
     Price: number
     DeliveredQuantity: number
     AccountNumber?: number
+    VATCode?: string
   }[]
 }
 
@@ -60,6 +63,37 @@ export const sendInvoiceAsEPrint = async (regionSlug: string, documentNumber: st
 export const getInvoice = async (regionSlug: string, documentNumber: string): Promise<FortnoxInvoice> => {
   const res = await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}`)
   return res?.Invoice
+}
+
+/**
+ * Fetch the invoice PDF (printout) from Fortnox. Returns the raw PDF bytes.
+ */
+export const getInvoicePdf = async (
+  regionSlug: string,
+  documentNumber: string
+): Promise<ArrayBuffer> => {
+  const accessToken = await getAccessToken(regionSlug)
+  const url = `${FORTNOX_API_BASE}/invoices/${encodeURIComponent(documentNumber)}/print`
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+
+  if (!res.ok) {
+    // Read the body exactly once — undici throws "Body has already been read"
+    // if .json()/.text() is called twice, which was masking real errors.
+    const raw = await res.text()
+    let detail = raw
+    try {
+      const parsed = JSON.parse(raw)
+      detail = parsed?.ErrorInformation?.Message ?? JSON.stringify(parsed)
+    } catch {
+      // not JSON — keep the raw body as detail
+    }
+    throw new Error(`Fortnox PDF fetch failed (${res.status}): ${detail}`)
+  }
+
+  return res.arrayBuffer()
 }
 
 export const listInvoicesForCustomer = async (
