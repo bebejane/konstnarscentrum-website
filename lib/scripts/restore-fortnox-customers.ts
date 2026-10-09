@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 import fs from 'fs';
 import path from 'path';
+import ExcelJS from 'exceljs';
 import { buildClient } from '@datocms/cma-client';
 import { sanitizeText } from '../fortnox/sync';
 import { hasFortnoxCredentials } from '../fortnox/auth';
@@ -97,6 +98,21 @@ const normEmail = (v?: string) => (v ?? '').trim().toLowerCase();
 const normName = (v?: string) => (sanitizeText(v ?? '') ?? '').toLowerCase();
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Add a sheet with a bold, frozen header row and auto-ish column widths. */
+function addSheet(wb: ExcelJS.Workbook, name: string, header: string[], data: string[][]) {
+	const ws = wb.addWorksheet(name);
+	ws.addRow(header);
+	data.forEach((r) => ws.addRow(r));
+	ws.getRow(1).font = { bold: true };
+	ws.views = [{ state: 'frozen', ySplit: 1 }];
+	header.forEach((h, i) => {
+		let w = String(h).length;
+		for (const r of data) w = Math.max(w, String(r[i] ?? '').length);
+		ws.getColumn(i + 1).width = Math.min(46, Math.max(10, w + 2));
+	});
+	return ws;
+}
+
 type Member = {
 	id: string;
 	email?: string;
@@ -108,7 +124,7 @@ type Member = {
 const fullName = (m: Member) => sanitizeText([m.first_name, m.last_name].filter(Boolean).join(' ')) ?? '';
 
 /** Parse the Fortnox Offer/Order/Invoice List (latin-1, tab separated). */
-type InvoiceInfo = { count: number; amount: number; names: Set<string> };
+type InvoiceInfo = { count: number; amount: number; names: string[] };
 function parseInvoices(file: string): Map<string, InvoiceInfo> {
 	const txt = fs.readFileSync(file, 'latin1').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 	const byNo = new Map<string, InvoiceInfo>();
@@ -117,10 +133,10 @@ function parseInvoices(file: string): Map<string, InvoiceInfo> {
 		if (f.length < 9 || !/^\d+$/.test(f[0]) || !/^\d+$/.test(f[1])) continue;
 		const cn = f[1];
 		const amount = Number(f[8].replace(/ /g, '').replace(',', '.')) || 0;
-		const e = byNo.get(cn) ?? { count: 0, amount: 0, names: new Set<string>() };
+		const e = byNo.get(cn) ?? { count: 0, amount: 0, names: [] };
 		e.count++;
 		e.amount += amount;
-		e.names.add(f[2]);
+		e.names.push(f[2]);
 		byNo.set(cn, e);
 	}
 	return byNo;
@@ -372,7 +388,10 @@ async function main() {
 	});
 	rows.sort((a, b) => Number(a.customerNumber) - Number(b.customerNumber));
 
-	// 4) Simulate the restore, then find the customers still duplicated.
+	// 4) Simulate the restore, then find customers that are the same person on
+	//    several numbers. Group by the *effective* name (post-restore) so an
+	//    overwritten victim returns to its September identity and a member who
+	//    changed e-mail is still one person.
 	const simName = new Map<string, string>();
 	const simEmail = new Map<string, string>();
 	register.forEach((r, cn) => {
@@ -383,57 +402,84 @@ async function main() {
 		simName.set(r.customerNumber, r.restoreName);
 		if (r.restoreEmail) simEmail.set(r.customerNumber, normEmail(r.restoreEmail));
 	}
-	const byEmail = new Map<string, string[]>();
-	simEmail.forEach((email, cn) => {
-		if (!email) return;
-		const list = byEmail.get(email) ?? [];
+	const byName = new Map<string, string[]>();
+	simName.forEach((name, cn) => {
+		const k = normName(name);
+		if (!k) return;
+		const list = byName.get(k) ?? [];
 		list.push(cn);
-		byEmail.set(email, list);
+		byName.set(k, list);
 	});
+
+	type Repoint = { member: Member; from: string; to: string; fromInv: number; toInv: number };
+	const repoints: Repoint[] = [];
+	const repointedIds = new Set<string>();
 	const dupRows: DupRow[] = [];
-	byEmail.forEach((cns, email) => {
+
+	byName.forEach((cns, key) => {
 		if (cns.length < 2) return;
 		const numbers = cns.slice().sort((a, b) => Number(a) - Number(b));
-		const names = numbers.map((cn) => simName.get(cn) ?? '');
-		const samePerson = new Set(names.map((n) => normName(n))).size === 1;
-		const withInv = numbers.filter((cn) => invCount(cn) > 0);
-		const without = numbers.filter((cn) => invCount(cn) === 0);
+		const invBy = numbers.map((cn) => `#${cn}=${invCount(cn)}`).join(' | ');
+		const namesLabel = numbers.map((cn) => `#${cn} ${simName.get(cn)}`).join(' | ');
+		// The member for this person: by effective e-mail first, else by name.
+		let member: Member | undefined;
+		for (const cn of numbers) {
+			const e = simEmail.get(cn) ?? '';
+			const hit = (e && membersByEmail.get(e)?.[0]) || membersByName.get(normName(simName.get(cn) ?? ''))?.[0];
+			if (hit) {
+				member = hit;
+				break;
+			}
+		}
+		if (!member) {
+			dupRows.push({
+				numbers,
+				email: '',
+				names: namesLabel,
+				invoices: invBy,
+				verdict: 'Lämna/granska (org eller delad e-post – ingen medlem)',
+				samePerson: true,
+				keep: [],
+				remove: [],
+			});
+			return;
+		}
+		const memName = normName(fullName(member));
+		const from = (member.fortnox_customer_number ?? '').trim();
+		const fromInv = invCount(from);
+		// The number that carries invoices in the member's OWN name.
+		const mine = numbers.find((cn) => {
+			const inf = invoices.get(cn);
+			return inf && inf.count > 0 && inf.names.some((x) => normName(x) === memName);
+		});
+		const keep = mine ?? (numbers.includes(from) ? from : numbers.filter((cn) => invCount(cn) > 0)[0] ?? from);
+
 		let verdict: string;
-		let keep: string[] = [];
 		let remove: string[] = [];
-		if (!samePerson) verdict = 'Lämna (olika kunder, delad e-post)';
-		else if (withInv.length && without.length) {
-			keep = withInv;
-			remove = without;
-			verdict = `Behåll ${withInv.map((n) => '#' + n).join(', ')} (har fakturor); ta bort ${without
-				.map((n) => '#' + n)
-				.join(', ')}`;
-		} else if (withInv.length) verdict = 'Granska manuellt (båda har fakturor)';
-		else verdict = 'Granska manuellt (ingen har fakturor)';
+		if (mine && mine !== from && fromInv === 0 && !repointedIds.has(member.id)) {
+			repoints.push({ member, from, to: mine, fromInv, toInv: invCount(mine) });
+			repointedIds.add(member.id);
+			remove = numbers.filter((cn) => cn !== keep && invCount(cn) === 0);
+			verdict = `Repointa ${fullName(member)}: #${from}(0) → #${keep}(${invCount(keep)})${
+				remove.length ? `; ta bort ${remove.map((n) => '#' + n).join(', ')}` : ''
+			}`;
+		} else if (fromInv > 0) {
+			verdict = `OK – ${fullName(member)} pekar på #${from} (${fromInv} fakturor)`;
+		} else {
+			verdict = `Granska manuellt – ${fullName(member)} pekar på #${from}(0); fakturor: ${invBy}`;
+		}
 		dupRows.push({
 			numbers,
-			email,
-			names: numbers.map((cn, i) => `#${cn} ${names[i]}`).join(' | '),
-			invoices: numbers.map((cn) => `#${cn}=${invCount(cn)}`).join(' | '),
+			email: member.email ?? '',
+			names: namesLabel,
+			invoices: invBy,
 			verdict,
-			samePerson,
-			keep,
+			samePerson: true,
+			keep: keep ? [keep] : [],
 			remove,
 		});
 	});
 	dupRows.sort((a, b) => Number(a.numbers[0]) - Number(b.numbers[0]));
-
-	// Members whose fortnox_customer_number points at a number we intend to
-	// delete -> they must be repointed to the kept number.
-	type Repoint = { member: Member; from: string; to: string };
-	const repoints: Repoint[] = [];
-	for (const d of dupRows) {
-		const to = d.keep[0];
-		if (!to) continue;
-		for (const del of d.remove) {
-			for (const m of membersByNumber.get(del) ?? []) repoints.push({ member: m, from: del, to });
-		}
-	}
 
 	// 5) Write plan CSV (restore rows + duplicate verdicts, unified via `Typ`).
 	const esc = (x: string) => `"${(x ?? '').replace(/"/g, '""')}"`;
@@ -527,6 +573,53 @@ async function main() {
 		'utf8',
 	);
 
+	// Excel version — one sheet per `Typ`.
+	const wb = new ExcelJS.Workbook();
+	addSheet(
+		wb,
+		'Återställ',
+		header,
+		rows.map((r) => [
+			'Återställ',
+			r.customerNumber,
+			r.restoreName,
+			r.restoreEmail,
+			r.restoreCity,
+			r.citySource,
+			r.owner ? `${fullName(r.owner)} [${r.owner.id}]` : '(ej medlem)',
+			r.ownerIsMember ? 'ja' : 'nej',
+			r.memberCurrent,
+			r.currentName,
+			r.currentEmail,
+			String(r.invoices),
+			r.refTarget,
+			r.ownerSource,
+			r.citySource === 'logg' || r.citySource === 'medlem' ? 'Skriv namn, e-post och ort' : 'Skriv namn och e-post',
+			r.logged,
+		]),
+	);
+	addSheet(
+		wb,
+		'Dubbletter',
+		['Kundnummer', 'E-post', 'Namn per kund', 'Fakturor', 'Bedömning'],
+		dupRows.map((d) => [d.numbers.map((n) => '#' + n).join(' + '), d.email, d.names, d.invoices, d.verdict]),
+	);
+	addSheet(
+		wb,
+		'Medlemsfält',
+		['Medlem', 'Från', 'Till', 'Medlems e-post', 'Fakturor', 'Åtgärd'],
+		repoints.map((rp) => [
+			`${fullName(rp.member)} [${rp.member.id}]`,
+			rp.from,
+			rp.to,
+			rp.member.email ?? '',
+			`#${rp.from}=${invCount(rp.from)} | #${rp.to}=${invCount(rp.to)}`,
+			`Byt fortnox_customer_number ${rp.from} → ${rp.to}`,
+		]),
+	);
+	const xlsxFile = OUT_FILE.replace(/\.csv$/i, '.xlsx');
+	await wb.xlsx.writeFile(xlsxFile);
+
 	const needs = rows.filter((r) => r.needsRestore);
 	console.log(`\nRestore: ${needs.length}/${rows.length} kunder`);
 	console.log(`Dubbletter efter återställning: ${dupRows.length}`);
@@ -534,6 +627,7 @@ async function main() {
 	console.log(`Medlemsfält (repoint): ${repoints.length}`);
 	for (const rp of repoints) console.log(`  ${fullName(rp.member)}: ${rp.from} → ${rp.to}`);
 	console.log(`  ${path.resolve(OUT_FILE)}`);
+	console.log(`  ${path.resolve(xlsxFile)}`);
 
 	// 6) Apply only when forced.
 	if (!live) {
@@ -566,7 +660,11 @@ async function main() {
 		for (const rp of repoints) {
 			await client.items.update(rp.member.id, { fortnox_customer_number: rp.to } as any);
 			rp.member.fortnox_customer_number = rp.to;
-			console.log(`  ↪ ${fullName(rp.member)}: fortnox_customer_number ${rp.from} → ${rp.to}`);
+			// Only the ownership key — never Name/E-mail (keep Fortnox data as-is
+			// for manual review).
+			await updateCustomer(REGION, rp.to, { ExternalReference: rp.member.id } as Partial<FortnoxCustomer>);
+			console.log(`  ↪ ${fullName(rp.member)}: fortnox_customer_number ${rp.from} → ${rp.to} (ref #${rp.to})`);
+			await sleep(250);
 		}
 		for (const d of dupRows) {
 			for (const del of d.remove) {
