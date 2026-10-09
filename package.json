@@ -27,7 +27,9 @@
 		"db:setup": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/setup-db.ts",
 		"db:backfill": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/backfill-tokens-to-turso.ts",
 		"testroundtrip": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/test-invoice-roundtrip.ts",
-		"deleteinvoices": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/delete-invoices.ts"
+		"deleteinvoices": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/delete-invoices.ts",
+		"auditfortnox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/audit-fortnox-overwrites.ts",
+		"restorefortnox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/restore-fortnox-customers.ts"
 	},
 	"exports": {
 		"lib/*": "/lib",

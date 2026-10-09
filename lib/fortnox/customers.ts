@@ -59,3 +59,13 @@ export const updateCustomer = async (
   })
   return res?.Customer
 }
+
+/**
+ * Delete a customer in Fortnox. Irreversible — a customer that has invoices or
+ * other references may be rejected by Fortnox; the error is surfaced as-is.
+ */
+export const deleteCustomer = async (regionSlug: string, customerNumber: string): Promise<void> => {
+  await fortnoxFetch(regionSlug, `/customers/${encodeURIComponent(customerNumber)}`, {
+    method: 'DELETE'
+  })
+}

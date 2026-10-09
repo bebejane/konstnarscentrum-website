@@ -30,13 +30,15 @@ export type SyncResult = {
 
 /**
  * Strip characters Fortnox rejects in free-text fields (e.g. emoji / Unicode
- * symbols). Keeps letters, digits, whitespace and punctuation, collapses
- * repeated whitespace, and trims. Returns undefined when nothing remains.
+ * symbols) plus zero-width / BOM characters that would otherwise be written
+ * verbatim (U+FEFF, U+200B–U+200D, U+2060, U+00AD). Keeps letters, digits,
+ * whitespace and punctuation, collapses repeated whitespace, and trims.
+ * Returns undefined when nothing remains.
  */
 export const sanitizeText = (value: string | undefined): string | undefined => {
 	if (!value) return undefined;
 	const cleaned = value
-		.replace(/[\p{S}]/gu, '')
+		.replace(/[\p{S}\uFEFF\u200B-\u200D\u2060\u00AD]/gu, '')
 		.replace(/\s+/g, ' ')
 		.trim();
 	return cleaned || undefined;

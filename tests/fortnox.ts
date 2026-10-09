@@ -143,6 +143,10 @@ async function main() {
   assert("sanitizeText returns undefined for empty input", sanitizeText("") === undefined);
   assert("sanitizeText returns undefined when only symbols", sanitizeText("🌏🌏") === undefined);
   assert("sanitizeText passes undefined through", sanitizeText(undefined) === undefined);
+  assert("sanitizeText removes leading BOM", sanitizeText("\uFEFFAnna") === "Anna");
+  assert("sanitizeText removes zero-width space", sanitizeText("An\u200Bna") === "Anna");
+  assert("sanitizeText removes zero-width joiner", sanitizeText("An\u200Dna") === "Anna");
+  assert("sanitizeText removes soft hyphen", sanitizeText("An\u00ADna") === "Anna");
   ok("sanitizeText runs");
 
   // ---------- overwrite safeguards ----------
