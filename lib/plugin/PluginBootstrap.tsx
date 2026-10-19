@@ -16,6 +16,7 @@ import ModelSelectorField from '/lib/plugin/entrypoints/ModelSelectorField';
 import MemberApproval from '/lib/plugin/entrypoints/MemberApproval';
 import InvoicesPage from '/lib/plugin/entrypoints/InvoicesPage';
 import InvoiceLinkField from '/lib/plugin/entrypoints/InvoiceLinkField';
+import MembersExportOutlet from '/lib/plugin/entrypoints/MembersExportOutlet';
 import { isDev } from '/lib/plugin/utils';
 
 export default function PluginBootstrap() {
@@ -76,6 +77,22 @@ export default function PluginBootstrap() {
 						return render(<ModelSelectorField ctx={ctx} />);
 					case 'invoice-link':
 						return render(<InvoiceLinkField ctx={ctx} />);
+				}
+			},
+			itemCollectionOutlets(itemType) {
+				if (itemType.attributes.api_key !== 'member') return [];
+
+				return [
+					{
+						id: 'members-export',
+						rank: 10,
+						initialHeight: 56,
+					},
+				];
+			},
+			renderItemCollectionOutlet(outletId, ctx) {
+				if (outletId === 'members-export') {
+					return render(<MembersExportOutlet ctx={ctx} />);
 				}
 			},
 			contentAreaSidebarItems(ctx: ContentAreaSidebarItemsCtx) {

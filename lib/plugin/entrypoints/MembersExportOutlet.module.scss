@@ -1,0 +1,20 @@
+.container {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-l);
+
+	.text {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+
+		strong {
+			font-weight: 600;
+		}
+
+		span {
+			font-size: var(--font-size-s);
+		}
+	}
+}

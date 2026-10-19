@@ -1,6 +1,20 @@
 query AllMembers($regionId: ItemId, $first: IntType = 10, $skip: IntType = 0) {
 	members: allMembers(filter: { region: { eq: $regionId } }, first: $first, skip: $skip) {
 		...MemberLightFragment
+		active
+		birthPlace
+		city
+		createdAt
+		fortnoxCustomerNumber
+		instagram
+		showContact
+		updatedAt
+		webpage
+		yearOfBirth
+		memberCategory {
+			id
+			categoryType
+		}
 	}
 	pagination: _allMembersMeta(filter: { region: { eq: $regionId } }) {
 		count
