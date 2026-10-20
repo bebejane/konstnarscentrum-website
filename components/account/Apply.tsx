@@ -199,7 +199,7 @@ const ApplicationForm = ({ regions, setApplication }) => {
 				/>
 				{errors.message && <label className={s.formError}>Meddelande är tomt...</label>}
 				<textarea
-					{...register('message', { required: true })}
+					{...register('message', { required: false })}
 					rows={10}
 					className={errors.message && s.error}
 					placeholder={`${text.message}...`}
