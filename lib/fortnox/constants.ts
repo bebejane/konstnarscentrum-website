@@ -8,8 +8,9 @@ export const FORTNOX_CLIENT_ID = process.env.FORTNOX_CLIENT_ID;
 export const FORTNOX_CLIENT_SECRET = process.env.FORTNOX_CLIENT_SECRET;
 export const FORTNOX_REDIRECT_URI = process.env.FORTNOX_REDIRECT_URI;
 
-// Invoice defaults (hardcoded for now)
-export const FORTNOX_INVOICE_AMOUNT = 250;
+// Invoice defaults. The amount itself is *not* configured here — it is read per
+// region from DatoCMS (`region.invoice_amount`, "Medlemsavgift per år") via
+// `lib/fortnox/invoiceAmount.ts`. A region without an amount cannot be invoiced.
 export const FORTNOX_INVOICE_DUE_DAYS = 30;
 
 /**

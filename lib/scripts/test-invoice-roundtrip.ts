@@ -7,6 +7,8 @@ import {
   createAnnualInvoiceForMember,
   syncMemberInvoicePaymentStatus
 } from '../fortnox/invoiceDispatch'
+import { readRegionInvoiceAmount } from '../fortnox/invoiceAmount'
+import { getRegionInvoiceEmailText } from '../fortnox/invoiceEmail'
 import { getInvoice, isInvoicePaid } from '../fortnox/invoices'
 
 /**
@@ -57,6 +59,20 @@ const main = async () => {
     process.exit(1)
   }
 
+  const { amount, error } = await readRegionInvoiceAmount(region)
+  if (amount === null) {
+    console.error(error)
+    process.exit(1)
+  }
+  console.log(`Amount: ${amount} kr`)
+
+  const emailText = await getRegionInvoiceEmailText(region)
+  console.log(
+    emailText
+      ? `E-mail text (sent as EmailBody):\n${emailText.replace(/^/gm, '  | ')}`
+      : 'E-mail text: (none — Fortnox default text is used)'
+  )
+
   console.log(`\nCreating Fortnox invoice + DatoCMS invoice record...`)
   const result = await createAnnualInvoiceForMember(member, invoiceYear)
   console.log(`✓ Invoice created. Document number: ${result.documentNumber}`)
@@ -67,6 +83,13 @@ const main = async () => {
   console.log(`  Status: ${fortnoxInvoice.Status}`)
   console.log(`  Total:  ${fortnoxInvoice.Total}`)
   console.log(`  Paid:   ${isInvoicePaid(fortnoxInvoice)}`)
+  console.log(
+    `  E-mail body stored in Fortnox: ${
+      fortnoxInvoice.EmailInformation?.EmailBody
+        ? JSON.stringify(fortnoxInvoice.EmailInformation.EmailBody)
+        : '(none)'
+    }`
+  )
 
   console.log('\nPolling payment status (sync to DatoCMS)...')
   const freshMember = await client.items.find(member.id)

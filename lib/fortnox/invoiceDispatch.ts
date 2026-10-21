@@ -14,11 +14,12 @@ const getInvoiceItemTypeId = async (): Promise<string> => {
 	return invoiceItemTypeId;
 };
 import {
-	FORTNOX_INVOICE_AMOUNT,
 	FORTNOX_INVOICE_DUE_DAYS,
 	getFortnoxTokenFromEnv,
 	isEmailAllowedToSend,
 } from './constants';
+import { getRegionInvoiceAmount } from './invoiceAmount';
+import { buildInvoiceEmailInformation, getRegionInvoiceEmailText } from './invoiceEmail';
 import {
 	createInvoice,
 	sendInvoiceAsEmail,
@@ -135,10 +136,14 @@ export const isEligibleForInvoice = async (
 /**
  * Create and send the annual membership invoice for a member via Fortnox,
  * then create a matching DatoCMS `invoice` record and link it to the member.
+ *
+ * Pass `amount` when the caller already resolved the region's yearly amount (bulk
+ * runs do, once per region) to avoid re-reading it for every member.
  */
 export const createAnnualInvoiceForMember = async (
 	member: MemberItem,
 	invoiceYear: number,
+	amount?: number,
 ): Promise<{ documentNumber: string; invoiceRecordId: string; invoiceDate?: string; record: InvoiceRecord }> => {
 	const region = regions.find((r) => r.id === member.region);
 	if (!region) throw new Error(`Member ${member.id} has no region`);
@@ -152,14 +157,25 @@ export const createAnnualInvoiceForMember = async (
 	const dueDate = new Date(invoiceDate);
 	dueDate.setDate(dueDate.getDate() + FORTNOX_INVOICE_DUE_DAYS);
 
+	// Throws (InvoiceAmountError) when the region has no annual amount configured —
+	// we never invoice a guessed amount.
+	const price = amount ?? (await getRegionInvoiceAmount(region));
+
+	// Optional per-region e-mail text. Without one the invoice is sent with
+	// Fortnox's own default message, exactly as before the field existed.
+	const emailInformation = buildInvoiceEmailInformation(
+		await getRegionInvoiceEmailText(region),
+	);
+
 	const invoice = await createInvoice(region.slug, {
 		CustomerNumber: member.fortnox_customer_number,
 		InvoiceDate: format(invoiceDate, 'yyyy-MM-dd'),
 		DueDate: format(dueDate, 'yyyy-MM-dd'),
+		...(emailInformation ? { EmailInformation: emailInformation } : {}),
 		InvoiceRows: [
 			{
 				Description: `Medlemsavgift ${invoiceYear}`,
-				Price: FORTNOX_INVOICE_AMOUNT,
+				Price: price,
 				DeliveredQuantity: 1,
 				VATCode: 'MF',
 			},

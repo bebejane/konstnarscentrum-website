@@ -4,5 +4,7 @@ export * from './client';
 export * from './customers';
 export * from './company';
 export * from './invoices';
+export * from './invoiceAmount';
+export * from './invoiceEmail';
 export * from './sync';
 export * from './invoiceDispatch';

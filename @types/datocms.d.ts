@@ -3885,6 +3885,7 @@ type MemberModelFilter = {
   fullName?: InputMaybe<StringFilter>;
   id?: InputMaybe<ItemIdFilter>;
   image?: InputMaybe<FileFilter>;
+  inactive?: InputMaybe<BooleanFilter>;
   instagram?: InputMaybe<StringFilter>;
   lastName?: InputMaybe<StringFilter>;
   memberCategory?: InputMaybe<LinksFilter>;
@@ -3933,6 +3934,8 @@ enum MemberModelOrderBy {
   fullName_DESC = 'fullName_DESC',
   id_ASC = 'id_ASC',
   id_DESC = 'id_DESC',
+  inactive_ASC = 'inactive_ASC',
+  inactive_DESC = 'inactive_DESC',
   instagram_ASC = 'instagram_ASC',
   instagram_DESC = 'instagram_DESC',
   lastName_ASC = 'lastName_ASC',
@@ -4172,6 +4175,7 @@ type MemberRecord = RecordInterface & {
   fullName: Scalars['String'];
   id: Scalars['ItemId'];
   image?: Maybe<FileField>;
+  inactive?: Maybe<Scalars['BooleanType']>;
   instagram?: Maybe<Scalars['String']>;
   lastName: Scalars['String'];
   memberCategory: Array<MemberCategoryRecord>;
@@ -5336,6 +5340,8 @@ type RegionModelFilter = {
   email?: InputMaybe<StringFilter>;
   global?: InputMaybe<BooleanFilter>;
   id?: InputMaybe<ItemIdFilter>;
+  invoiceAmount?: InputMaybe<FloatFilter>;
+  invoiceEmailText?: InputMaybe<TextFilter>;
   name?: InputMaybe<StringFilter>;
   position?: InputMaybe<PositionFilter>;
   slug?: InputMaybe<SlugFilter>;
@@ -5367,6 +5373,8 @@ enum RegionModelOrderBy {
   global_DESC = 'global_DESC',
   id_ASC = 'id_ASC',
   id_DESC = 'id_DESC',
+  invoiceAmount_ASC = 'invoiceAmount_ASC',
+  invoiceAmount_DESC = 'invoiceAmount_DESC',
   name_ASC = 'name_ASC',
   name_DESC = 'name_DESC',
   position_ASC = 'position_ASC',
@@ -5400,6 +5408,8 @@ type RegionRecord = RecordInterface & {
   global?: Maybe<Scalars['BooleanType']>;
   id: Scalars['ItemId'];
   info: Array<MetaBlockRecord>;
+  invoiceAmount?: Maybe<Scalars['FloatType']>;
+  invoiceEmailText?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   position?: Maybe<Scalars['IntType']>;
   sections: Array<RegionModelSectionsField>;
@@ -5417,6 +5427,12 @@ type RegionRecord_seoMetaTagsArgs = {
 
 /** Record of type Region (region) */
 type RegionRecordcontactIntroArgs = {
+  markdown?: InputMaybe<Scalars['Boolean']>;
+};
+
+
+/** Record of type Region (region) */
+type RegionRecordinvoiceEmailTextArgs = {
   markdown?: InputMaybe<Scalars['Boolean']>;
 };
 

@@ -8,6 +8,7 @@ import {
 	getYearlyInvoicesByMember,
 	isEligibleForInvoice,
 } from '/lib/fortnox/invoiceDispatch';
+import { readRegionInvoiceAmount } from '/lib/fortnox/invoiceAmount';
 import { parseDatoError } from '/lib/utils';
 
 export const config = {
@@ -77,7 +78,11 @@ const resolveMember = async (id: string, regionId: string): Promise<MemberItem |
  * Create (and email) the annual invoice for a single member.
  * Never throws: failures are surfaced as a `failed` result.
  */
-const processMember = async (member: MemberItem, invoiceYear: number): Promise<MemberResult> => {
+const processMember = async (
+	member: MemberItem,
+	invoiceYear: number,
+	invoiceAmount: number,
+): Promise<MemberResult> => {
 	try {
 		const { eligible, reason, records } = await isEligibleForInvoice(member, invoiceYear);
 		if (!eligible) {
@@ -100,7 +105,7 @@ const processMember = async (member: MemberItem, invoiceYear: number): Promise<M
 		}
 
 		const { documentNumber, invoiceRecordId, invoiceDate, record } =
-			await createAnnualInvoiceForMember(member, invoiceYear);
+			await createAnnualInvoiceForMember(member, invoiceYear, invoiceAmount);
 		return {
 			status: 'created',
 			documentNumber,
@@ -164,9 +169,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				invoice: yearlyInvoices[m.id] ?? null,
 			}));
 			const company = await resolveRegionCompany(region.slug);
-			return res
-				.status(200)
-				.json({ members: membersWithInvoices, region: region.slug, invoiceYear, company });
+			const { amount: invoiceAmount, error: invoiceAmountError } =
+				await readRegionInvoiceAmount(region);
+			return res.status(200).json({
+				members: membersWithInvoices,
+				region: region.slug,
+				invoiceYear,
+				company,
+				invoiceAmount,
+				invoiceAmountError,
+			});
 		} catch (err) {
 			console.error(err);
 			return res.status(500).json({ error: parseDatoError(err) });
@@ -187,6 +199,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			? (req.body.memberIds as string[])
 			: null;
 		const stream = req.body?.stream === true;
+
+		// No amount, no invoices: the region's "Medlemsavgift per år" is required.
+		const { amount: invoiceAmount, error: invoiceAmountError } =
+			await readRegionInvoiceAmount(region);
+		if (invoiceAmount === null)
+			return res.status(400).json({ error: invoiceAmountError });
 
 		try {
 			const tasks: Task[] = memberIds
@@ -216,14 +234,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 					return true;
 				};
 
-				write({ type: 'start', total: tasks.length, invoiceYear, region: region.slug });
+				write({ type: 'start', total: tasks.length, invoiceYear, region: region.slug, invoiceAmount });
 
 				for (let i = 0; i < tasks.length; i++) {
 					if (closed || res.writableEnded) break;
 
 					const task = tasks[i];
 					const result: MemberResult = task.member
-						? await processMember(task.member, invoiceYear)
+						? await processMember(task.member, invoiceYear, invoiceAmount)
 						: { status: 'failed', reason: 'Member not found in region' };
 					accumulate(summary, task, result);
 
@@ -252,12 +270,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			const results = emptySummary();
 			for (const task of tasks) {
 				const result: MemberResult = task.member
-					? await processMember(task.member, invoiceYear)
+					? await processMember(task.member, invoiceYear, invoiceAmount)
 					: { status: 'failed', reason: 'Member not found in region' };
 				accumulate(results, task, result);
 			}
 
-			return res.status(200).json({ ...results, invoiceYear, region: region.slug });
+			return res.status(200).json({ ...results, invoiceYear, region: region.slug, invoiceAmount });
 		} catch (err) {
 			if (res.headersSent) {
 				try {

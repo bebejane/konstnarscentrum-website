@@ -1,6 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import regions from '/regions.json';
 import { getAllMembers } from '/lib/fortnox/sync';
 import { createAnnualInvoiceForMember, isEligibleForInvoice } from '/lib/fortnox/invoiceDispatch';
+import { readRegionInvoiceAmount } from '/lib/fortnox/invoiceAmount';
+import { isFortnoxEnabled } from '/lib/fortnox/constants';
 import { parseDatoError } from '/lib/utils';
 
 export const config = {
@@ -37,6 +40,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 	try {
 		const members = await getAllMembers();
+
+		// The amount is set per region in DatoCMS with no code fallback: refuse the
+		// whole run before creating anything if any invoiceable region lacks one.
+		const regionIds = members
+			.map((m) => m.region)
+			.filter((id, i, all): id is string => !!id && all.indexOf(id) === i);
+		const missing: string[] = [];
+		const amounts: Record<string, number> = {};
+		for (const regionId of regionIds) {
+			const region = regions.find((r) => r.id === regionId);
+			// Regions without Fortnox credentials can't be invoiced at all, so their
+			// missing amount must not block the regions that can.
+			if (!region || !isFortnoxEnabled(region.slug)) continue;
+			const { amount, error } = await readRegionInvoiceAmount(region);
+			if (amount === null) missing.push(error ?? region.slug);
+			else amounts[regionId] = amount;
+		}
+		if (missing.length) return res.status(400).json({ error: missing.join(' ') });
+
 		const results = {
 			created: 0,
 			skipped: 0,
@@ -53,7 +75,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			}
 
 			try {
-				const { documentNumber } = await createAnnualInvoiceForMember(member, invoiceYear);
+				const { documentNumber } = await createAnnualInvoiceForMember(
+					member,
+					invoiceYear,
+					member.region ? amounts[member.region] : undefined,
+				);
 				results.created++;
 				results.invoices.push(documentNumber);
 			} catch (err: any) {

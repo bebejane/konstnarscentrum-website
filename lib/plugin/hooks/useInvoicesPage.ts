@@ -48,7 +48,7 @@ export type RunProgress = {
 };
 
 type StreamEvent =
-	| { type: 'start'; total: number; invoiceYear: number; region: string }
+	| { type: 'start'; total: number; invoiceYear: number; region: string; invoiceAmount: number }
 	| {
 			type: 'member';
 			index: number;
@@ -75,6 +75,10 @@ export const sortSwedish = (arr: any[], key: string): any[] => {
 	const sorter = new Intl.Collator('sv', { usage: 'sort' });
 	return arr.sort((a: any, b: any) => sorter.compare(a[key], b[key]));
 };
+
+/** 250 -> "250", 250.5 -> "250,50" */
+export const formatAmount = (amount: number): string =>
+	new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 2 }).format(amount);
 
 const basicAuthHeaders = (ctx: RenderPageCtx): Record<string, string> => {
 	const { basicAuthUsername, basicAuthPassword } = ctx.plugin.attributes.parameters;
@@ -154,6 +158,8 @@ export type UseInvoicesPage = {
 	statusById: Record<string, MemberRunState>;
 	percent: number;
 	invoiceYear: number;
+	invoiceAmount: number | null;
+	invoiceAmountError: string | null;
 	region: ReturnType<typeof regionFromRoleName>;
 	submit: () => Promise<void>;
 	abort: () => void;
@@ -167,6 +173,8 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 
 	const [members, setMembers] = useState<Member[]>([]);
 	const [company, setCompany] = useState<RegionCompany | null>(null);
+	const [invoiceAmount, setInvoiceAmount] = useState<number | null>(null);
+	const [invoiceAmountError, setInvoiceAmountError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [running, setRunning] = useState(false);
 	const [aborted, setAborted] = useState(false);
@@ -195,6 +203,8 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 			.then((data) => {
 				setMembers(data.members);
 				setCompany(data.company ?? null);
+				setInvoiceAmount(typeof data.invoiceAmount === 'number' ? data.invoiceAmount : null);
+				setInvoiceAmountError(data.invoiceAmountError ?? null);
 			})
 			.catch((err) => setError(err.message || String(err)))
 			.finally(() => setLoading(false));
@@ -211,10 +221,16 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 
 	const submit = async () => {
 		if (running) return;
+		if (invoiceAmount === null) {
+			setError(invoiceAmountError ?? 'Regionen saknar medlemsavgift.');
+			return;
+		}
 
 		const res = await ctx.openConfirm({
 			title: 'Fakturera',
-			content: `Är du säker på att du vill fakturera alla medlemmar för ${invoiceYear}?`,
+			content: `Är du säker på att du vill fakturera alla medlemmar ${formatAmount(
+				invoiceAmount,
+			)} kr för ${invoiceYear}?`,
 			cancel: {
 				label: 'Avbryt',
 				intent: 'negative',
@@ -339,6 +355,8 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 		statusById,
 		percent,
 		invoiceYear,
+		invoiceAmount,
+		invoiceAmountError,
 		region,
 		submit,
 		abort,

@@ -14,6 +14,11 @@ import {
   webhookModelApiKey
 } from "../lib/fortnox/sync";
 import { isEmailAllowedToSend } from "../lib/fortnox/constants";
+import { parseInvoiceAmount, regionAmountError } from "../lib/fortnox/invoiceAmount";
+import {
+  buildInvoiceEmailInformation,
+  normalizeInvoiceEmailText
+} from "../lib/fortnox/invoiceEmail";
 import {
   canPersistTokens,
   hasDb,
@@ -309,6 +314,61 @@ async function main() {
   assert("webhookModelApiKey undefined without related entity", webhookModelApiKey({ entity: { id: "a" } } as any) === undefined);
   assert("webhookModelApiKey undefined without payload", webhookModelApiKey({} as any) === undefined);
   ok("webhook entity helpers run");
+
+  // ---------- parseInvoiceAmount (region.invoice_amount) ----------
+  assert("parseInvoiceAmount 250 → 250", parseInvoiceAmount(250) === 250);
+  assert("parseInvoiceAmount 350.5 → 350.5", parseInvoiceAmount(350.5) === 350.5);
+  assert("parseInvoiceAmount 1 → 1", parseInvoiceAmount(1) === 1);
+  assert("parseInvoiceAmount '300' → 300", parseInvoiceAmount("300") === 300);
+  assert("parseInvoiceAmount null → invalid", parseInvoiceAmount(null) === null);
+  assert("parseInvoiceAmount undefined → invalid", parseInvoiceAmount(undefined) === null);
+  assert("parseInvoiceAmount 0 → invalid", parseInvoiceAmount(0) === null);
+  assert("parseInvoiceAmount -5 → invalid", parseInvoiceAmount(-5) === null);
+  assert("parseInvoiceAmount NaN → invalid", parseInvoiceAmount(NaN) === null);
+  assert("parseInvoiceAmount '' → invalid", parseInvoiceAmount("") === null);
+  assert("parseInvoiceAmount '   ' → invalid", parseInvoiceAmount("   ") === null);
+  assert("parseInvoiceAmount 'abc' → invalid", parseInvoiceAmount("abc") === null);
+  assert("parseInvoiceAmount {} → invalid", parseInvoiceAmount({}) === null);
+
+  const missingRegionError = regionAmountError({ id: "143685114", slug: "ost", name: "Öst" });
+  assert(
+    "regionAmountError names the region",
+    missingRegionError.includes("Öst") && missingRegionError.includes("Medlemsavgift per år")
+  );
+  ok("parseInvoiceAmount runs");
+
+  // ---------- normalizeInvoiceEmailText (region.invoice_email_text) ----------
+  assert(
+    "normalizeInvoiceEmailText keeps interior line breaks",
+    normalizeInvoiceEmailText("Hej!\n\nMed vänlig hälsning\nKonstnärscentrum") ===
+      "Hej!\n\nMed vänlig hälsning\nKonstnärscentrum"
+  );
+  assert(
+    "normalizeInvoiceEmailText trims surrounding whitespace only",
+    normalizeInvoiceEmailText("  Hej igen  \n") === "Hej igen"
+  );
+  assert(
+    "normalizeInvoiceEmailText normalises CRLF to LF",
+    normalizeInvoiceEmailText("Rad ett\r\nRad två") === "Rad ett\nRad två"
+  );
+  assert("normalizeInvoiceEmailText '' → null", normalizeInvoiceEmailText("") === null);
+  assert("normalizeInvoiceEmailText whitespace → null", normalizeInvoiceEmailText("   ") === null);
+  assert("normalizeInvoiceEmailText newlines only → null", normalizeInvoiceEmailText("\n\n") === null);
+  assert("normalizeInvoiceEmailText null → null", normalizeInvoiceEmailText(null) === null);
+  assert("normalizeInvoiceEmailText undefined → null", normalizeInvoiceEmailText(undefined) === null);
+  assert("normalizeInvoiceEmailText number → null", normalizeInvoiceEmailText(250) === null);
+  assert("normalizeInvoiceEmailText {} → null", normalizeInvoiceEmailText({}) === null);
+
+  const emailInfo = buildInvoiceEmailInformation("Hej!\n\nMed vänlig hälsning");
+  assert("buildInvoiceEmailInformation sets EmailBody", emailInfo?.EmailBody === "Hej!\n\nMed vänlig hälsning");
+  assert(
+    "buildInvoiceEmailInformation sets nothing else",
+    !!emailInfo && Object.keys(emailInfo).join(",") === "EmailBody"
+  );
+  assert("buildInvoiceEmailInformation null → undefined", buildInvoiceEmailInformation(null) === undefined);
+  assert("buildInvoiceEmailInformation '' → undefined", buildInvoiceEmailInformation("") === undefined);
+  assert("buildInvoiceEmailInformation '  ' → undefined", buildInvoiceEmailInformation("  ") === undefined);
+  ok("invoice e-mail text helpers run");
 
   // ---------- report ----------
   results.forEach(r => {

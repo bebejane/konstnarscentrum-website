@@ -57,6 +57,14 @@
 		width: 70%;
 	}
 
+	.amountError {
+		margin: var(--spacing-l) var(--spacing-m) 0 var(--spacing-m);
+		padding: var(--spacing-m);
+		font-size: var(--font-size-s);
+		background: var(--color--danger-soft--surface);
+		color: var(--color--danger-soft--ink);
+	}
+
 	.progress {
 		margin-bottom: var(--spacing-l);
 

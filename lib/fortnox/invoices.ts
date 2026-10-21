@@ -18,11 +18,27 @@ export type FortnoxInvoice = {
   [key: string]: any
 }
 
+/**
+ * Per-invoice e-mail overrides, used when the invoice is sent with
+ * `sendInvoiceAsEmail`. Field names follow Fortnox (`EmailAddressCC` and
+ * `EmailAddressBCC` with double letters). Everything here is optional: what is
+ * omitted falls back to the Fortnox account's own settings.
+ */
+export type FortnoxEmailInformation = {
+  EmailAddressFrom?: string
+  EmailAddressTo?: string
+  EmailAddressCC?: string
+  EmailAddressBCC?: string
+  EmailSubject?: string
+  EmailBody?: string
+}
+
 export type CreateInvoiceInput = {
   CustomerNumber: string
   InvoiceDate: string
   DueDate: string
   Currency?: string
+  EmailInformation?: FortnoxEmailInformation
   InvoiceRows: {
     Description: string
     Price: number
@@ -45,8 +61,9 @@ export const createInvoice = async (regionSlug: string, input: CreateInvoiceInpu
 }
 
 /**
- * Send the invoice as an email via Fortnox's own sending (EmailInformation on
- * the customer / invoice is used for the recipient).
+ * Send the invoice as an email via Fortnox's own sending (the invoice's
+ * `EmailInformation` — set at creation, see `./invoiceEmail` — controls the
+ * message; otherwise the account's default text is used).
  */
 export const sendInvoiceAsEmail = async (regionSlug: string, documentNumber: string): Promise<void> => {
   await fortnoxFetch(regionSlug, `/invoices/${encodeURIComponent(documentNumber)}/email`, { method: 'GET' })

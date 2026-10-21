@@ -18,6 +18,8 @@
 		"postbuild": "next-sitemap",
 		"syncfortknox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/sync-fortknox-customers.tsx",
 		"migratememberfields": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/migrate-member-fields.tsx",
+		"migrateinvoiceamount": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/add-region-invoice-amount.tsx",
+		"migrateinvoiceemail": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/add-region-invoice-email-text.tsx",
 		"test": "tsx --tsconfig ./tsconfig.node.json ./tests/test.ts",
 		"test:emails": "tsx --tsconfig ./tsconfig.node.json ./tests/emails.tsx",
 		"test:fortnox": "tsx --tsconfig ./tsconfig.node.json ./tests/fortnox.ts",

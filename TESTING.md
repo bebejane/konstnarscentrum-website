@@ -2,12 +2,15 @@
 
 Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONMENT=dev` in `.env`). Do not run these against production data. Only the `ost` region is enabled (`FORTNOX_ENABLED_REGIONS` in `lib/fortnox/constants.ts`) during testing.
 
+> **Check the environment first.** `.env` is a single shared file and may currently point at `main` and/or a **live** Fortnox company. Before running anything that writes, verify both: `grep DATOCMS_ENVIRONMENT .env` and `pnpm fortnoxenv` (reports SANDBOX vs LIVE). Creating an invoice is not reversible from the scripts.
+
 ## Safety rails
 
 - **Email allowlist** — `.env` sets `FORTNOX_EMAIL_ALLOWLIST=bjorn@konst-teknik.se,mattias@konst-teknik.se`. When invoices are created, only these emails get the Fortnox email. Unset the var (leave empty) in production so everyone is emailed.
 - **Region guard** — `FORTNOX_ENABLED_REGIONS = ['ost']`. Nothing outside that region is touched.
 - **Wrong-customer guard** — `syncMemberToFortKnox` (`lib/fortnox/sync.ts`) only overwrites a Fortnox customer it can *prove* belongs to the member: its `ExternalReference` must match the member id, or — when no reference is stored — its email must match. A stored customer number pointing at another member, an ambiguous email (several customers share it), or a write that would change nothing is **skipped** and logged (HTTP 200, `{ skipped: true, reason }`) instead of overwriting the wrong customer. The bulk `syncfortknox` script refuses the same ambiguous/foreign links.
-- **Amount/account** — `FORTNOX_INVOICE_AMOUNT` and `FORTNOX_INVOICE_ACCOUNT` in `.env`. Set a test amount (e.g. `100`) before creating invoices; a 0-amount may be rejected.
+- **Amount** — the yearly amount is *not* in `.env` or in code: it comes from the region's **Medlemsavgift per år** (`region.invoice_amount`) in DatoCMS, one value per region. There is no fallback — invoicing a region without an amount fails with an error (API 400 / plugin banner / script exit), so set it before creating invoices. A 0-amount is rejected by Fortnox.
+- **Invoice e-mail text** — optional, per region: **Text i fakturamejl** (`region.invoice_email_text`, added by `pnpm run migrateinvoiceemail`). Empty means Fortnox's own default text. When set, it is sent as the invoice's `EmailInformation.EmailBody`, trimmed but otherwise untouched — line breaks are sent as `\n`. How Fortnox renders them in the HTML mail is *unverified*: check the received mail in the roundtrip test before writing multi-paragraph texts.
 
 ## Prerequisites
 
@@ -133,7 +136,7 @@ npm run syncfortknox          # first run only: link/create customers for all me
 npm run testroundtrip -- bjorn@konst-teknik.se 2026
 ```
 
-Creates an annual invoice in the Fortnox sandbox for one member, sends the Fortnox email **only if the email is allowlisted**, creates + links the DatoCMS `invoice` record, fetches the Fortnox status, then runs the payment-status sync. Verify afterward in the DatoCMS dev UI that the member now has a linked `invoice` record.
+Creates an annual invoice in the Fortnox sandbox for one member, sends the Fortnox email **only if the email is allowlisted**, creates + links the DatoCMS `invoice` record, fetches the Fortnox status, then runs the payment-status sync. Verify afterward in the DatoCMS dev UI that the member now has a linked `invoice` record. The script prints the region's amount and exits with an error if it isn't set — the invoice row is priced from `region.invoice_amount`.
 
 ## 4. Manual endpoint smoke tests
 
@@ -146,7 +149,7 @@ These are the same endpoints the DatoCMS plugin and the daily cron call. Use Bas
     -H "Content-Type: application/json" -d '{"invoiceYear": 2026}'
   ```
 
-  Idempotent per `invoice_year` — members already invoiced for the year are skipped.
+  Idempotent per `invoice_year` — members already invoiced for the year are skipped. Returns **400** without creating anything if a Fortnox-enabled region that has members lacks **Medlemsavgift per år**.
 
 - **Payment status sync** (the daily cron at `0 6 * * *`):
 
@@ -195,8 +198,15 @@ Log in as a test member (dev) and open `/konstnar/konto/fakturor`. Confirm the l
 
 ## Rollout checklist (later, outside dev)
 
-- Increase `FORTNOX_INVOICE_AMOUNT` and set `FORTNOX_INVOICE_ACCOUNT` for real accounting.
+- Set **Medlemsavgift per år** on every region in DatoCMS (field `region.invoice_amount`,
+  added by `pnpm run migrateinvoiceamount`) — invoicing is refused for a region
+  without it.
+- Optionally set **Text i fakturamejl** on the regions (field `region.invoice_email_text`,
+  added by `pnpm run migrateinvoiceemail`). Empty = Fortnox's default text.
+- Add the invoice account number to the Fortnox integration (there is no
+  `FORTNOX_INVOICE_ACCOUNT` setting in the code today).
 - Clear `FORTNOX_EMAIL_ALLOWLIST` so all members get emailed.
 - Test on one real region (add its slug to `FORTNOX_ENABLED_REGIONS`) before enabling the rest.
 - Add tokens for the new region(s) to `.env` and the production env.
-- Switch `DATOCMS_ENVIRONMENT` back to `main` only after the model migration has been applied there too.
+- Switch `DATOCMS_ENVIRONMENT` back to `main` only after the model migration has been applied there too
+  (run `DATOCMS_ENVIRONMENT=main pnpm run migrateinvoiceamount`).

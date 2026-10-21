@@ -2,7 +2,7 @@ import s from './InvoicesPage.module.scss';
 import cn from 'classnames';
 import { RenderPageCtx } from 'datocms-plugin-sdk';
 import { Button, Spinner, Canvas, Toolbar, ToolbarStack, ToolbarTitle } from 'datocms-react-ui';
-import { useInvoicesPage, sortSwedish } from '../hooks/useInvoicesPage';
+import { useInvoicesPage, sortSwedish, formatAmount } from '../hooks/useInvoicesPage';
 import type { MemberRunState } from '../hooks/useInvoicesPage';
 import { format } from 'date-fns';
 
@@ -21,6 +21,8 @@ export default function InvoicesPage({ ctx }: Props) {
 		statusById,
 		percent,
 		invoiceYear,
+		invoiceAmount,
+		invoiceAmountError,
 		region,
 		submit,
 		abort,
@@ -97,13 +99,26 @@ export default function InvoicesPage({ ctx }: Props) {
 							<Button
 								buttonType='primary'
 								onClick={submit}
-								disabled={running || pendingMembers.length === 0}
+								disabled={
+									running || pendingMembers.length === 0 || invoiceAmount === null
+								}
 								className={s.submit}
 							>
-								{running ? <Spinner /> : `Skicka fakturor (${invoiceYear})`}
+								{running
+									? <Spinner />
+									: `Skicka fakturor (${invoiceYear})${
+											invoiceAmount !== null
+												? ` · ${formatAmount(invoiceAmount)} kr`
+												: ''
+										}`}
 							</Button>
 						</ToolbarStack>
 					</Toolbar>
+					{invoiceAmountError && (
+						<div className={s.amountError}>
+							<strong>Kan inte fakturera:</strong> {invoiceAmountError}
+						</div>
+					)}
 					<div className={s.invoices}>
 						{progress && progress.total > 0 && (
 							<div className={s.progress}>
