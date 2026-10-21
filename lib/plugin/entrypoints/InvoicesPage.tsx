@@ -15,6 +15,7 @@ export default function InvoicesPage({ ctx }: Props) {
 		company,
 		loading,
 		running,
+		sendingTest,
 		aborted,
 		results,
 		progress,
@@ -23,8 +24,10 @@ export default function InvoicesPage({ ctx }: Props) {
 		invoiceYear,
 		invoiceAmount,
 		invoiceAmountError,
+		testEmail,
 		region,
 		submit,
+		sendTest,
 		abort,
 	} = useInvoicesPage(ctx);
 
@@ -94,6 +97,15 @@ export default function InvoicesPage({ ctx }: Props) {
 							{running && (
 								<Button buttonType='muted' onClick={abort}>
 									Avbryt
+								</Button>
+							)}
+							{testEmail && (
+								<Button
+									buttonType='muted'
+									onClick={sendTest}
+									disabled={running || sendingTest || invoiceAmount === null}
+								>
+									{sendingTest ? <Spinner /> : 'Testfaktura'}
 								</Button>
 							)}
 							<Button
@@ -196,6 +208,14 @@ export default function InvoicesPage({ ctx }: Props) {
 											<tr key={m.id} onClick={() => ctx.editItem(m.id)}>
 												<td>
 													<a>{[m.last_name, m.first_name].filter(Boolean).join(', ') || ''}</a>
+													{m.inactive && (
+														<span
+															className={cn(s.badgeSkipped, s.inactiveBadge)}
+															title='Vilande medlem — faktureras inte'
+														>
+															Vilande
+														</span>
+													)}
 												</td>
 												<td>{m.email || ''}</td>
 												<td>{m.fortnox_customer_number || ''}</td>

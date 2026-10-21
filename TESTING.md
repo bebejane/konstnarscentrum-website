@@ -11,6 +11,8 @@ Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONM
 - **Wrong-customer guard** — `syncMemberToFortKnox` (`lib/fortnox/sync.ts`) only overwrites a Fortnox customer it can *prove* belongs to the member: its `ExternalReference` must match the member id, or — when no reference is stored — its email must match. A stored customer number pointing at another member, an ambiguous email (several customers share it), or a write that would change nothing is **skipped** and logged (HTTP 200, `{ skipped: true, reason }`) instead of overwriting the wrong customer. The bulk `syncfortknox` script refuses the same ambiguous/foreign links.
 - **Amount** — the yearly amount is *not* in `.env` or in code: it comes from the region's **Medlemsavgift per år** (`region.invoice_amount`) in DatoCMS, one value per region. There is no fallback — invoicing a region without an amount fails with an error (API 400 / plugin banner / script exit), so set it before creating invoices. A 0-amount is rejected by Fortnox.
 - **Invoice e-mail text** — optional, per region: **Text i fakturamejl** (`region.invoice_email_text`, added by `pnpm run migrateinvoiceemail`). Empty means Fortnox's own default text. When set, it is sent as the invoice's `EmailInformation.EmailBody`, trimmed but otherwise untouched — line breaks are sent as `\n`. How Fortnox renders them in the HTML mail is *unverified*: check the received mail in the roundtrip test before writing multi-paragraph texts.
+- **Test invoice** — the invoices plugin shows a *Testfaktura* button only when the region has a usable **Test email** (`region.test_email`, e.g. `karin@karinwillen.se` on Öst). It creates one real Fortnox invoice and e-mails it to that address instead of to the member, writes **no** DatoCMS `invoice` record (so the member stays invoiceable for the year) and leaves the invoice in Fortnox. It **ignores `FORTNOX_EMAIL_ALLOWLIST`**, and it is **not** limited to sandbox companies: on a live company it is a real document against a real customer, left behind.
+- **Vilande medlemmar** — members with **Vilande** (`member.inactive`) ticked are never invoiced: both invoice endpoints skip them (`isEligibleForInvoice`, reason `inactive`), `createAnnualInvoiceForMember` refuses them (so the roundtrip script cannot invoice one either), and the plugin table marks them and leaves them out of the “Skicka fakturor” count. Only a literal `true` counts — `null`/`false` are invoiceable. The Fortnox customer sync is deliberately unaffected.
 
 ## Prerequisites
 
@@ -150,6 +152,20 @@ These are the same endpoints the DatoCMS plugin and the daily cron call. Use Bas
   ```
 
   Idempotent per `invoice_year` — members already invoiced for the year are skipped. Returns **400** without creating anything if a Fortnox-enabled region that has members lacks **Medlemsavgift per år**.
+
+- **Test invoice** (the plugin's *Testfaktura* button):
+
+  ```
+  curl -u konstnarscentrum:<password> -X POST http://localhost:3000/api/fortnox/plugin/test-invoice \
+    -H "Content-Type: application/json" -d '{"role": "ost"}'
+  ```
+
+  Creates ONE invoice exactly like the annual run and e-mails it to the region's
+  **Test email** (`region.test_email`) instead of to a member. The customer is the
+  member whose e-mail *is* the test address, otherwise the first member with a
+  Fortnox customer number. **No DatoCMS `invoice` record is written**, so the
+  member stays invoiceable for the year. Returns **400** when the region has no
+  usable test address or no amount.
 
 - **Payment status sync** (the daily cron at `0 6 * * *`):
 

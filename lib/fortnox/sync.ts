@@ -12,7 +12,8 @@ export type MemberItem = {
 	city?: string;
 	region?: string;
 	active?: boolean;
-	vilande?: boolean;
+	/** Dormant member ("Vilande" in DatoCMS) — never invoiced. */
+	inactive?: boolean;
 	fortnox_customer_number?: string;
 	[key: string]: any;
 };
@@ -345,7 +346,7 @@ export const webhookEntityToMember = (entity: DatoWebhookEntity): MemberItem => 
 		last_name: attrs.last_name,
 		city: attrs.city,
 		active: attrs.active,
-		vilande: attrs.vilande,
+		inactive: attrs.inactive,
 		fortnox_customer_number: attrs.fortnox_customer_number,
 		region,
 	};

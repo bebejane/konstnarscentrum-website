@@ -6,5 +6,6 @@ export * from './company';
 export * from './invoices';
 export * from './invoiceAmount';
 export * from './invoiceEmail';
+export * from './testEmail';
 export * from './sync';
 export * from './invoiceDispatch';

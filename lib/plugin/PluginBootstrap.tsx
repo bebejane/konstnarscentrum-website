@@ -97,12 +97,12 @@ export default function PluginBootstrap() {
 			},
 			contentAreaSidebarItems(ctx: ContentAreaSidebarItemsCtx) {
 				return [
-					// {
-					// 	label: 'Fakturera' + (isDev ? ' (dev)' : ''),
-					// 	icon: 'file-lines',
-					// 	pointsTo: { pageId: 'invoices' },
-					// 	placement: ['after', 'menuItems'],
-					// },
+					{
+						label: 'Fakturera' + (isDev ? ' (dev)' : ''),
+						icon: 'file-lines',
+						pointsTo: { pageId: 'invoices' },
+						placement: ['after', 'menuItems'],
+					},
 				];
 			},
 			renderPage(pageId: string, ctx: RenderPageCtx) {

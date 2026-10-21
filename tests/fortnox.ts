@@ -19,6 +19,8 @@ import {
   buildInvoiceEmailInformation,
   normalizeInvoiceEmailText
 } from "../lib/fortnox/invoiceEmail";
+import { normalizeTestEmail } from "../lib/fortnox/testEmail";
+import { pickTestInvoiceMember } from "../lib/fortnox/invoiceDispatch";
 import {
   canPersistTokens,
   hasDb,
@@ -87,8 +89,18 @@ async function main() {
   );
 
   assert(
-    "vilande → not eligible",
-    !isEligibleForInvoiceFromRecords(member({ region: regionId, vilande: true }), 2026, [], true).eligible
+    "inactive (vilande) → not eligible",
+    !isEligibleForInvoiceFromRecords(member({ region: regionId, inactive: true }), 2026, [], true).eligible
+  );
+
+  assert(
+    "inactive null → eligible",
+    isEligibleForInvoiceFromRecords(member({ region: regionId, inactive: null }), 2026, [], true).eligible
+  );
+
+  assert(
+    "inactive false → eligible",
+    isEligibleForInvoiceFromRecords(member({ region: regionId, inactive: false }), 2026, [], true).eligible
   );
 
   assert(
@@ -274,7 +286,7 @@ async function main() {
       first_name: "Karin",
       last_name: "Karlsson",
       city: "Göteborg",
-      vilande: false,
+      inactive: false,
       fortnox_customer_number: "10001",
       region: "143685113"
     },
@@ -290,7 +302,7 @@ async function main() {
   assert("webhookEntityToMember first_name", m.first_name === "Karin");
   assert("webhookEntityToMember last_name", m.last_name === "Karlsson");
   assert("webhookEntityToMember city", m.city === "Göteborg");
-  assert("webhookEntityToMember vilande", m.vilande === false);
+  assert("webhookEntityToMember inactive", m.inactive === false);
   assert(
     "webhookEntityToMember fortnox_customer_number",
     m.fortnox_customer_number === "10001"
@@ -369,6 +381,56 @@ async function main() {
   assert("buildInvoiceEmailInformation '' → undefined", buildInvoiceEmailInformation("") === undefined);
   assert("buildInvoiceEmailInformation '  ' → undefined", buildInvoiceEmailInformation("  ") === undefined);
   ok("invoice e-mail text helpers run");
+
+  // ---------- normalizeTestEmail (region.test_email) ----------
+  assert("normalizeTestEmail trims", normalizeTestEmail("  Karin@KarinWillen.se  ") === "karin@karinwillen.se");
+  assert("normalizeTestEmail plain address", normalizeTestEmail("test@example.com") === "test@example.com");
+  assert("normalizeTestEmail '' → null", normalizeTestEmail("") === null);
+  assert("normalizeTestEmail '   ' → null", normalizeTestEmail("   ") === null);
+  assert("normalizeTestEmail no @ → null", normalizeTestEmail("karin.karinwillen.se") === null);
+  assert("normalizeTestEmail no domain dot → null", normalizeTestEmail("karin@karinwillen") === null);
+  assert("normalizeTestEmail spaces inside → null", normalizeTestEmail("kar in@example.com") === null);
+  assert("normalizeTestEmail null → null", normalizeTestEmail(null) === null);
+  assert("normalizeTestEmail undefined → null", normalizeTestEmail(undefined) === null);
+  assert("normalizeTestEmail number → null", normalizeTestEmail(42) === null);
+  ok("normalizeTestEmail runs");
+
+  // ---------- pickTestInvoiceMember ----------
+  const testMembers = [
+    { id: "m1", email: "a@example.com", last_name: "Alm", fortnox_customer_number: "10" },
+    { id: "m2", email: "karin@karinwillen.se", last_name: "Willén", fortnox_customer_number: "400" },
+    { id: "m3", email: "b@example.com", last_name: "Berg", fortnox_customer_number: undefined },
+    { id: "m4", email: "c@example.com", last_name: "Ceder", fortnox_customer_number: "20" }
+  ] as any;
+
+  assert(
+    "pickTestInvoiceMember prefers the member with the test email",
+    pickTestInvoiceMember(testMembers, "Karin@karinwillen.se")?.id === "m2"
+  );
+  assert(
+    "pickTestInvoiceMember falls back to the first with a customer number",
+    pickTestInvoiceMember(testMembers, "nobody@example.com")?.id === "m1"
+  );
+  assert(
+    "pickTestInvoiceMember never picks a member without a customer number",
+    pickTestInvoiceMember(
+      [{ id: "x", email: "x@example.com", last_name: "X", fortnox_customer_number: undefined }] as any,
+      "nobody@example.com"
+    ) === null
+  );
+  assert("pickTestInvoiceMember empty list → null", pickTestInvoiceMember([], "a@example.com") === null);
+  assert("pickTestInvoiceMember invalid email → null", pickTestInvoiceMember(testMembers, "nope") === null);
+  assert(
+    "pickTestInvoiceMember prefers a non-dormant member",
+    pickTestInvoiceMember(
+      [
+        { id: "d1", email: "d@example.com", last_name: "Ahl", fortnox_customer_number: "1", inactive: true },
+        { id: "a1", email: "a@example.com", last_name: "Öberg", fortnox_customer_number: "2" }
+      ] as any,
+      "nobody@example.com"
+    )?.id === "a1"
+  );
+  ok("pickTestInvoiceMember runs");
 
   // ---------- report ----------
   results.forEach(r => {

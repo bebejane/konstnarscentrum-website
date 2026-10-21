@@ -20,6 +20,7 @@ import {
 } from './constants';
 import { getRegionInvoiceAmount } from './invoiceAmount';
 import { buildInvoiceEmailInformation, getRegionInvoiceEmailText } from './invoiceEmail';
+import { normalizeTestEmail } from './testEmail';
 import {
 	createInvoice,
 	sendInvoiceAsEmail,
@@ -27,6 +28,7 @@ import {
 	isInvoicePaid,
 	isInvoicePartiallyPaid,
 } from './invoices';
+import type { CreateInvoiceInput, FortnoxEmailInformation } from './invoices';
 import { hasFortnoxCredentials } from './auth';
 import type { MemberItem } from './sync';
 import { format } from 'date-fns';
@@ -103,7 +105,7 @@ export const isEligibleForInvoiceFromRecords = (
 		return { eligible: false, reason: `no fortnox credentials (${region.slug})` };
 	if (!member.fortnox_customer_number)
 		return { eligible: false, reason: 'no fortnox customer number' };
-	if (member.vilande) return { eligible: false, reason: 'vilande' };
+	if (member.inactive === true) return { eligible: false, reason: 'inactive' };
 
 	if (records.some((inv) => inv.invoice_year === invoiceYear))
 		return { eligible: false, reason: `already invoiced ${invoiceYear}` };
@@ -115,7 +117,7 @@ export const isEligibleForInvoiceFromRecords = (
  * Eligibility for receiving the annual invoice:
  * - has region + fortnox credentials
  * - has a linked fortnox customer number
- * - not dormant (vilande)
+ * - not dormant (`inactive`, "Vilande" in DatoCMS)
  * - does not already have a linked invoice record for `invoiceYear`
  */
 export const isEligibleForInvoice = async (
@@ -133,6 +135,44 @@ export const isEligibleForInvoice = async (
 	return { ...result, records };
 };
 
+/** Invoice date + `FORTNOX_INVOICE_DUE_DAYS`, as the annual invoices are due. */
+const dueDateFrom = (invoiceDate: Date): Date => {
+	const dueDate = new Date(invoiceDate);
+	dueDate.setDate(dueDate.getDate() + FORTNOX_INVOICE_DUE_DAYS);
+	return dueDate;
+};
+
+/**
+ * The payload shared by the annual run and the test send: one row for the
+ * membership fee, same dates, and the region's e-mail text when it has one.
+ */
+const buildAnnualInvoiceInput = ({
+	customerNumber,
+	invoiceYear,
+	price,
+	invoiceDate,
+	emailInformation,
+}: {
+	customerNumber: string;
+	invoiceYear: number;
+	price: number;
+	invoiceDate: Date;
+	emailInformation?: FortnoxEmailInformation;
+}): CreateInvoiceInput => ({
+	CustomerNumber: customerNumber,
+	InvoiceDate: format(invoiceDate, 'yyyy-MM-dd'),
+	DueDate: format(dueDateFrom(invoiceDate), 'yyyy-MM-dd'),
+	...(emailInformation ? { EmailInformation: emailInformation } : {}),
+	InvoiceRows: [
+		{
+			Description: `Medlemsavgift ${invoiceYear}`,
+			Price: price,
+			DeliveredQuantity: 1,
+			VATCode: 'MF',
+		},
+	],
+});
+
 /**
  * Create and send the annual membership invoice for a member via Fortnox,
  * then create a matching DatoCMS `invoice` record and link it to the member.
@@ -149,38 +189,32 @@ export const createAnnualInvoiceForMember = async (
 	if (!region) throw new Error(`Member ${member.id} has no region`);
 	if (!member.fortnox_customer_number)
 		throw new Error(`Member ${member.id} has no Fortnox customer number`);
+	if (member.inactive)
+		throw new Error(`Member ${member.id} is inactive (vilande) and must not be invoiced`);
 	if (!hasFortnoxCredentials(region.slug))
 		throw new Error(`Fortnox is disabled or not configured for region ${region.slug}`);
 
 	const invoiceDate = new Date();
 	const invoiceDateString = format(invoiceDate, 'yyyy-MM-dd');
-	const dueDate = new Date(invoiceDate);
-	dueDate.setDate(dueDate.getDate() + FORTNOX_INVOICE_DUE_DAYS);
 
 	// Throws (InvoiceAmountError) when the region has no annual amount configured —
 	// we never invoice a guessed amount.
 	const price = amount ?? (await getRegionInvoiceAmount(region));
 
-	// Optional per-region e-mail text. Without one the invoice is sent with
-	// Fortnox's own default message, exactly as before the field existed.
-	const emailInformation = buildInvoiceEmailInformation(
-		await getRegionInvoiceEmailText(region),
+	const invoice = await createInvoice(
+		region.slug,
+		buildAnnualInvoiceInput({
+			customerNumber: member.fortnox_customer_number,
+			invoiceYear,
+			price,
+			invoiceDate,
+			// Optional per-region e-mail text. Without one the invoice is sent with
+			// Fortnox's own default message, exactly as before the field existed.
+			emailInformation: buildInvoiceEmailInformation(
+				await getRegionInvoiceEmailText(region),
+			),
+		}),
 	);
-
-	const invoice = await createInvoice(region.slug, {
-		CustomerNumber: member.fortnox_customer_number,
-		InvoiceDate: format(invoiceDate, 'yyyy-MM-dd'),
-		DueDate: format(dueDate, 'yyyy-MM-dd'),
-		...(emailInformation ? { EmailInformation: emailInformation } : {}),
-		InvoiceRows: [
-			{
-				Description: `Medlemsavgift ${invoiceYear}`,
-				Price: price,
-				DeliveredQuantity: 1,
-				VATCode: 'MF',
-			},
-		],
-	});
 
 	// Send via Fortnox email (guarded by the email allowlist)
 	if (isEmailAllowedToSend(member.email)) {
@@ -212,6 +246,92 @@ export const createAnnualInvoiceForMember = async (
 		invoiceRecordId: invoiceRecord.id,
 		invoiceDate: (invoice.InvoiceDate as string | undefined) ?? invoiceDateString,
 		record: invoiceRecord as unknown as InvoiceRecord,
+	};
+};
+
+/**
+ * Pick the member a test invoice is issued to. Fortnox needs a real customer, so
+ * the test is a real invoice delivered to someone else's address:
+ * - the member whose e-mail is the region's test address, so the invoice and the
+ *   recipient describe the same person, otherwise
+ * - the first member (by last name) with a Fortnox customer number, preferring
+ *   members that are not dormant.
+ * Members without a customer number cannot be invoiced at all, so they are never
+ * picked. Pure, so the choice is unit-tested without network access.
+ */
+export const pickTestInvoiceMember = (
+	members: MemberItem[],
+	testEmail: string,
+): MemberItem | null => {
+	const needle = normalizeTestEmail(testEmail);
+	if (!needle) return null;
+
+	const withCustomer = members.filter((m) => !!m.fortnox_customer_number);
+	const matching = withCustomer.find((m) => normalizeTestEmail(m.email) === needle);
+	if (matching) return matching;
+
+	const active = withCustomer.filter((m) => m.inactive !== true);
+	const candidates = active.length ? active : withCustomer;
+	const byLastName = [...candidates].sort((a, b) =>
+		(a.last_name ?? '').localeCompare(b.last_name ?? '', 'sv', { sensitivity: 'base' }),
+	);
+	return byLastName[0] ?? null;
+};
+
+export type TestInvoiceRegion = {
+	id: string;
+	slug: string;
+	name?: string;
+};
+
+/**
+ * Create and e-mail a single invoice as a test: the same invoice the annual run
+ * produces (same amount, row and e-mail text), but sent to the region's test
+ * address instead of to the member.
+ *
+ * No DatoCMS `invoice` record is created and no member is marked as invoiced, so
+ * the real run for the year is unaffected. The Fortnox invoice itself is left in
+ * place — it is a real document and has to be credited/deleted in Fortnox if it
+ * should not stay.
+ */
+export const createTestInvoice = async (
+	region: TestInvoiceRegion,
+	member: MemberItem,
+	invoiceYear: number,
+	testEmail: string,
+): Promise<{ documentNumber: string; customerNumber: string; invoiceDate: string }> => {
+	if (!member.fortnox_customer_number)
+		throw new Error(`Member ${member.id} has no Fortnox customer number`);
+	if (!hasFortnoxCredentials(region.slug))
+		throw new Error(`Fortnox is disabled or not configured for region ${region.slug}`);
+
+	const recipient = normalizeTestEmail(testEmail);
+	if (!recipient) throw new Error('No valid test e-mail address');
+
+	const invoiceDate = new Date();
+	const price = await getRegionInvoiceAmount(region);
+
+	// Only the recipient changes: the region's e-mail text goes out as it would to
+	// a member, so the test shows what members actually receive.
+	const emailText = buildInvoiceEmailInformation(await getRegionInvoiceEmailText(region));
+
+	const invoice = await createInvoice(
+		region.slug,
+		buildAnnualInvoiceInput({
+			customerNumber: member.fortnox_customer_number,
+			invoiceYear,
+			price,
+			invoiceDate,
+			emailInformation: { ...(emailText ?? {}), EmailAddressTo: recipient },
+		}),
+	);
+
+	await sendInvoiceAsEmail(region.slug, invoice.DocumentNumber);
+
+	return {
+		documentNumber: invoice.DocumentNumber,
+		customerNumber: member.fortnox_customer_number,
+		invoiceDate: (invoice.InvoiceDate as string | undefined) ?? format(invoiceDate, 'yyyy-MM-dd'),
 	};
 };
 

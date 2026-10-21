@@ -114,6 +114,9 @@
 		background: var(--color--surface-muted);
 		color: var(--color--ink-subtle);
 	}
+	.inactiveBadge {
+		margin-left: var(--spacing-s);
+	}
 	.badgeFailed {
 		background: var(--color--danger-soft--surface);
 		color: var(--color--danger-soft--ink);

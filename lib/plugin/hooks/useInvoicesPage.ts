@@ -12,6 +12,8 @@ export type Member = {
 	city: string;
 	postal_code: string;
 	active?: boolean;
+	/** Dormant ("Vilande" in DatoCMS) — excluded from the invoice run. */
+	inactive?: boolean;
 	region?: string;
 	fortnox_customer_number?: string;
 	invoice?: InvoiceRecord | null;
@@ -151,6 +153,7 @@ export type UseInvoicesPage = {
 	company: RegionCompany | null;
 	loading: boolean;
 	running: boolean;
+	sendingTest: boolean;
 	aborted: boolean;
 	error?: string | null;
 	results: InvoiceResult | null;
@@ -160,8 +163,10 @@ export type UseInvoicesPage = {
 	invoiceYear: number;
 	invoiceAmount: number | null;
 	invoiceAmountError: string | null;
+	testEmail: string | null;
 	region: ReturnType<typeof regionFromRoleName>;
 	submit: () => Promise<void>;
+	sendTest: () => Promise<void>;
 	abort: () => void;
 	dismissError: () => void;
 	refresh: () => void;
@@ -175,8 +180,10 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	const [company, setCompany] = useState<RegionCompany | null>(null);
 	const [invoiceAmount, setInvoiceAmount] = useState<number | null>(null);
 	const [invoiceAmountError, setInvoiceAmountError] = useState<string | null>(null);
+	const [testEmail, setTestEmail] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [running, setRunning] = useState(false);
+	const [sendingTest, setSendingTest] = useState(false);
 	const [aborted, setAborted] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [results, setResults] = useState<InvoiceResult | null>(null);
@@ -185,7 +192,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 	const abortRef = useRef<AbortController | null>(null);
 
 	const invoiceYear = new Date().getFullYear();
-	const pendingMembers = members.filter((m) => !m.invoice);
+	const pendingMembers = members.filter((m) => !m.invoice && m.inactive !== true);
 	const percent = progress ? (progress.processed / Math.max(progress.total, 1)) * 100 : 0;
 
 	const refresh = async () => {
@@ -205,6 +212,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 				setCompany(data.company ?? null);
 				setInvoiceAmount(typeof data.invoiceAmount === 'number' ? data.invoiceAmount : null);
 				setInvoiceAmountError(data.invoiceAmountError ?? null);
+				setTestEmail(typeof data.testEmail === 'string' ? data.testEmail : null);
 			})
 			.catch((err) => setError(err.message || String(err)))
 			.finally(() => setLoading(false));
@@ -339,6 +347,65 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 		abortRef.current = null;
 	};
 
+	/**
+	 * Send one invoice to the region's test address. It is a real Fortnox invoice
+	 * (left in Fortnox, not linked in DatoCMS), so the environment is spelled out
+	 * in the confirmation — on a live company this documents a real customer.
+	 */
+	const sendTest = async () => {
+		if (sendingTest || running || !testEmail) return;
+		if (invoiceAmount === null) {
+			setError(invoiceAmountError ?? 'Regionen saknar medlemsavgift.');
+			return;
+		}
+
+		const environment =
+			company?.environment === 'sandbox'
+				? 'SANDBOX'
+				: company?.environment === 'live'
+					? 'LIVE'
+					: 'OKÄND miljö';
+
+		const res = await ctx.openConfirm({
+			title: 'Skicka testfaktura',
+			content: `En riktig faktura skapas i Fortnox (${environment}) och mejlas till ${testEmail} i stället för till medlemmen. Fakturan blir kvar i Fortnox.`,
+			cancel: {
+				label: 'Avbryt',
+				intent: 'negative',
+				value: 'cancel',
+			},
+			choices: [
+				{
+					label: 'Skicka',
+					value: 'confirm',
+					intent: 'positive',
+				},
+			],
+		});
+
+		if (res !== 'confirm') return;
+
+		setError(null);
+		setSendingTest(true);
+
+		try {
+			const response = await fetch('/api/fortnox/plugin/test-invoice', {
+				method: 'POST',
+				headers: basicAuthHeaders(ctx),
+				body: JSON.stringify({ role: roleName, invoiceYear }),
+			});
+			const body = await response.json().catch(() => ({}));
+			if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+			await ctx.notice(
+				`Testfaktura #${body.documentNumber} skickad till ${body.recipient} (avser ${body.memberName}).`,
+			);
+		} catch (err: any) {
+			setError(err?.message || String(err));
+		} finally {
+			setSendingTest(false);
+		}
+	};
+
 	const abort = () => abortRef.current?.abort();
 	const dismissError = () => setError(null);
 
@@ -348,6 +415,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 		company,
 		loading,
 		running,
+		sendingTest,
 		aborted,
 		error,
 		results,
@@ -357,8 +425,10 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 		invoiceYear,
 		invoiceAmount,
 		invoiceAmountError,
+		testEmail,
 		region,
 		submit,
+		sendTest,
 		abort,
 		dismissError,
 		refresh,

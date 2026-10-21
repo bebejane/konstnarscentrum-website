@@ -9,6 +9,7 @@ import {
 	isEligibleForInvoice,
 } from '/lib/fortnox/invoiceDispatch';
 import { readRegionInvoiceAmount } from '/lib/fortnox/invoiceAmount';
+import { getRegionTestEmail } from '/lib/fortnox/testEmail';
 import { parseDatoError } from '/lib/utils';
 
 export const config = {
@@ -171,6 +172,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			const company = await resolveRegionCompany(region.slug);
 			const { amount: invoiceAmount, error: invoiceAmountError } =
 				await readRegionInvoiceAmount(region);
+			const testEmail = await getRegionTestEmail(region);
 			return res.status(200).json({
 				members: membersWithInvoices,
 				region: region.slug,
@@ -178,6 +180,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				company,
 				invoiceAmount,
 				invoiceAmountError,
+				testEmail,
 			});
 		} catch (err) {
 			console.error(err);

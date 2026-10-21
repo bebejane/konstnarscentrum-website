@@ -18,7 +18,7 @@ type MemberItem = {
 	city?: string;
 	region?: string;
 	active?: boolean;
-	vilande?: boolean;
+	inactive?: boolean;
 	fortnox_customer_number?: string;
 	[key: string]: any;
 };
