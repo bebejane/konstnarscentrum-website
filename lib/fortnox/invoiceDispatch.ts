@@ -16,10 +16,11 @@ const getInvoiceItemTypeId = async (): Promise<string> => {
 import {
 	FORTNOX_INVOICE_DUE_DAYS,
 	getFortnoxTokenFromEnv,
+	getInvoiceAccountNumber,
 	isEmailAllowedToSend,
 } from './constants';
 import { getRegionInvoiceAmount } from './invoiceAmount';
-import { buildInvoiceEmailInformation, getRegionInvoiceEmailText } from './invoiceEmail';
+import { buildInvoiceEmailInformation, getRegionInvoiceEmail } from './invoiceEmail';
 import { normalizeTestEmail } from './testEmail';
 import {
 	createInvoice,
@@ -147,12 +148,14 @@ const dueDateFrom = (invoiceDate: Date): Date => {
  * membership fee, same dates, and the region's e-mail text when it has one.
  */
 const buildAnnualInvoiceInput = ({
+	regionSlug,
 	customerNumber,
 	invoiceYear,
 	price,
 	invoiceDate,
 	emailInformation,
 }: {
+	regionSlug: string;
 	customerNumber: string;
 	invoiceYear: number;
 	price: number;
@@ -166,9 +169,13 @@ const buildAnnualInvoiceInput = ({
 	InvoiceRows: [
 		{
 			Description: `Medlemsavgift ${invoiceYear}`,
+			// Never rely on the company's default sales account: when that default is
+			// missing/inactive Fortnox rejects the whole invoice (error 2001304).
+			AccountNumber: getInvoiceAccountNumber(regionSlug),
 			Price: price,
 			DeliveredQuantity: 1,
-			VATCode: 'MF',
+			// No VATCode: the account's own VAT setting applies, as on the invoices the
+			// association has issued manually (medlemsavgift is VAT exempt).
 		},
 	],
 });
@@ -201,18 +208,22 @@ export const createAnnualInvoiceForMember = async (
 	// we never invoice a guessed amount.
 	const price = amount ?? (await getRegionInvoiceAmount(region));
 
+	// Optional per-region e-mail text and subject. Without either, the invoice is
+	// sent with Fortnox's own default message, exactly as before the fields existed.
+	const email = await getRegionInvoiceEmail(region);
 	const invoice = await createInvoice(
 		region.slug,
 		buildAnnualInvoiceInput({
+			regionSlug: region.slug,
 			customerNumber: member.fortnox_customer_number,
 			invoiceYear,
 			price,
 			invoiceDate,
-			// Optional per-region e-mail text. Without one the invoice is sent with
-			// Fortnox's own default message, exactly as before the field existed.
-			emailInformation: buildInvoiceEmailInformation(
-				await getRegionInvoiceEmailText(region),
-			),
+			emailInformation: buildInvoiceEmailInformation({
+				body: email.body,
+				subject: email.subject,
+				fallbackSubject: `Medlemsavgift ${invoiceYear}`,
+			}),
 		}),
 	);
 
@@ -311,18 +322,24 @@ export const createTestInvoice = async (
 	const invoiceDate = new Date();
 	const price = await getRegionInvoiceAmount(region);
 
-	// Only the recipient changes: the region's e-mail text goes out as it would to
-	// a member, so the test shows what members actually receive.
-	const emailText = buildInvoiceEmailInformation(await getRegionInvoiceEmailText(region));
+	// Only the recipient changes: the region's e-mail text and subject go out as they
+	// would to a member, so the test shows what members actually receive.
+	const email = await getRegionInvoiceEmail(region);
 
 	const invoice = await createInvoice(
 		region.slug,
 		buildAnnualInvoiceInput({
+			regionSlug: region.slug,
 			customerNumber: member.fortnox_customer_number,
 			invoiceYear,
 			price,
 			invoiceDate,
-			emailInformation: { ...(emailText ?? {}), EmailAddressTo: recipient },
+			emailInformation: buildInvoiceEmailInformation({
+				body: email.body,
+				subject: email.subject,
+				addressTo: recipient,
+				fallbackSubject: `Medlemsavgift ${invoiceYear}`,
+			}),
 		}),
 	);
 

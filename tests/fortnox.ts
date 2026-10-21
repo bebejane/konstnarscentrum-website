@@ -13,11 +13,12 @@ import {
   webhookEntityToMember,
   webhookModelApiKey
 } from "../lib/fortnox/sync";
-import { isEmailAllowedToSend } from "../lib/fortnox/constants";
+import { isEmailAllowedToSend, getInvoiceAccountNumber } from "../lib/fortnox/constants";
 import { parseInvoiceAmount, regionAmountError } from "../lib/fortnox/invoiceAmount";
 import {
   buildInvoiceEmailInformation,
-  normalizeInvoiceEmailText
+  normalizeInvoiceEmailText,
+  normalizeInvoiceEmailSubject
 } from "../lib/fortnox/invoiceEmail";
 import { normalizeTestEmail } from "../lib/fortnox/testEmail";
 import { pickTestInvoiceMember } from "../lib/fortnox/invoiceDispatch";
@@ -254,6 +255,33 @@ async function main() {
   process.env.FORTNOX_EMAIL_ALLOWLIST = prevAllowlist;
   ok("isEmailAllowedToSend runs");
 
+  // ---------- getInvoiceAccountNumber (sales account on the invoice row) ----------
+  const prevGlobalAccount = process.env.FORTNOX_INVOICE_ACCOUNT;
+  const prevRegionAccount = process.env.FORTNOX_OST_INVOICE_ACCOUNT;
+  delete process.env.FORTNOX_INVOICE_ACCOUNT;
+  delete process.env.FORTNOX_OST_INVOICE_ACCOUNT;
+
+  assert("invoice account: default 3013", getInvoiceAccountNumber("ost") === 3013);
+
+  process.env.FORTNOX_INVOICE_ACCOUNT = "3014";
+  assert("invoice account: global env override", getInvoiceAccountNumber("ost") === 3014);
+
+  process.env.FORTNOX_OST_INVOICE_ACCOUNT = "3015";
+  assert("invoice account: region env wins over global", getInvoiceAccountNumber("ost") === 3015);
+  assert("invoice account: other regions use global", getInvoiceAccountNumber("syd") === 3014);
+
+  process.env.FORTNOX_OST_INVOICE_ACCOUNT = "0";
+  assert("invoice account: 0 falls back to default", getInvoiceAccountNumber("ost") === 3013);
+
+  process.env.FORTNOX_OST_INVOICE_ACCOUNT = "abc";
+  assert("invoice account: garbage falls back to default", getInvoiceAccountNumber("ost") === 3013);
+
+  if (prevGlobalAccount) process.env.FORTNOX_INVOICE_ACCOUNT = prevGlobalAccount;
+  else delete process.env.FORTNOX_INVOICE_ACCOUNT;
+  if (prevRegionAccount) process.env.FORTNOX_OST_INVOICE_ACCOUNT = prevRegionAccount;
+  else delete process.env.FORTNOX_OST_INVOICE_ACCOUNT;
+  ok("getInvoiceAccountNumber runs");
+
   // ---------- tokenStore ----------
   const prevTursoUrl = process.env.TURSO_DATABASE_URL;
   const prevEnvRefresh = process.env.FORTNOX_OST_REFRESH_TOKEN;
@@ -371,16 +399,62 @@ async function main() {
   assert("normalizeInvoiceEmailText number → null", normalizeInvoiceEmailText(250) === null);
   assert("normalizeInvoiceEmailText {} → null", normalizeInvoiceEmailText({}) === null);
 
-  const emailInfo = buildInvoiceEmailInformation("Hej!\n\nMed vänlig hälsning");
+  // ---------- normalizeInvoiceEmailSubject (region.invoice_email_subject) ----------
+  assert("normalizeInvoiceEmailSubject trims", normalizeInvoiceEmailSubject("  Medlemsavgift 2026  ") === "Medlemsavgift 2026");
+  assert(
+    "normalizeInvoiceEmailSubject collapses newlines",
+    normalizeInvoiceEmailSubject("Medlemsavgift\n2026") === "Medlemsavgift 2026"
+  );
+  assert("normalizeInvoiceEmailSubject '' → null", normalizeInvoiceEmailSubject("") === null);
+  assert("normalizeInvoiceEmailSubject whitespace → null", normalizeInvoiceEmailSubject("  \n ") === null);
+  assert("normalizeInvoiceEmailSubject null → null", normalizeInvoiceEmailSubject(null) === null);
+  assert("normalizeInvoiceEmailSubject number → null", normalizeInvoiceEmailSubject(2026) === null);
+  ok("normalizeInvoiceEmailSubject runs");
+
+  // ---------- buildInvoiceEmailInformation ----------
+  const fallbackSubject = "Medlemsavgift 2026";
+  const emailInfo = buildInvoiceEmailInformation({
+    body: "Hej!\n\nMed vänlig hälsning",
+    fallbackSubject
+  });
   assert("buildInvoiceEmailInformation sets EmailBody", emailInfo?.EmailBody === "Hej!\n\nMed vänlig hälsning");
+  assert("buildInvoiceEmailInformation falls back to the default subject", emailInfo?.EmailSubject === fallbackSubject);
   assert(
     "buildInvoiceEmailInformation sets nothing else",
-    !!emailInfo && Object.keys(emailInfo).join(",") === "EmailBody"
+    !!emailInfo && Object.keys(emailInfo).sort().join(",") === "EmailBody,EmailSubject"
   );
-  assert("buildInvoiceEmailInformation null → undefined", buildInvoiceEmailInformation(null) === undefined);
-  assert("buildInvoiceEmailInformation '' → undefined", buildInvoiceEmailInformation("") === undefined);
-  assert("buildInvoiceEmailInformation '  ' → undefined", buildInvoiceEmailInformation("  ") === undefined);
-  ok("invoice e-mail text helpers run");
+
+  const withOwnSubject = buildInvoiceEmailInformation({
+    body: "Hej!",
+    subject: "  Medlemsavgift\nför 2026 ",
+    fallbackSubject
+  });
+  assert(
+    "buildInvoiceEmailInformation uses the region subject",
+    withOwnSubject?.EmailSubject === "Medlemsavgift för 2026"
+  );
+
+  const subjectOnly = buildInvoiceEmailInformation({ subject: "Bara rubrik", fallbackSubject });
+  assert("buildInvoiceEmailInformation subject only → no body", !!subjectOnly && !("EmailBody" in subjectOnly));
+  assert("buildInvoiceEmailInformation subject only keeps the subject", subjectOnly?.EmailSubject === "Bara rubrik");
+
+  const testSend = buildInvoiceEmailInformation({
+    body: "Hej!",
+    addressTo: "karin@karinwillen.se",
+    fallbackSubject
+  });
+  assert("buildInvoiceEmailInformation test send sets recipient", testSend?.EmailAddressTo === "karin@karinwillen.se");
+  assert("buildInvoiceEmailInformation test send still has a subject", testSend?.EmailSubject === fallbackSubject);
+
+  assert(
+    "buildInvoiceEmailInformation nothing to say → undefined",
+    buildInvoiceEmailInformation({ fallbackSubject }) === undefined
+  );
+  assert(
+    "buildInvoiceEmailInformation null body → undefined",
+    buildInvoiceEmailInformation({ body: null, subject: "", addressTo: "  ", fallbackSubject }) === undefined
+  );
+  ok("buildInvoiceEmailInformation runs");
 
   // ---------- normalizeTestEmail (region.test_email) ----------
   assert("normalizeTestEmail trims", normalizeTestEmail("  Karin@KarinWillen.se  ") === "karin@karinwillen.se");

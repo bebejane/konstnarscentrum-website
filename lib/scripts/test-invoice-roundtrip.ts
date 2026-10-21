@@ -8,7 +8,7 @@ import {
   syncMemberInvoicePaymentStatus
 } from '../fortnox/invoiceDispatch'
 import { readRegionInvoiceAmount } from '../fortnox/invoiceAmount'
-import { getRegionInvoiceEmailText } from '../fortnox/invoiceEmail'
+import { getRegionInvoiceEmail } from '../fortnox/invoiceEmail'
 import { getInvoice, isInvoicePaid } from '../fortnox/invoices'
 
 /**
@@ -66,11 +66,16 @@ const main = async () => {
   }
   console.log(`Amount: ${amount} kr`)
 
-  const emailText = await getRegionInvoiceEmailText(region)
+  const emailInfo = await getRegionInvoiceEmail(region)
   console.log(
-    emailText
-      ? `E-mail text (sent as EmailBody):\n${emailText.replace(/^/gm, '  | ')}`
+    emailInfo.body
+      ? `E-mail text (sent as EmailBody):\n${emailInfo.body.replace(/^/gm, '  | ')}`
       : 'E-mail text: (none — Fortnox default text is used)'
+  )
+  console.log(
+    emailInfo.subject
+      ? `E-mail subject: ${emailInfo.subject}`
+      : 'E-mail subject: (none — Medlemsavgift <year> is used when a text is sent)'
   )
 
   console.log(`\nCreating Fortnox invoice + DatoCMS invoice record...`)

@@ -10,7 +10,7 @@ Everything below runs against the **dev DatoCMS environment** (`DATOCMS_ENVIRONM
 - **Region guard** — `FORTNOX_ENABLED_REGIONS = ['ost']`. Nothing outside that region is touched.
 - **Wrong-customer guard** — `syncMemberToFortKnox` (`lib/fortnox/sync.ts`) only overwrites a Fortnox customer it can *prove* belongs to the member: its `ExternalReference` must match the member id, or — when no reference is stored — its email must match. A stored customer number pointing at another member, an ambiguous email (several customers share it), or a write that would change nothing is **skipped** and logged (HTTP 200, `{ skipped: true, reason }`) instead of overwriting the wrong customer. The bulk `syncfortknox` script refuses the same ambiguous/foreign links.
 - **Amount** — the yearly amount is *not* in `.env` or in code: it comes from the region's **Medlemsavgift per år** (`region.invoice_amount`) in DatoCMS, one value per region. There is no fallback — invoicing a region without an amount fails with an error (API 400 / plugin banner / script exit), so set it before creating invoices. A 0-amount is rejected by Fortnox.
-- **Invoice e-mail text** — optional, per region: **Text i fakturamejl** (`region.invoice_email_text`, added by `pnpm run migrateinvoiceemail`). Empty means Fortnox's own default text. When set, it is sent as the invoice's `EmailInformation.EmailBody`, trimmed but otherwise untouched — line breaks are sent as `\n`. How Fortnox renders them in the HTML mail is *unverified*: check the received mail in the roundtrip test before writing multi-paragraph texts.
+- **Invoice e-mail text and subject** — optional, per region: **Text i faktura mail** (`region.invoice_email_text`) and **Invoice e-post rubrik** (`region.invoice_email_subject`), both upserted by `pnpm run migrateinvoiceemail`. Empty means Fortnox's own default e-mail. When set they are sent as the invoice's `EmailInformation.EmailBody` / `EmailSubject`; the body is trimmed but otherwise untouched (line breaks are sent as `\n` — how Fortnox renders them in the HTML mail is *unverified*: check the received mail in the roundtrip test before writing multi-paragraph texts), the subject is collapsed to one line. Fortnox requires a subject as soon as `EmailInformation` is sent — without one the send fails with `2001578` ("Ämne för e-post saknas") — so an empty subject falls back to `Medlemsavgift <år>` whenever a body or a test recipient is sent.
 - **Test invoice** — the invoices plugin shows a *Testfaktura* button only when the region has a usable **Test email** (`region.test_email`, e.g. `karin@karinwillen.se` on Öst). It creates one real Fortnox invoice and e-mails it to that address instead of to the member, writes **no** DatoCMS `invoice` record (so the member stays invoiceable for the year) and leaves the invoice in Fortnox. It **ignores `FORTNOX_EMAIL_ALLOWLIST`**, and it is **not** limited to sandbox companies: on a live company it is a real document against a real customer, left behind.
 - **Vilande medlemmar** — members with **Vilande** (`member.inactive`) ticked are never invoiced: both invoice endpoints skip them (`isEligibleForInvoice`, reason `inactive`), `createAnnualInvoiceForMember` refuses them (so the roundtrip script cannot invoice one either), and the plugin table marks them and leaves them out of the “Skicka fakturor” count. Only a literal `true` counts — `null`/`false` are invoiceable. The Fortnox customer sync is deliberately unaffected.
 
@@ -217,10 +217,15 @@ Log in as a test member (dev) and open `/konstnar/konto/fakturor`. Confirm the l
 - Set **Medlemsavgift per år** on every region in DatoCMS (field `region.invoice_amount`,
   added by `pnpm run migrateinvoiceamount`) — invoicing is refused for a region
   without it.
-- Optionally set **Text i fakturamejl** on the regions (field `region.invoice_email_text`,
-  added by `pnpm run migrateinvoiceemail`). Empty = Fortnox's default text.
-- Add the invoice account number to the Fortnox integration (there is no
-  `FORTNOX_INVOICE_ACCOUNT` setting in the code today).
+- Optionally set **Text i faktura mail** and **Invoice e-post rubrik** on the regions
+  (fields `region.invoice_email_text` / `region.invoice_email_subject`, added by
+  `pnpm run migrateinvoiceemail`). Empty = Fortnox's default e-mail.
+- Sales account: the invoice row always sets `AccountNumber` (default **3013**, the
+  account used for the 2021 membership invoices). Override per region with
+  `FORTNOX_<REGION>_INVOICE_ACCOUNT` or globally with `FORTNOX_INVOICE_ACCOUNT`.
+  Without an explicit account Fortnox falls back to the company's default sales
+  account, and when that default is inactive/missing the invoice fails with error
+  `2001304` ("Förvalt konto för Försäljning är inaktivt eller finns inte i kontoplanen").
 - Clear `FORTNOX_EMAIL_ALLOWLIST` so all members get emailed.
 - Test on one real region (add its slug to `FORTNOX_ENABLED_REGIONS`) before enabling the rest.
 - Add tokens for the new region(s) to `.env` and the production env.

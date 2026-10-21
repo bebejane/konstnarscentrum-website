@@ -5345,6 +5345,7 @@ type RegionModelFilter = {
   name?: InputMaybe<StringFilter>;
   position?: InputMaybe<PositionFilter>;
   slug?: InputMaybe<SlugFilter>;
+  testEmail?: InputMaybe<StringFilter>;
   updatedAt?: InputMaybe<UpdatedAtFilter>;
 };
 
@@ -5379,6 +5380,8 @@ enum RegionModelOrderBy {
   name_DESC = 'name_DESC',
   position_ASC = 'position_ASC',
   position_DESC = 'position_DESC',
+  testEmail_ASC = 'testEmail_ASC',
+  testEmail_DESC = 'testEmail_DESC',
   updatedAt_ASC = 'updatedAt_ASC',
   updatedAt_DESC = 'updatedAt_DESC'
 }
@@ -5415,6 +5418,7 @@ type RegionRecord = RecordInterface & {
   sections: Array<RegionModelSectionsField>;
   slug: Scalars['String'];
   sponsors: Array<SponsorRecord>;
+  testEmail?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
 };
 

@@ -14,6 +14,29 @@ export const FORTNOX_REDIRECT_URI = process.env.FORTNOX_REDIRECT_URI;
 export const FORTNOX_INVOICE_DUE_DAYS = 30;
 
 /**
+ * Sales account (BAS-konto) for the membership fee row.
+ *
+ * Fortnox falls back to the company's *default* sales account when a row has no
+ * AccountNumber, and that default being missing/inactive fails the whole invoice
+ * (Fortnox error 2001304: "Förvalt konto för Försäljning är inaktivt eller finns
+ * inte i kontoplanen"). 3013 is the account the association has historically used
+ * for medlemsavgift (visible on the 2021 membership invoices).
+ *
+ * Override per region with `FORTNOX_<REGION>_INVOICE_ACCOUNT`, or for all regions
+ * with `FORTNOX_INVOICE_ACCOUNT`. Read lazily so tests can mutate the env.
+ */
+export const FORTNOX_INVOICE_ACCOUNT = 3013;
+
+export const getInvoiceAccountNumber = (regionSlug: string): number => {
+	const raw =
+		process.env[`FORTNOX_${regionSlug.toUpperCase()}_INVOICE_ACCOUNT`] ??
+		process.env.FORTNOX_INVOICE_ACCOUNT;
+	if (!raw) return FORTNOX_INVOICE_ACCOUNT;
+	const account = Number(raw);
+	return Number.isInteger(account) && account > 0 ? account : FORTNOX_INVOICE_ACCOUNT;
+};
+
+/**
  * Comma-separated allowlist of member emails that may receive an emailed
  * invoice. When set, only members whose email is in the list get the Fortnox
  * email; everyone else's invoice is created but not emailed. When empty/unset,
