@@ -3,7 +3,7 @@ import { RenderItemCollectionOutletCtx } from 'datocms-plugin-sdk';
 import { Button, Canvas, Spinner } from 'datocms-react-ui';
 import { useState } from 'react';
 import { basicAuthHeader, downloadBlob, filenameFromDisposition, isDev } from '../utils';
-import regions from '@/regions.json';
+import regions from '/regions.json';
 
 export type PropTypes = {
 	ctx: RenderItemCollectionOutletCtx;
