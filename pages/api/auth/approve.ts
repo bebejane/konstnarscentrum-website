@@ -96,6 +96,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				region: region.id,
 				slug,
 				email: application.email,
+				address: application.address,
+				postal_code: application.postal_code,
 				application: application.id,
 			});
 		}

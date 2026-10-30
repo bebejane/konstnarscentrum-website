@@ -10,6 +10,7 @@
 	"email": "E-post",
 	"phone": "Telefonnummer",
 	"address": "Adress",
+	"postalCode": "Postnummer",
 	"firstName": "Förnamn",
 	"lastName": "Efternamn",
 	"homeCity": "Bostadsort",

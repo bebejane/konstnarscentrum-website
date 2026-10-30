@@ -293,6 +293,8 @@ fragment MemberFragment on MemberRecord {
 	lastName
 	fullName
 	email
+	address
+	postalCode
 	bio(markdown: false)
 	yearOfBirth
 	birthPlace

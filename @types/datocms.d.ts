@@ -151,6 +151,7 @@ type ApplicationModelFilter = {
   message?: InputMaybe<TextFilter>;
   pdf?: InputMaybe<FileFilter>;
   phone?: InputMaybe<StringFilter>;
+  postalCode?: InputMaybe<StringFilter>;
   region?: InputMaybe<LinkFilter>;
   sex?: InputMaybe<StringFilter>;
   updatedAt?: InputMaybe<UpdatedAtFilter>;
@@ -194,6 +195,8 @@ enum ApplicationModelOrderBy {
   lastName_DESC = 'lastName_DESC',
   phone_ASC = 'phone_ASC',
   phone_DESC = 'phone_DESC',
+  postalCode_ASC = 'postalCode_ASC',
+  postalCode_DESC = 'postalCode_DESC',
   sex_ASC = 'sex_ASC',
   sex_DESC = 'sex_DESC',
   updatedAt_ASC = 'updatedAt_ASC',
@@ -232,6 +235,7 @@ type ApplicationRecord = RecordInterface & {
   message: Scalars['String'];
   pdf?: Maybe<FileField>;
   phone?: Maybe<Scalars['String']>;
+  postalCode?: Maybe<Scalars['String']>;
   region: RegionRecord;
   sex?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
@@ -3874,6 +3878,7 @@ type MemberModelFilter = {
   _unpublishingScheduledAt?: InputMaybe<PublishedAtFilter>;
   _updatedAt?: InputMaybe<UpdatedAtFilter>;
   active?: InputMaybe<BooleanFilter>;
+  address?: InputMaybe<TextFilter>;
   application?: InputMaybe<LinkFilter>;
   bio?: InputMaybe<TextFilter>;
   birthPlace?: InputMaybe<StringFilter>;
@@ -3890,6 +3895,7 @@ type MemberModelFilter = {
   lastName?: InputMaybe<StringFilter>;
   memberCategory?: InputMaybe<LinksFilter>;
   password?: InputMaybe<StringFilter>;
+  postalCode?: InputMaybe<StringFilter>;
   region?: InputMaybe<LinkFilter>;
   resettoken?: InputMaybe<StringFilter>;
   showContact?: InputMaybe<BooleanFilter>;
@@ -3942,6 +3948,8 @@ enum MemberModelOrderBy {
   lastName_DESC = 'lastName_DESC',
   password_ASC = 'password_ASC',
   password_DESC = 'password_DESC',
+  postalCode_ASC = 'postalCode_ASC',
+  postalCode_DESC = 'postalCode_DESC',
   resettoken_ASC = 'resettoken_ASC',
   resettoken_DESC = 'resettoken_DESC',
   showContact_ASC = 'showContact_ASC',
@@ -4163,6 +4171,7 @@ type MemberRecord = RecordInterface & {
   _unpublishingScheduledAt?: Maybe<Scalars['DateTime']>;
   _updatedAt: Scalars['DateTime'];
   active?: Maybe<Scalars['BooleanType']>;
+  address?: Maybe<Scalars['String']>;
   application?: Maybe<ApplicationRecord>;
   bio?: Maybe<Scalars['String']>;
   birthPlace?: Maybe<Scalars['String']>;
@@ -4180,6 +4189,7 @@ type MemberRecord = RecordInterface & {
   lastName: Scalars['String'];
   memberCategory: Array<MemberCategoryRecord>;
   password?: Maybe<Scalars['String']>;
+  postalCode?: Maybe<Scalars['String']>;
   region: RegionRecord;
   resettoken?: Maybe<Scalars['String']>;
   showContact?: Maybe<Scalars['BooleanType']>;
@@ -4193,6 +4203,12 @@ type MemberRecord = RecordInterface & {
 /** Record of type Medlem (member) */
 type MemberRecord_seoMetaTagsArgs = {
   locale?: InputMaybe<SiteLocale>;
+};
+
+
+/** Record of type Medlem (member) */
+type MemberRecordaddressArgs = {
+  markdown?: InputMaybe<Scalars['Boolean']>;
 };
 
 
@@ -5341,6 +5357,7 @@ type RegionModelFilter = {
   global?: InputMaybe<BooleanFilter>;
   id?: InputMaybe<ItemIdFilter>;
   invoiceAmount?: InputMaybe<FloatFilter>;
+  invoiceEmailSubject?: InputMaybe<StringFilter>;
   invoiceEmailText?: InputMaybe<TextFilter>;
   name?: InputMaybe<StringFilter>;
   position?: InputMaybe<PositionFilter>;
@@ -5376,6 +5393,8 @@ enum RegionModelOrderBy {
   id_DESC = 'id_DESC',
   invoiceAmount_ASC = 'invoiceAmount_ASC',
   invoiceAmount_DESC = 'invoiceAmount_DESC',
+  invoiceEmailSubject_ASC = 'invoiceEmailSubject_ASC',
+  invoiceEmailSubject_DESC = 'invoiceEmailSubject_DESC',
   name_ASC = 'name_ASC',
   name_DESC = 'name_DESC',
   position_ASC = 'position_ASC',
@@ -5412,6 +5431,7 @@ type RegionRecord = RecordInterface & {
   id: Scalars['ItemId'];
   info: Array<MetaBlockRecord>;
   invoiceAmount?: Maybe<Scalars['FloatType']>;
+  invoiceEmailSubject?: Maybe<Scalars['String']>;
   invoiceEmailText?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   position?: Maybe<Scalars['IntType']>;
@@ -6490,21 +6510,21 @@ type MemberQueryVariables = Exact<{
 }>;
 
 
-type MemberQuery = { __typename?: 'Query', member?: { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> } | null };
+type MemberQuery = { __typename?: 'Query', member?: { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, address?: string | null, postalCode?: string | null, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> } | null };
 
 type MemberBySlugQueryVariables = Exact<{
   slug: Scalars['String'];
 }>;
 
 
-type MemberBySlugQuery = { __typename?: 'Query', member?: { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> } | null };
+type MemberBySlugQuery = { __typename?: 'Query', member?: { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, address?: string | null, postalCode?: string | null, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> } | null };
 
 type MemberByPasswordTokenQueryVariables = Exact<{
   token: Scalars['String'];
 }>;
 
 
-type MemberByPasswordTokenQuery = { __typename?: 'Query', member?: { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> } | null };
+type MemberByPasswordTokenQuery = { __typename?: 'Query', member?: { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, address?: string | null, postalCode?: string | null, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> } | null };
 
 type AllMemberCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6598,7 +6618,7 @@ type MembersListQuery = { __typename?: 'Query', membersList?: { __typename?: 'Me
 
 type MediaGalleryFragment = { __typename?: 'FileField', _createdAt: any, id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, base64?: string | null, bgColor?: string | null, sizes: string } | null };
 
-type MemberFragment = { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> };
+type MemberFragment = { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, address?: string | null, postalCode?: string | null, bio?: string | null, yearOfBirth?: string | null, birthPlace?: string | null, city?: string | null, webpage?: string | null, instagram?: string | null, active?: any | null, showContact?: any | null, slug: string, resettoken?: string | null, _status: ItemStatus, _firstPublishedAt: any, memberCategory: Array<{ __typename?: 'MemberCategoryRecord', id: any, categoryType: string }>, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null, content: Array<{ __typename: 'ImageRecord', id: any, image: Array<{ __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null, sizes: string } | null }> } | { __typename: 'VideoRecord', id: any, title?: string | null, video?: { __typename?: 'VideoField', height: any, width: any, title: string, provider: string, providerUid: string, thumbnailUrl: string, url: string } | null }>, _seoMetaTags: Array<{ __typename?: 'Tag', attributes?: any | null, content?: string | null, tag: string }> };
 
 type MemberLightFragment = { __typename: 'MemberRecord', _modelApiKey: string, id: any, firstName: string, lastName: string, fullName: string, email: string, slug: string, _status: ItemStatus, _firstPublishedAt: any, region: { __typename?: 'RegionRecord', id: any, name: string, slug: string, global?: any | null, position?: any | null }, image?: { __typename?: 'FileField', id: any, mimeType: string, url: string, title?: string | null, alt?: string | null, responsiveImage?: { __typename?: 'ResponsiveImage', src: string, width: any, height: any, alt?: string | null, title?: string | null, bgColor?: string | null } | null } | null };
 

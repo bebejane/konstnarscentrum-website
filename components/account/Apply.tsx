@@ -73,6 +73,7 @@ const ApplicationForm = ({ regions, setApplication }) => {
 		phone,
 		sex,
 		address,
+		postalCode,
 		birthYear,
 		homeCity,
 		education,
@@ -88,6 +89,7 @@ const ApplicationForm = ({ regions, setApplication }) => {
 				phone,
 				sex,
 				address,
+				postalCode,
 				birthYear,
 				homeCity,
 				education,
@@ -170,6 +172,12 @@ const ApplicationForm = ({ regions, setApplication }) => {
 					{...register('address', {
 						required: true,
 					})}
+				/>
+				{errors.postalCode && <label className={s.formError}>Postnummer är obligatoriskt...</label>}
+				<input
+					{...register('postalCode', { required: true })}
+					className={errors.postalCode && s.error}
+					placeholder={`${text.postalCode}...`}
 				/>
 				{errors.homeCity && <label className={s.formError}>Bostadsort är obligatoriskt...</label>}
 				<input
