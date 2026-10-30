@@ -27,6 +27,8 @@ import {
   hasDb,
   readRefreshTokenFromEnv
 } from "../lib/fortnox/tokenStore";
+import { regionFromRole, isFortnoxRoleEnabled } from "../lib/plugin/utils/regions";
+import { findPluginRegion } from "../lib/fortnox/pluginRegion";
 
 // Tests for the Fortnox integration's pure logic (no network / no credentials).
 
@@ -134,16 +136,22 @@ async function main() {
     email: "test@example.com",
     first_name: "Anna",
     last_name: "Andersson",
+    address: "Storgatan 1 (Lgh 1202)",
+    postal_code: "127 61",
     city: "Malmö"
   });
   assert("memberToCustomer full name", c.Name === "Anna Andersson");
   assert("memberToCustomer email", c.Email === "test@example.com");
   assert("memberToCustomer city", c.City === "Malmö");
+  assert("memberToCustomer address to Address1", c.Address1 === "Storgatan 1 (Lgh 1202)");
+  assert("memberToCustomer postal code to ZipCode", c.ZipCode === "127 61");
   assert("memberToCustomer stores member id in ExternalReference", (c as any).ExternalReference === "Member1");
 
   const noName = memberToCustomer({ id: "Member2", email: "x@example.com" });
   assert("memberToCustomer handles missing name", noName.Name === undefined);
   assert("memberToCustomer handles missing city", noName.City === undefined);
+  assert("memberToCustomer handles missing address", noName.Address1 === undefined);
+  assert("memberToCustomer handles missing postal code", noName.ZipCode === undefined);
 
   const clearedCity = memberToCustomer({ id: "Member3", email: "y@example.com", city: "" });
   assert("memberToCustomer empty-string city clears with API_BLANK", clearedCity.City === "API_BLANK");
@@ -151,6 +159,26 @@ async function main() {
   assert("memberToCustomer whitespace-only city clears with API_BLANK", whitespaceCity.City === "API_BLANK");
   const emptyEmail = memberToCustomer({ id: "Member5", email: "", city: "Stockholm" });
   assert("memberToCustomer email passed through (not optional-clearing)", emptyEmail.Email === "");
+
+  // Address/postal code mirror the member: blank clears the Fortnox field.
+  const clearedAddress = memberToCustomer({ id: "Member6", email: "a@example.com", address: "", postal_code: "" });
+  assert("memberToCustomer empty address clears with API_BLANK", clearedAddress.Address1 === "API_BLANK");
+  assert("memberToCustomer empty postal code clears with API_BLANK", clearedAddress.ZipCode === "API_BLANK");
+  const whitespaceAddress = memberToCustomer({ id: "Member8", email: "c@example.com", address: "  ", postal_code: " " });
+  assert("memberToCustomer whitespace address clears with API_BLANK", whitespaceAddress.Address1 === "API_BLANK");
+  assert("memberToCustomer whitespace postal code clears with API_BLANK", whitespaceAddress.ZipCode === "API_BLANK");
+  const messyAddress = memberToCustomer({
+    id: "Member7",
+    email: "b@example.com",
+    address: "  Storgatan   1 🌏 ",
+    postal_code: " 127  61 "
+  });
+  assert("memberToCustomer sanitizes address", messyAddress.Address1 === "Storgatan 1");
+  assert("memberToCustomer sanitizes postal code", messyAddress.ZipCode === "127 61");
+  assert(
+    "memberToCustomer omits untouched fields (no clear) when undefined",
+    memberToCustomer({ id: "Member9", email: "d@example.com" }).Address1 === undefined
+  );
   ok("memberToCustomer runs");
 
   // ---------- sanitizeText ----------
@@ -313,6 +341,8 @@ async function main() {
       email: "web@example.com",
       first_name: "Karin",
       last_name: "Karlsson",
+      address: "Storgatan 1",
+      postal_code: "127 61",
       city: "Göteborg",
       inactive: false,
       fortnox_customer_number: "10001",
@@ -329,6 +359,8 @@ async function main() {
   assert("webhookEntityToMember email", m.email === "web@example.com");
   assert("webhookEntityToMember first_name", m.first_name === "Karin");
   assert("webhookEntityToMember last_name", m.last_name === "Karlsson");
+  assert("webhookEntityToMember address", m.address === "Storgatan 1");
+  assert("webhookEntityToMember postal_code", m.postal_code === "127 61");
   assert("webhookEntityToMember city", m.city === "Göteborg");
   assert("webhookEntityToMember inactive", m.inactive === false);
   assert(
@@ -336,6 +368,12 @@ async function main() {
     m.fortnox_customer_number === "10001"
   );
   assert("webhookEntityToMember region from attributes", m.region === "143685113");
+
+  // Address edits in DatoCMS must reach the Fortnox mapping (not dropped).
+  assert(
+    "webhookEntityToMember address flows into the Fortnox customer",
+    memberToCustomer(m).Address1 === "Storgatan 1" && memberToCustomer(m).ZipCode === "127 61"
+  );
 
   const noAttrs = webhookEntityToMember({ id: "Member4", relationships: { region: { data: { id: "143707759" } } } } as any);
   assert("webhookEntityToMember region falls back to relationships", noAttrs.region === "143707759");
@@ -505,6 +543,43 @@ async function main() {
     )?.id === "a1"
   );
   ok("pickTestInvoiceMember runs");
+
+  // ---------- role → region (plugin gate) ----------
+  const OST_ROLE = { id: "111107", name: "Öst" };
+  const VAST_ROLE = { id: "111106", name: "Väst" };
+  const ADMIN_ROLE = { id: "110954", name: "Admin" };
+  const EDITOR_ROLE = { id: "175568", name: "Editor" };
+
+  assert("regionFromRole Öst → ost", regionFromRole(OST_ROLE)?.slug === "ost");
+  assert("regionFromRole Väst → vast", regionFromRole(VAST_ROLE)?.slug === "vast");
+  assert("regionFromRole admin → first enabled region (ost)", regionFromRole(ADMIN_ROLE)?.slug === "ost");
+  assert("regionFromRole Editor → none", regionFromRole(EDITOR_ROLE) === undefined);
+  assert("regionFromRole empty role → none", regionFromRole({}) === undefined);
+  assert(
+    "regionFromRole never resolves by display name alone",
+    regionFromRole({ name: "Öst" }) === undefined
+  );
+
+  assert("isFortnoxRoleEnabled Öst", isFortnoxRoleEnabled(OST_ROLE) === true);
+  assert("isFortnoxRoleEnabled admin", isFortnoxRoleEnabled(ADMIN_ROLE) === true);
+  assert("isFortnoxRoleEnabled Nord is false", isFortnoxRoleEnabled({ id: "133332", name: "Nord" }) === false);
+  assert("isFortnoxRoleEnabled Riks is false", isFortnoxRoleEnabled({ id: "133283", name: "Riks" }) === false);
+  assert("isFortnoxRoleEnabled Editor is false", isFortnoxRoleEnabled(EDITOR_ROLE) === false);
+  ok("role → region gate runs");
+
+  // ---------- findPluginRegion (server-side API guard) ----------
+  assert("findPluginRegion slug", findPluginRegion("ost")?.slug === "ost");
+  assert("findPluginRegion is case-insensitive", findPluginRegion("OST")?.slug === "ost");
+  assert("findPluginRegion role name", findPluginRegion("Öst")?.slug === "ost");
+  assert("findPluginRegion role id", findPluginRegion("111107")?.slug === "ost");
+  assert("findPluginRegion unknown → undefined", findPluginRegion("Atlantis") === undefined);
+  assert("findPluginRegion empty → undefined", findPluginRegion("") === undefined);
+  assert("findPluginRegion undefined → undefined", findPluginRegion(undefined) === undefined);
+  assert(
+    "findPluginRegion has no ost fallback",
+    findPluginRegion("nord")?.slug === "nord" && findPluginRegion("Atlantis") === undefined
+  );
+  ok("findPluginRegion runs");
 
   // ---------- report ----------
   results.forEach(r => {

@@ -18,6 +18,7 @@ import InvoicesPage from '/lib/plugin/entrypoints/InvoicesPage';
 import InvoiceLinkField from '/lib/plugin/entrypoints/InvoiceLinkField';
 import MembersExportOutlet from '/lib/plugin/entrypoints/MembersExportOutlet';
 import { isDev } from '/lib/plugin/utils';
+import { isFortnoxRoleEnabled } from '/lib/plugin/utils/regions';
 
 export default function PluginBootstrap() {
 	const connecting = useRef(false);
@@ -79,8 +80,17 @@ export default function PluginBootstrap() {
 						return render(<InvoiceLinkField ctx={ctx} />);
 				}
 			},
-			itemCollectionOutlets(itemType) {
+			itemCollectionOutlets(itemType, ctx) {
 				if (itemType.attributes.api_key !== 'member') return [];
+				// Only regions with the Fortnox integration enabled (currently Öst)
+				// get the export outlet.
+				if (
+					!isFortnoxRoleEnabled({
+						id: ctx.currentRole?.id,
+						name: ctx.currentRole?.attributes?.name,
+					})
+				)
+					return [];
 
 				return [
 					{
@@ -96,6 +106,15 @@ export default function PluginBootstrap() {
 				}
 			},
 			contentAreaSidebarItems(ctx: ContentAreaSidebarItemsCtx) {
+				// "Fakturera" is only meaningful for regions using Fortnox (Öst).
+				if (
+					!isFortnoxRoleEnabled({
+						id: ctx.currentRole?.id,
+						name: ctx.currentRole?.attributes?.name,
+					})
+				)
+					return [];
+
 				return [
 					{
 						label: 'Fakturera' + (isDev ? ' (dev)' : ''),

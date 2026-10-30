@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button, Canvas } from 'datocms-react-ui';
 import { RenderFieldExtensionCtx } from 'datocms-plugin-sdk';
-import { regionFromRoleName } from '/lib/plugin/utils';
+import { regionFromRole } from '/lib/plugin/utils';
 import { MdFileDownload } from 'react-icons/md';
 
 type PropTypes = {
@@ -16,7 +16,10 @@ export default function InvoiceLinkField({ ctx }: PropTypes) {
 	const [error, setError] = useState<string | null>(null);
 
 	if (!invoiceId) return null;
-	const region = regionFromRoleName(ctx.currentRole.attributes.name.toLowerCase());
+	const region = regionFromRole({
+		id: ctx.currentRole?.id,
+		name: ctx.currentRole?.attributes?.name,
+	});
 	if (!region) return null;
 
 	const download = async () => {

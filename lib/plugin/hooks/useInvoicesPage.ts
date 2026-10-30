@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RenderPageCtx } from 'datocms-plugin-sdk';
-import { regionFromRoleName } from '/lib/plugin/utils';
+import { regionFromRole } from '/lib/plugin/utils';
 import type { InvoiceRecord } from '/lib/fortnox/invoiceDispatch';
 import type { RegionCompany } from '/lib/fortnox/company';
 
@@ -97,7 +97,7 @@ const basicAuthHeaders = (ctx: RenderPageCtx): Record<string, string> => {
 const streamBatch = async (
 	memberIds: string[],
 	ctx: RenderPageCtx,
-	role: string,
+	regionSlug: string,
 	invoiceYear: number,
 	signal: AbortSignal,
 	handlers: {
@@ -109,7 +109,7 @@ const streamBatch = async (
 		method: 'POST',
 		headers: basicAuthHeaders(ctx),
 		signal,
-		body: JSON.stringify({ invoiceYear, role, memberIds, stream: true }),
+		body: JSON.stringify({ invoiceYear, role: regionSlug, memberIds, stream: true }),
 	});
 
 	if (!res.ok || !res.body) {
@@ -164,7 +164,7 @@ export type UseInvoicesPage = {
 	invoiceAmount: number | null;
 	invoiceAmountError: string | null;
 	testEmail: string | null;
-	region: ReturnType<typeof regionFromRoleName>;
+	region: ReturnType<typeof regionFromRole>;
 	submit: () => Promise<void>;
 	sendTest: () => Promise<void>;
 	abort: () => void;
@@ -173,8 +173,13 @@ export type UseInvoicesPage = {
 };
 
 export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
-	const roleName = ctx.currentRole.attributes.name.toLowerCase();
-	const region = regionFromRoleName(roleName);
+	const region = regionFromRole({
+		id: ctx.currentRole?.id,
+		name: ctx.currentRole?.attributes?.name,
+	});
+	// The API resolves the region from its slug; roles are named "Öst" but the
+	// slug is "ost", so the raw role name must not be sent.
+	const regionSlug = region?.slug ?? '';
 
 	const [members, setMembers] = useState<Member[]>([]);
 	const [company, setCompany] = useState<RegionCompany | null>(null);
@@ -197,7 +202,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 
 	const refresh = async () => {
 		setLoading(true);
-		fetch(`/api/fortnox/plugin/invoices?role=${encodeURIComponent(roleName)}`, {
+		fetch(`/api/fortnox/plugin/invoices?role=${encodeURIComponent(regionSlug)}`, {
 			headers: basicAuthHeaders(ctx),
 		})
 			.then(async (res) => {
@@ -295,7 +300,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 				await streamBatch(
 					batch.map((m) => m.id),
 					ctx,
-					roleName,
+					regionSlug,
 					invoiceYear,
 					controller.signal,
 					{
@@ -392,7 +397,7 @@ export function useInvoicesPage(ctx: RenderPageCtx): UseInvoicesPage {
 			const response = await fetch('/api/fortnox/plugin/test-invoice', {
 				method: 'POST',
 				headers: basicAuthHeaders(ctx),
-				body: JSON.stringify({ role: roleName, invoiceYear }),
+				body: JSON.stringify({ role: regionSlug, invoiceYear }),
 			});
 			const body = await response.json().catch(() => ({}));
 			if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);

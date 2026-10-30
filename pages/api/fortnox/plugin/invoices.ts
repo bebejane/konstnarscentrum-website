@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import client from '/lib/client';
-import regions from '/regions.json';
 import { getAllMembers, MemberItem } from '/lib/fortnox/sync';
 import { getCompany, classifyCompanyEnvironment, RegionCompany } from '/lib/fortnox/company';
 import {
@@ -10,6 +9,8 @@ import {
 } from '/lib/fortnox/invoiceDispatch';
 import { readRegionInvoiceAmount } from '/lib/fortnox/invoiceAmount';
 import { getRegionTestEmail } from '/lib/fortnox/testEmail';
+import { findPluginRegion } from '/lib/fortnox/pluginRegion';
+import { isFortnoxEnabled } from '/lib/fortnox/enabledRegions';
 import { parseDatoError } from '/lib/utils';
 
 export const config = {
@@ -41,9 +42,22 @@ const isAuthorized = (req: NextApiRequest) => {
 	return user === process.env.BASIC_AUTH_USER && pwd === process.env.BASIC_AUTH_PASSWORD;
 };
 
-const findRegionByRole = (roleName: string) =>
-	regions.find((r) => r.slug.toLowerCase() === roleName.toLowerCase()) ??
-	regions.find((r) => r.slug.toLowerCase() === 'ost');
+/**
+ * Resolve the requested region and refuse regions the Fortnox integration is
+ * not enabled for. Returns the region, or sends the error response itself.
+ */
+const regionForRequest = (res: NextApiResponse, value: string | undefined) => {
+	const region = findPluginRegion(value);
+	if (!region) {
+		res.status(400).json({ error: `No region found for "${value ?? ''}"` });
+		return null;
+	}
+	if (!isFortnoxEnabled(region.slug)) {
+		res.status(403).json({ error: `Fortnox är inte aktiverat för ${region.name}` });
+		return null;
+	}
+	return region;
+};
 
 // Best-effort: a missing scope/token must never break the plugin page.
 const resolveRegionCompany = async (regionSlug: string): Promise<RegionCompany | null> => {
@@ -157,8 +171,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		const roleName = (req.query.role as string) || '';
 		if (!roleName) return res.status(400).json({ error: 'Missing role query parameter' });
 
-		const region = findRegionByRole(roleName);
-		if (!region) return res.status(404).json({ error: `No region found for role "${roleName}"` });
+		const region = regionForRequest(res, roleName);
+		if (!region) return;
 
 		try {
 			const allMembers = await getAllMembers(region.id);
@@ -194,8 +208,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		const roleName = req.body?.role as string;
 		if (!roleName) return res.status(400).json({ error: 'Missing role in request body' });
 
-		const region = findRegionByRole(roleName);
-		if (!region) return res.status(404).json({ error: `No region found for role "${roleName}"` });
+		const region = regionForRequest(res, roleName);
+		if (!region) return;
 
 		const invoiceYear = Number(req.body?.invoiceYear ?? new Date().getFullYear());
 		const memberIds: string[] | null = Array.isArray(req.body?.memberIds)

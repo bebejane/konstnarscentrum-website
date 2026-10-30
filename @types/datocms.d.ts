@@ -232,7 +232,7 @@ type ApplicationRecord = RecordInterface & {
   homeCity?: Maybe<Scalars['String']>;
   id: Scalars['ItemId'];
   lastName: Scalars['String'];
-  message: Scalars['String'];
+  message?: Maybe<Scalars['String']>;
   pdf?: Maybe<FileField>;
   phone?: Maybe<Scalars['String']>;
   postalCode?: Maybe<Scalars['String']>;

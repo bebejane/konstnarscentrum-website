@@ -144,6 +144,14 @@ Creates an annual invoice in the Fortnox sandbox for one member, sends the Fortn
 
 These are the same endpoints the DatoCMS plugin and the daily cron call. Use Basic Auth (`BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD` from `.env`).
 
+The plugin itself only shows the **Fakturera** sidebar item and the member-export
+outlet to roles whose region is in `FORTNOX_ENABLED_REGIONS` (`lib/fortnox/enabledRegions.ts`,
+currently `ost`; the global `Admin` role maps to it). The plugin endpoints below
+apply the same rule: an unknown region is `400`, a region that is not
+Fortnox-enabled is `403`. The role is resolved from `regions.json`, which is
+generated from the DatoCMS roles (`roleId`), so both role names and region slugs
+are accepted.
+
 - **Bulk invoice creation** (warning: emails allowed members):
 
   ```
@@ -183,8 +191,14 @@ These are the same endpoints the DatoCMS plugin and the daily cron call. Use Bas
 
   A new member (no `fortnox_customer_number`) is created in Fortnox for `ost` and
   the returned number is written back to the DatoCMS member. Re-run the same curl
-  with the number added to confirm it updates instead of recreating. To register
-  the real webhook in the DatoCMS project: **Project settings → Webhooks**,
+  with the number added to confirm it updates instead of recreating. The customer
+  sync mirrors `first_name`/`last_name`, `email`, `address` → `Address1`,
+  `postal_code` → `ZipCode` and `city` → `City`; a blank member value is sent as
+  Fortnox's `API_BLANK`, so clearing the address in DatoCMS clears it in Fortnox
+  too (the register was imported into DatoCMS first, so this only ever follows a
+  member who really has no address; clears against an already-empty Fortnox field
+  are dropped as redundant). To register the real webhook in the DatoCMS
+  project: **Project settings → Webhooks**,
   event type *Item*, events *Create* + *Update*, URL
   `https://<site>/api/fortnox/customer-sync`, HTTP Basic Auth
   (`BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD`). Non-member events are skipped
@@ -211,6 +225,42 @@ Verify the DatoCMS `invoice` record's `payment_status` and `payment_date` update
 ## 6. Browser check
 
 Log in as a test member (dev) and open `/konstnar/konto/fakturor`. Confirm the linked invoices render with correct year, belopp and status, and that the "Visa mina fakturor" button on the account page works.
+
+## 7. Fortnox → DatoCMS address import (one-off)
+
+`pnpm importaddress` copies each Öst member's street address and postal code
+from their Fortnox customer (`Address1` / `ZipCode`) into the member's
+`address` / `postal_code` fields.
+
+```
+pnpm importaddress                                     # plan only → docs/fortnox-address-import.csv
+pnpm importaddress --fork --apply                      # fork main → address-import-<date> + write
+pnpm importaddress --target address-import-<date> --include-review --apply
+```
+
+- **Never writes to `main` or `dev`.** `--apply` requires `--fork` (it creates an
+  `address-import-*` environment forked from `--source`, default `main`) or an
+  existing `--target address-import-*` environment. Promoting the fork to
+  primary is manual, in the DatoCMS UI.
+- **Never writes to Fortnox.** It only calls `listCustomers` — which still
+  rotates the Öst refresh token, so run `pnpm fortnoxenv` first.
+- **Identity-gated.** A member is imported only when the customer is provably
+  theirs: `ExternalReference` equals the member id, or name **and** email match.
+  Name-only / email-only matches (nicknames, married names, diacritics, changed
+  email) are listed as `review` and imported only with `--include-review`.
+  Customers that match neither are never imported (`mismatch`) — a stored
+  `fortnox_customer_number` alone is not treated as proof.
+- Postal codes are normalised to `123 45`; anything that is not five digits is
+  reported and skipped (the address is still written).
+- Other flags: `--include-city` (also fill an empty `city`), `--overwrite`
+  (replace an address the member already has), `--limit <n>`, `--out <csv>`,
+  `--name <env>`. Re-running against the same fork reports the members as
+  `already up to date` and writes nothing.
+
+Every row of `docs/fortnox-address-import.csv` carries the status (`import`,
+`review`, `mismatch`, `shared-number`, `missing-customer`, `no-customer-number`,
+`no-address`, `existing`) plus both current values and the proposed ones, so the
+plan can be reviewed before and after applying it.
 
 ## Rollout checklist (later, outside dev)
 

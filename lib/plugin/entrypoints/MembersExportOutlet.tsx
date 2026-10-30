@@ -3,7 +3,7 @@ import { RenderItemCollectionOutletCtx } from 'datocms-plugin-sdk';
 import { Button, Canvas, Spinner } from 'datocms-react-ui';
 import { useState } from 'react';
 import { basicAuthHeader, downloadBlob, filenameFromDisposition, isDev } from '../utils';
-import regions from '/regions.json';
+import { regionFromRole } from '../utils/regions';
 
 export type PropTypes = {
 	ctx: RenderItemCollectionOutletCtx;
@@ -16,7 +16,10 @@ export default function MembersExportOutlet({ ctx }: PropTypes) {
 		setExporting(true);
 
 		try {
-			const region = regions.find(({ name }) => ctx.currentRole.attributes.name === name);
+			const region = regionFromRole({
+				id: ctx.currentRole?.id,
+				name: ctx.currentRole?.attributes?.name,
+			});
 			if (!region) throw new Error('Region not found for role: ' + ctx.currentRole.attributes.name);
 
 			const res = await fetch('/api/members/export', {

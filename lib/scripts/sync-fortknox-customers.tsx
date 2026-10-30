@@ -6,22 +6,10 @@ import regions from '../../regions.json';
 import { createCustomer, listCustomers } from '../fortnox/customers';
 import { getAccessToken, hasFortnoxCredentials } from '../fortnox/auth';
 import { memberToCustomer } from '../fortnox/sync';
+import type { MemberItem } from '../fortnox/sync';
 
 const environment = process.env.DATOCMS_ENVIRONMENT!;
 const client = buildClient({ apiToken: process.env.GRAPHQL_API_TOKEN_FULL as string, environment });
-
-type MemberItem = {
-	id: string;
-	email?: string;
-	first_name?: string;
-	last_name?: string;
-	city?: string;
-	region?: string;
-	active?: boolean;
-	inactive?: boolean;
-	fortnox_customer_number?: string;
-	[key: string]: any;
-};
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

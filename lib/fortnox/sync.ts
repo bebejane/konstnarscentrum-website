@@ -9,6 +9,8 @@ export type MemberItem = {
 	email?: string;
 	first_name?: string;
 	last_name?: string;
+	address?: string;
+	postal_code?: string;
 	city?: string;
 	region?: string;
 	active?: boolean;
@@ -62,12 +64,20 @@ const optionalClearingString = (value: string | undefined | null): string | unde
 /**
  * Map a DatoCMS member to the data we send to Fortnox as a customer.
  * Email is the join key between the systems.
+ *
+ * Address, postal code and city are mirrored: a blank value in DatoCMS is sent
+ * as `API_BLANK` so Fortnox clears the field too. The Fortnox addresses were
+ * imported into DatoCMS before this was enabled, so a clear only ever follows a
+ * member who really has no address. (For members whose Fortnox field is already
+ * empty the clear is dropped as redundant by `dropRedundantClears`.)
  */
 export const memberToCustomer = (member: MemberItem): Partial<FortnoxCustomer> => {
 	const fullName = [member.first_name, member.last_name].filter(Boolean).join(' ') || undefined;
 	const data = {
 		Name: sanitizeText(fullName),
 		Email: member.email,
+		Address1: optionalClearingString(member.address),
+		ZipCode: optionalClearingString(member.postal_code),
 		City: optionalClearingString(member.city),
 		// Store the DatoCMS member id for reverse lookup
 		ExternalReference: member.id,
@@ -344,6 +354,8 @@ export const webhookEntityToMember = (entity: DatoWebhookEntity): MemberItem => 
 		email: attrs.email,
 		first_name: attrs.first_name,
 		last_name: attrs.last_name,
+		address: attrs.address,
+		postal_code: attrs.postal_code,
 		city: attrs.city,
 		active: attrs.active,
 		inactive: attrs.inactive,

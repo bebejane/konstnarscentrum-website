@@ -56,14 +56,11 @@ export const isEmailAllowedToSend = (email?: string): boolean => {
 };
 
 /**
- * Regions allowed to use the Fortnox integration. Add a region's slug
- * (e.g. 'ost', 'vast') as it comes onboard; regions not listed are excluded
- * even if they have OAuth tokens configured in .env.
+ * Regions allowed to use the Fortnox integration — defined in
+ * `lib/fortnox/enabledRegions.ts` (env-free, so the browser plugin can share
+ * the same allowlist) and re-exported here for the server-side callers.
  */
-export const FORTNOX_ENABLED_REGIONS: string[] = ['ost'];
-
-export const isFortnoxEnabled = (regionSlug: string): boolean =>
-	FORTNOX_ENABLED_REGIONS.includes(regionSlug);
+export { FORTNOX_ENABLED_REGIONS, isFortnoxEnabled } from './enabledRegions';
 
 /**
  * Region slugs in the system, mapped to the env prefix used for their

@@ -17,6 +17,7 @@
 		"barrel:watch": "watch 'node ./lib/scripts/barrel' ./components",
 		"postbuild": "next-sitemap",
 		"syncfortknox": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/sync-fortknox-customers.tsx",
+		"importaddress": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/import-fortnox-addresses.ts",
 		"migratememberfields": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/migrate-member-fields.tsx",
 		"migrateinvoiceamount": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/add-region-invoice-amount.tsx",
 		"migrateinvoiceemail": "tsx --tsconfig ./tsconfig.node.json ./lib/scripts/add-region-invoice-email-text.tsx",

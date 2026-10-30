@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import regions from '/regions.json';
 import { getAllMembers } from '/lib/fortnox/sync';
 import { createTestInvoice, pickTestInvoiceMember } from '/lib/fortnox/invoiceDispatch';
 import { getRegionTestEmail } from '/lib/fortnox/testEmail';
+import { findPluginRegion } from '/lib/fortnox/pluginRegion';
+import { isFortnoxEnabled } from '/lib/fortnox/enabledRegions';
 import { parseDatoError } from '/lib/utils';
 
 export const config = {
@@ -17,10 +18,6 @@ const isAuthorized = (req: NextApiRequest) => {
 		.split(':');
 	return user === process.env.BASIC_AUTH_USER && pwd === process.env.BASIC_AUTH_PASSWORD;
 };
-
-const findRegionByRole = (roleName: string) =>
-	regions.find((r) => r.slug.toLowerCase() === roleName.toLowerCase()) ??
-	regions.find((r) => r.slug.toLowerCase() === 'ost');
 
 /**
  * Send ONE invoice as a test, to the region's test address.
@@ -45,8 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 	const roleName = req.body?.role as string;
 	if (!roleName) return res.status(400).json({ error: 'Missing role in request body' });
 
-	const region = findRegionByRole(roleName);
-	if (!region) return res.status(404).json({ error: `No region found for role "${roleName}"` });
+	const region = findPluginRegion(roleName);
+	if (!region) return res.status(400).json({ error: `No region found for "${roleName}"` });
+	if (!isFortnoxEnabled(region.slug))
+		return res.status(403).json({ error: `Fortnox är inte aktiverat för ${region.name}` });
 
 	const invoiceYear = Number(req.body?.invoiceYear ?? new Date().getFullYear());
 
