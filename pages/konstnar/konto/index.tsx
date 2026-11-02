@@ -38,6 +38,7 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 		memberCategory,
 		active,
 		showContact,
+		fortnoxCustomerNumber,
 	} = member;
 
 	const {
@@ -61,6 +62,7 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 			active,
 			showContact,
 			memberCategory: memberCategory.map((c) => c.id),
+			fortnoxCustomerNumber,
 		},
 	});
 
@@ -230,6 +232,12 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 						{...register('showContact', { required: false })}
 					/>{' '}
 					<span className='small'>Visa mina kontaktuppgifter på min portfolio sida</span>
+					{fortnoxCustomerNumber && (
+						<>
+							<label htmlFor='fortnoxCustomerNumber'>Fortnox kundnr: {fortnoxCustomerNumber}</label>
+							<br />
+						</>
+					)}
 					<button disabled={saving}>
 						{saved ? 'Sparad' : saving ? <Loader size={10} /> : <>Spara</>}
 					</button>
