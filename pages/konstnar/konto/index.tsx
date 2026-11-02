@@ -127,18 +127,6 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 						{...register('lastName', { required: 'Efternamn saknas' })}
 					/>
 					<ErrorMessage id='lastName' errors={errors} />
-					<label htmlFor='bio'>Bio</label>
-					<textarea
-						id='bio'
-						name='bio'
-						rows={6}
-						{...register('bio', {
-							required: true,
-							minLength: { value: 50, message: 'Din biografi måste minst vara 50 tecken lång' },
-							maxLength: { value: 800, message: 'Din biografi får högst vara 800 tecken lång' },
-						})}
-					/>
-					<ErrorMessage id='bio' errors={errors} />
 					<label htmlFor='birthPlace'>Födelseort</label>
 					<input
 						id='birthPlace'
@@ -176,6 +164,18 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 						{...register('yearOfBirth', { required: false })}
 					/>
 					<ErrorMessage id='yearOfBirth' errors={errors} />
+					<label htmlFor='bio'>Bio</label>
+					<textarea
+						id='bio'
+						name='bio'
+						rows={6}
+						{...register('bio', {
+							required: true,
+							minLength: { value: 50, message: 'Din biografi måste minst vara 50 tecken lång' },
+							maxLength: { value: 800, message: 'Din biografi får högst vara 800 tecken lång' },
+						})}
+					/>
+					<ErrorMessage id='bio' errors={errors} />
 					<label htmlFor='webpage'>Hemsida</label>
 					<input
 						id='webpage'
@@ -221,6 +221,14 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 						))}
 					</div>
 					<ErrorMessage id='memberCategory' errors={errors} className={s.errorMuted} />
+					{fortnoxCustomerNumber && (
+						<>
+							<br />
+							<label className='small'>Kundnummer</label>
+							<span className='big'>{fortnoxCustomerNumber}</span>
+							<br />
+						</>
+					)}
 					<br />
 					<label htmlFor='active'>Synlighet</label>
 					<input type='checkbox' name='active' {...register('active', { required: false })} />{' '}
@@ -232,17 +240,12 @@ export default function Account({ member: memberFromProps, memberCategories }: P
 						{...register('showContact', { required: false })}
 					/>{' '}
 					<span className='small'>Visa mina kontaktuppgifter på min portfolio sida</span>
-					{fortnoxCustomerNumber && (
-						<>
-							<label htmlFor='fortnoxCustomerNumber'>Fortnox kundnr: {fortnoxCustomerNumber}</label>
-							<br />
-						</>
-					)}
+					<br />
 					<button disabled={saving}>
 						{saved ? 'Sparad' : saving ? <Loader size={10} /> : <>Spara</>}
 					</button>
 				</form>
-				<h3>Övrigt</h3>
+
 				<Link href='/konstnar/konto/fakturor'>
 					<button>Visa mina fakturor</button>
 				</Link>
