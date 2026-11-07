@@ -14,8 +14,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 	try {
 		const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-		const { id, region: regionId, approval_token, first_name, last_name, approved, ping } = body;
+		const {
+			id,
+			region: regionId,
+			approval_token,
+			first_name,
+			last_name,
+			approved,
+			approve_direct,
+			ping,
+		} = body;
 		const email = body?.email?.toLowerCase();
+		const approveDirect = Boolean(approve_direct);
 
 		if (ping) {
 			console.log('ping endpoint');
@@ -45,7 +55,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			return res.status(401).send('Access denied');
 		}
 
-		if (!email || !approval_token || !first_name || !last_name) throw 'Ogitltig data';
+		if (!email || !first_name || !last_name) throw 'Ogiltig data';
+		if (!approveDirect && !approval_token) throw 'Ogiltig data';
 
 		const region = regions.find((el) => el.id === regionId);
 		if (!region) throw 'Ogiltig region';
@@ -68,6 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			})
 		)?.[0];
 
+		let memberCreated = false;
 		if (!member) {
 			let slug = slugify(`${application.first_name} ${application.last_name}`, {
 				lower: true,
@@ -100,15 +112,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				postal_code: application.postal_code,
 				application: application.id,
 			});
+			memberCreated = true;
 		}
 
-		await Email.applicationApproved({
-			email,
-			token: approval_token,
-			name: `${first_name} ${last_name}`,
-		});
-		console.log('application successfully approved', email);
-		res.status(200).json({ approved });
+		if (!approveDirect) {
+			await Email.applicationApproved({
+				email,
+				token: approval_token,
+				name: `${first_name} ${last_name}`,
+			});
+		}
+		console.log('application successfully approved', email, approveDirect ? '(direct)' : '');
+		res.status(200).json({ approved, memberCreated });
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: err?.message || err });
