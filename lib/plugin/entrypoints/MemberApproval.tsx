@@ -89,7 +89,9 @@ export default function MemberApproval({ ctx }: PropTypes) {
 			if (res.status !== 200) throw new Error('Server error: ' + body.error);
 
 			try {
-				const directMessage = body.memberCreated ? 'Medlem skapad utan e-post' : 'Medlem fanns redan';
+				const directMessage = body.memberCreated
+					? 'Medlem skapad utan e-post'
+					: 'Medlem fanns redan';
 
 				if (body.approved !== ctx.item?.attributes.approved) {
 					await ctx.setFieldValue(ctx.field.attributes.api_key as string, true);

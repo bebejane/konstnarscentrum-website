@@ -1,19 +1,17 @@
 .container {
+	p {
+	}
 
-  p {}
+	.error {
+		color: var(--color--ink-danger);
+	}
 
-  .error {
-    color: var(--color--ink-danger);
-  }
+	.button {
+		margin-top: 1rem;
+	}
 
-  .button {
-    margin-top: 1rem;
-  }
-
-  .hint {
-    margin-top: 2rem;
-    color: var(--color--ink-muted);
-    font-size: var(--font-size-s);
-  }
-
+	.hint {
+		margin-top: 2rem;
+		font-size: var(--font-size-s);
+	}
 }
